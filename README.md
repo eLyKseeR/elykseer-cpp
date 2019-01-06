@@ -12,12 +12,15 @@ read [more](https://github.com/eLyKseeR/elykseer-cpp)
 1. prepare C++ code 
 
 > $ cd cpp
+
 >  $ ./mk_cpp.sh
 
 2. compilation
 
 > $ cd ../BUILD
+
 > $ cmake ..
+
 > $ make
 
 3. testing (in directory `BUILD`)
