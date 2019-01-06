@@ -1,6 +1,6 @@
 # eLyKseeR
 
-![eLyKseeR](https://www.elykseer.com/lxricon2)
+![eLyKseeR](https://www.elykseer.com/wp-content/uploads/2017/11/lxricon2.png)
 
 cryptographic data archive; written in C++; an elixir to stay forever
 
