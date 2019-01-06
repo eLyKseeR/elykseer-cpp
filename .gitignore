@@ -1,18 +1,3 @@
-
-packages/
-bin/
-obj/
-
-*.snk
-
-eLyKseeR-base.userprefs
-
-._*
-
-GTAGS
-GRTAGS
-GPATH
-
 cpp/src/lxr
 cpp/src/*.hpp
 cpp/src/*.cpp
@@ -21,16 +6,11 @@ cpp/tests/*.cpp
 
 ext/[a-z]*
 
-src/fstar/lxr.*.fst.checked
-src/fstar/lxr.*.fst.hints
-src/fstar/lxr.*.fst.checked.lax
-
 BUILD/cpp
 BUILD/CMakeFiles
-
-
-.DS_Store
-
 BUILD/CMakeCache.txt
 BUILD/Makefile
 BUILD/cmake_install.cmake
+
+._*
+.DS_Store
