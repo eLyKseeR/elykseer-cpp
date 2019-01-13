@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
 
-#project(UT_elykseer-base)
-
 IF(DEFINED CMAKE_BUILD_TYPE)
    SET(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release DebugProfile RelWithDebInfo MinSizeRel.")
 ELSE()
@@ -35,7 +33,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         )
 
         target_link_libraries ( ut${PROJECT_NAME}
-          elykseer-base_${CMAKE_BUILD_TYPE}
+          elykseer-cpp_${CMAKE_BUILD_TYPE}
           ${libs}
           ${Boost_LIBRARIES}
           ${CRYPTO_LIBS}
@@ -48,7 +46,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "DebugProfile")
         )
         set_target_properties(utp${PROJECT_NAME} PROPERTIES LINK_FLAGS "-fprofile-arcs -ftest-coverage ")
         target_link_libraries ( utp${PROJECT_NAME}
-                elykseer-base_p${CMAKE_BUILD_TYPE}
+                elykseer-cpp_p${CMAKE_BUILD_TYPE}
                 #gcov
                 ${libs}
                 ${Boost_LIBRARIES}

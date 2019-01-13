@@ -8,7 +8,7 @@ ELSE()
 	SET(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release DebugProfile RelWithDebInfo MinSizeRel.")
 ENDIF()
 
-project(elykseer-base)
+project(elykseer-cpp)
 
 # The version number.
 set (VERSION_MAJOR 1)

@@ -1,6 +1,6 @@
 ```cpp
 /*
- *  Copyright 2017 by Alexander Diemand
+ *  Copyright 2018 by Alexander Diemand
  *
  *  [LICENSE](../LICENSE)
  */

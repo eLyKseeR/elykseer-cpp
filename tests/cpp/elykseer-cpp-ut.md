@@ -1,8 +1,8 @@
-# Unit tests for eLyKseeR-base
+# Unit tests for eLyKseeR-cpp
 
 all entries here are parsed and used in source code generation
 and subsequentially be compiled and linked against the 
-elykseer-base library.
+elykseer-cpp library.
 
 
 ## unit tests

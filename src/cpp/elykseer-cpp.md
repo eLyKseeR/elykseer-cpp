@@ -1,8 +1,11 @@
-# eLyKseeR base
+# eLyKseeR cpp
 
->  Copyright (C) 2017 Alexander Diemand
+A C++ reimplementation of eLyKseeR base (https://github.com/CodiePP/elykseer-base.git)
 
->  [LICENSE](../LICENSE)
+>  Copyright (C) 2018 Alexander Diemand
+
+>  GPL v3
+   [LICENSE](../LICENSE)
 
 ## main header
 

@@ -1,4 +1,4 @@
-Copyright (C) 2017 Alexander Diemand
+Copyright (C) 2018 Alexander Diemand
 
 [LICENSE](../../LICENSE)
 
