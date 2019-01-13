@@ -93,7 +93,7 @@ std::string decodeb64(std::string const & _enc)
 
 const std::string Liz::copyright()
 {
-    static std::string _enc = "Q29weXJpZ2h0IChjKSAyMDE3IEFsZXhhbmRlciBEaWVtYW5kCg==";
+    static std::string _enc = "Q29weXJpZ2h0IChjKSAyMDE5IEFsZXhhbmRlciBEaWVtYW5k";
     return decodeb64(_enc);
 }
 

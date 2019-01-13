@@ -28,6 +28,10 @@ add_library (${PROJECT_NAME}_${CMAKE_BUILD_TYPE}_s STATIC
 	${SRCS}
 )
 
+set_target_properties(${PROJECT_NAME}_${CMAKE_BUILD_TYPE} PROPERTIES
+                      VERSION ${elykseer-cpp_VERSION_STRING}
+                      SOVERSION ${elykseer-cpp_VERSION_MAJOR})
+
 if (CMAKE_BUILD_TYPE STREQUAL "DebugProfile")
 	add_library (${PROJECT_NAME}_p${CMAKE_BUILD_TYPE} STATIC
 		${SRCS}
