@@ -48,7 +48,9 @@ type IDb<'k, 'e> =
       return _map.size(); }
 
 >virtual bool contains(K const & k) const {
+```cpp
       try { return (_map.at(k),true); } catch (...) { return false; }; }
+```
 
 >virtual std::experimental::optional&lt;T&gt; get(K const & k) {
 ```cpp

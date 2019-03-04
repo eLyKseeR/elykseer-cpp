@@ -14,7 +14,7 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   # Linux specific code
-  set(libs "dl" "z" "prngCpp_s.linux.1.0.4")
+  set(libs "dl" "z" "prngCpp_s.linux.1.0.4" "libpugixml")
 ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
 # list of source files to be compiled

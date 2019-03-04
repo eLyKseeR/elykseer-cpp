@@ -38,7 +38,12 @@ DbFpDat DbFpDat::fromFile(boost::filesystem::path const & fp)
         db._osusr = _buf;
         snprintf(_buf, 65, "%d", _fst.st_gid);
         db._osgrp = _buf;
+#ifdef __APPLE__
         db._osattr = OS::time2string(_fst.st_mtimespec.tv_sec);
+#endif
+#ifdef __linux__
+        db._osattr = OS::time2string(_fst.st_mtim.tv_sec);
+#endif
     }
 #else
     #error Such a platform is not yet a good host for this software

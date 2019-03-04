@@ -15,7 +15,7 @@
 #include <iostream>
 #include <functional>
 
-#ifdef __APPLE__
+#if defined(__linux__) || defined(__APPLE__)
 #include <sys/stat.h>
 #endif
 
