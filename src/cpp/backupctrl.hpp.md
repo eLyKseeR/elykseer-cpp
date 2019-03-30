@@ -80,6 +80,10 @@ module BackupCtrl =
 
 >std::time_t [time_write](backupctrl_info.cpp.md)() const;
 
+>DbFp const & [getDbFp](backupctrl_info.cpp.md)() const;
+
+>DbKey const & [getDbKey](backupctrl_info.cpp.md)() const;
+
 >protected:
 
 >private:

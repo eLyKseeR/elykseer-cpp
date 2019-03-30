@@ -8,6 +8,7 @@
 #include "lxr/dbfp.hpp"
 #include "lxr/liz.hpp"
 #include "lxr/os.hpp"
+#include "lxr/sha256.hpp"
 #include "lxr/filectrl.hpp"
 
 #include "pugixml.hpp"

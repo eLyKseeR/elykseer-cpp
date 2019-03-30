@@ -36,14 +36,14 @@ bool BackupCtrl::backup(boost::filesystem::path const & fp)
 
     // make DbFP entry
     auto dbentry = DbFpDat::fromFile(fp);
-    dbentry._checksum = Sha256::hash(fp);
 
     int _bidx = 1;
     uint64_t _fpos = 0;
     while (! feof(fptr)) {
         size_t nread = fread((void*)buffer.ptr(), 64, Assembly::datasz / 64, fptr);
+        _pimpl->trx_in += nread;
         int nwritten = _pimpl->_ass->addData(nread * 64, buffer);
-        // what if nwritten < 64 bytes?
+        _pimpl->trx_out += nwritten;
         auto dbblock = DbFpBlock(
             _bidx++,
             _pimpl->_ass->pos(),

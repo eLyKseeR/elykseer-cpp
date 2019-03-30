@@ -28,6 +28,7 @@ DbFpDat DbFpDat::fromFile(boost::filesystem::path const & fp)
     if (! FileCtrl::fileExists(fp)) {
         return db;
     }
+    db._checksum = Sha256::hash(fp);
 
 #if defined(__linux__) || defined(__APPLE__)
     struct stat _fst;

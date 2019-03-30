@@ -33,4 +33,14 @@ std::time_t BackupCtrl::time_write() const
 {
     return 0; // TODO
 }
+
+DbFp const & BackupCtrl::getDbFp() const
+{
+    return _pimpl->_dbfp;
+}
+
+DbKey const & BackupCtrl::getDbKey() const
+{
+    return _pimpl->_dbkey;
+}
 ```
