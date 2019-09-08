@@ -31,12 +31,10 @@ BOOST_AUTO_TEST_CASE( message_digest )
 ```cpp
 BOOST_AUTO_TEST_CASE( file_checksum )
 {
-	boost::filesystem::path fp = "/bin/sh";
-#ifdef __APPLE__
-	std::string sha256 = "85707017145c05047154d7bf32e373287db44906d6e97fb9c32f166aaceb62b7";
-#else 
-#ifdef __linux__
+  boost::filesystem::path fp = "/bin/sh";
   std::string sha256 = "";
+
+#if defined(__linux__) || defined(__APPLE__)
   std::string cmd = "sha256sum "; cmd += fp.string();
   FILE* pipe = popen(cmd.c_str(), "r");
   if (pipe) {
@@ -48,8 +46,7 @@ BOOST_AUTO_TEST_CASE( file_checksum )
 #else
 #error Where are we?
 #endif
-#endif
-	BOOST_CHECK_EQUAL(lxr::Sha256::hash(fp).toHex(), sha256);
+  BOOST_CHECK_EQUAL(lxr::Sha256::hash(fp).toHex(), sha256);
 }
 ```
 
