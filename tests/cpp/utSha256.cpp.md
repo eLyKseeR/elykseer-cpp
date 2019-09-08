@@ -36,7 +36,15 @@ BOOST_AUTO_TEST_CASE( file_checksum )
 	std::string sha256 = "85707017145c05047154d7bf32e373287db44906d6e97fb9c32f166aaceb62b7";
 #else 
 #ifdef __linux__
-	std::string sha256 = "8cc3e6ea29b4fa72578418757ca4bc01e2b448d1a9a4af014e2527a04dafb8b8";
+  std::string sha256 = "";
+  std::string cmd = "sha256sum "; cmd += fp.string();
+  FILE* pipe = popen(cmd.c_str(), "r");
+  if (pipe) {
+    char buffer[128];
+    fgets(buffer, 128, pipe);
+    sha256 = std::string(buffer, 64);
+    pclose(pipe);
+  }
 #else
 #error Where are we?
 #endif
