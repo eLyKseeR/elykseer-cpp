@@ -13,16 +13,14 @@ project(elykseer-cpp)
 # The version number.
 set (${PROJECT_NAME}_VERSION_MAJOR 1)
 set (${PROJECT_NAME}_VERSION_MINOR 0)
-set (${PROJECT_NAME}_VERSION_PATCH 33)
+set (${PROJECT_NAME}_VERSION_PATCH 42)
 set (${PROJECT_NAME}_VERSION_STRING ${elykseer-cpp_VERSION_MAJOR}.${elykseer-cpp_VERSION_MINOR}.${elykseer-cpp_VERSION_PATCH})
 
 # choose either one
 set(USE_OPENSSL NO)
 set(USE_CRYPTOPP YES)
 
-#set(CMAKE_C_COMPILER "/usr/local/bin/gcc48")
-#set(CMAKE_CXX_COMPILER "/usr/local/bin/g++48")
-#set(CMAKE_CXX_COMPILER "/usr/local/bin/clang36")
+
 
 #add_definitions( -DLinux )
 #add_definitions( -DFreeBSD )
@@ -47,7 +45,7 @@ IF(USE_CRYPTOPP)
   add_definitions( -DCRYPTOPP )
   add_definitions( -DCRYPTOLIB=CRYPTOPP )
   add_library(libcryptopp STATIC IMPORTED)
-  SET_TARGET_PROPERTIES(libcryptopp PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/ext/cryptopp/libcryptopp.a)
+  SET_TARGET_PROPERTIES(libcryptopp PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/../ext/cryptopp/libcryptopp.a)
   set(CRYPTO_LIBS "libcryptopp")
 ENDIF(USE_CRYPTOPP)
 
@@ -63,8 +61,11 @@ IF(USE_OPENSSL)
 ENDIF(USE_OPENSSL)
 
 add_library(libpugixml STATIC IMPORTED)
-SET_TARGET_PROPERTIES(libpugixml PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/ext/pugixml/libpugixml.a)
+SET_TARGET_PROPERTIES(libpugixml PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/../ext/pugixml/libpugixml.a)
 
+#add_library(libelykseer-crypto STATIC IMPORTED)
+#SET_TARGET_PROPERTIES(libelykseer-crypto PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/../ext/elykseer-crypto/BUILD/src/libelykseer-crypto_Debug_s.a)
+link_directories (${CMAKE_HOME_DIRECTORY}/../ext/elykseer-crypto/BUILD/src/)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z -g -O1 -fPIC")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -g -fPIC")
@@ -79,8 +80,9 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 # other external tools
-include_directories(./ext)
+include_directories(../ext)
 
 
-add_subdirectory( cpp )
+add_subdirectory( src )
+add_subdirectory( test )
 

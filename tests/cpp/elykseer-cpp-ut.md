@@ -7,18 +7,6 @@ elykseer-cpp library.
 
 ## unit tests
 
-[utMd5](utMd5.cpp.md) for class [Md5](../md5.hpp.md)
-
-[utSha256](utSha256.cpp.md) for class [Sha256](../sha256.hpp.md)
-
-[utRandom](utRandom.cpp.md) for class [Random](../random.hpp.md)
-
-[utKey128](utKey128.cpp.md) for class [Key128](../key128.hpp.md)
-
-[utKey256](utKey256.cpp.md) for class [Key256](../key256.hpp.md)
-
-[utRandList](utRandList.cpp.md) for class [RandList](../randlist.hpp.md)
-
 [utLiz](utLiz.cpp.md) for class [Liz](../liz.hpp.md)
 
 [utOS](utOS.cpp.md) for class [OS](../os.hpp.md)
@@ -34,8 +22,6 @@ elykseer-cpp library.
 [utFileCtrl](utFileCtrl.cpp.md) for class [FileCtrl](../filectrl.hpp.md)
 
 [utOptions](utOptions.cpp.md) for class [Options](../options.hpp.md)
-
-[utAes](utAes.cpp.md) for class [Aes](../aes.hpp.md)
 
 [utAssembly](utAssembly.cpp.md) for class [Assembly](../assembly.hpp.md)
 

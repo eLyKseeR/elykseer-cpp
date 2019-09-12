@@ -17,11 +17,12 @@ include_directories(${Boost_INCLUDE_DIRS})
 
 # mine
 include_directories(../src)
-include_directories("${CMAKE_HOME_DIRECTORY}/ext/prngsharp/src")
-include_directories("${CMAKE_HOME_DIRECTORY}/ext/pugixml/src")
+include_directories("${CMAKE_HOME_DIRECTORY}/../ext/prngsharp/src")
+include_directories("${CMAKE_HOME_DIRECTORY}/../ext/pugixml/src")
+include_directories("${CMAKE_HOME_DIRECTORY}/../ext/elykseer-crypto/BUILD/src")
 
 # link external libraries
-link_directories("${CMAKE_HOME_DIRECTORY}/ext/prngsharp")
+link_directories("${CMAKE_HOME_DIRECTORY}/../ext/prngsharp")
 set(libs "dl" "z")
 
 file(GLOB SRCS ut*.cpp mocks/*.cpp)

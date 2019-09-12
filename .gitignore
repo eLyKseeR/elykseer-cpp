@@ -4,13 +4,13 @@ cpp/src/*.cpp
 cpp/tests/*.hpp
 cpp/tests/*.cpp
 
-ext/[a-z]*
-
-BUILD/cpp
-BUILD/CMakeFiles
-BUILD/CMakeCache.txt
-BUILD/Makefile
-BUILD/cmake_install.cmake
-
 ._*
 .DS_Store
+
+BUILD/CMakeCache.txt
+BUILD/CMakeFiles/
+BUILD/Makefile
+BUILD/cmake_install.cmake
+BUILD/src
+BUILD/test
+

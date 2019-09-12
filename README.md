@@ -11,15 +11,13 @@ read [more](https://github.com/eLyKseeR/elykseer-cpp)
 
 1. prepare C++ code 
 
-> $ cd cpp
+> $ cd BUILD
 
 >  $ ./mk_cpp.sh
 
 2. compilation
 
-> $ cd ../BUILD
-
-> $ cmake ..
+> $ cmake .
 
 > $ make
 
@@ -30,7 +28,7 @@ read [more](https://github.com/eLyKseeR/elykseer-cpp)
 
 # copyright
 
-Copyright 2018 by Alexander Diemand
+Copyright 2018, 2019 by Alexander Diemand
 
 # license
 

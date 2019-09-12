@@ -1,0 +1,3 @@
+[submodule "ext/elykseer-crypto"]
+	path = ext/elykseer-crypto
+	url = https://github.com/eLyKseeR/elykseer-crypto.git
