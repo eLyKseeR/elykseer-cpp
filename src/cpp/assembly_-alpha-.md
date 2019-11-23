@@ -1,6 +1,6 @@
 ```cpp
 /*
-````
+```
 <fpaste ../../src/copyright.md>
 ```cpp
 */
@@ -18,7 +18,7 @@
 #include "sizebounded/sizebounded.ipp"
 
 #include "boost/optional.hpp"
-#include "boost/contract.hpp"
+#include "boost/contract_macro.hpp"
 
 #include <string>
 #include <iostream>
@@ -31,7 +31,7 @@ struct Assembly::pimpl :
   private boost::contract::constructor_precondition<pimpl>
 {
   pimpl(Key256 const & aid, int n) :
-      boost::contract::constructor_precondition<pimpl>([&] {
+      BOOST_CONTRACT_CONSTRUCTOR_PRECONDITION(pimpl)([&] {
             BOOST_CONTRACT_ASSERT(n >= 16 && n <= 256);
         })
     , _chunks(new Chunk[n])

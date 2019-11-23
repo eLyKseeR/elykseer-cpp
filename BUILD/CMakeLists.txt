@@ -16,17 +16,6 @@ set (${PROJECT_NAME}_VERSION_MINOR 0)
 set (${PROJECT_NAME}_VERSION_PATCH 42)
 set (${PROJECT_NAME}_VERSION_STRING ${elykseer-cpp_VERSION_MAJOR}.${elykseer-cpp_VERSION_MINOR}.${elykseer-cpp_VERSION_PATCH})
 
-# choose either one
-set(USE_OPENSSL NO)
-set(USE_CRYPTOPP YES)
-
-
-
-#add_definitions( -DLinux )
-#add_definitions( -DFreeBSD )
-#add_definitions( -DWindows )
-
-
 # boost
 #set(BOOST_ROOT "${CMAKE_HOME_DIRECTORY}/ext/boost_1_69_0/")
 #set(BOOST_LIBRARYDIR "${CMAKE_HOME_DIRECTORY}/ext/boost_1_69_0/stage/lib")
@@ -40,32 +29,22 @@ find_package( Boost 1.67.0 REQUIRED COMPONENTS system filesystem chrono thread d
 LINK_DIRECTORIES ( ${Boost_LIBRARY_DIRS} )
 INCLUDE_DIRECTORIES (${Boost_INCLUDE_DIRS})
 
-# cryptography
-IF(USE_CRYPTOPP)
-  add_definitions( -DCRYPTOPP )
-  add_definitions( -DCRYPTOLIB=CRYPTOPP )
-  add_library(libcryptopp STATIC IMPORTED)
-  SET_TARGET_PROPERTIES(libcryptopp PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/../ext/cryptopp/libcryptopp.a)
-  set(CRYPTO_LIBS "libcryptopp")
-ENDIF(USE_CRYPTOPP)
-
-IF(USE_OPENSSL)
-  add_definitions( -DOPENSSL )
-  add_definitions( -DCRYPTOLIB=OPENSSL )
-  IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(OPENSSL_ROOT_DIR "/usr/local/opt/openssl")
-  ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  find_package(OpenSSL REQUIRED)
-  include_directories(${OPENSSL_INCLUDE_DIR})
-  set(CRYPTO_LIBS ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY})
-ENDIF(USE_OPENSSL)
+# boost/contract
+if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+  # only check preconditions and class invariants (on entry)
+  ##add_definitions(-DBOOST_CONTRACT_NO_PRECONDITIONS)
+  add_definitions(-DBOOST_CONTRACT_NO_POSTCONDITIONS)
+  add_definitions(-DBOOST_CONTRACT_NO_EXCEPTS)
+  ##add_definitions(-DBOOST_CONTRACT_NO_ENTRY_INVARIANTS)
+  add_definitions(-DBOOST_CONTRACT_NO_EXIT_INVARIANTS)
+  add_definitions(-DBOOST_CONTRACT_NO_CHECKS)
+endif()
 
 add_library(libpugixml STATIC IMPORTED)
 SET_TARGET_PROPERTIES(libpugixml PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/../ext/pugixml/libpugixml.a)
 
 #add_library(libelykseer-crypto STATIC IMPORTED)
 #SET_TARGET_PROPERTIES(libelykseer-crypto PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/../ext/elykseer-crypto/BUILD/src/libelykseer-crypto_Debug_s.a)
-link_directories (${CMAKE_HOME_DIRECTORY}/../ext/elykseer-crypto/BUILD/src/)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z -g -O1 -fPIC")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -g -fPIC")

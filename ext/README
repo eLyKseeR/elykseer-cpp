@@ -3,13 +3,12 @@ External Dependencies
 
 the content of the 'ext/' directory:
 
-  cryptopp -> cryptopp-CRYPTOPP_5_6_5/
+  elykseer-crypto
   date/
   gitalk/
   prngsharp/
   pugixml/
   sizebounded/
-  boost_1_67_0
 
 
 gitalk
@@ -52,22 +51,6 @@ parses XML data
 license: MIT
 
 https://github.com/zeux/pugixml.git
-
-
-Crypto++ 7.0.0
-==============
-
-license: Boost Software License 1.0
-
-https://github.com/weidai11/cryptopp/releases/tag/CRYPTOPP_7_0_0
-
-the extracted directory should be symlinked to 'cryptopp' so we find 
-the headers.
-
-on OSX build with env. var. set:
-
-> export USER_CXXFLAGS="-mmacosx-version-min=10.12"
-> ./cryptest.sh fast
 
 
 Boost 1.67.0

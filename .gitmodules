@@ -1,3 +1,18 @@
 [submodule "ext/elykseer-crypto"]
 	path = ext/elykseer-crypto
 	url = https://github.com/eLyKseeR/elykseer-crypto.git
+[submodule "ext/date"]
+	path = ext/date
+	url = https://github.com/HowardHinnant/date.git
+[submodule "ext/prngsharp"]
+	path = ext/prngsharp
+	url = https://github.com/CodiePP/prngsharp.git
+[submodule "ext/sizebounded"]
+	path = ext/sizebounded
+	url = https://github.com/CodiePP/sizebounded.git
+[submodule "ext/gitalk"]
+	path = ext/gitalk
+	url = https://github.com/CodiePP/gitalk.git
+[submodule "ext/pugixml"]
+	path = ext/pugixml
+	url = https://github.com/zeux/pugixml.git

@@ -9,6 +9,8 @@ include_directories("${CMAKE_HOME_DIRECTORY}/../ext/elykseer-crypto/BUILD/src")
 
 # link external libraries
 link_directories("${CMAKE_HOME_DIRECTORY}/../ext/prngsharp/")
+link_directories("${CMAKE_HOME_DIRECTORY}/../ext/elykseer-crypto/BUILD/src/")
+
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
    # Mac OS X specific code
    set(libs "dl" "z" "prngCpp_s.osx.1.0.5" "libpugixml" "elykseer-crypto_${CMAKE_BUILD_TYPE}")
@@ -42,7 +44,6 @@ if (CMAKE_BUILD_TYPE STREQUAL "DebugProfile")
 	target_link_libraries (${PROJECT_NAME}_p${CMAKE_BUILD_TYPE}
 		${libs}
 		${Boost_LIBRARIES}
-    ${CRYPTO_LIBS}
 	)
 endif()
 
@@ -50,12 +51,10 @@ endif()
 target_link_libraries (${PROJECT_NAME}_${CMAKE_BUILD_TYPE} PUBLIC
 	${libs}
 	${Boost_LIBRARIES}
-  ${CRYPTO_LIBS}
 )
 
 target_link_libraries (${PROJECT_NAME}_${CMAKE_BUILD_TYPE}_s
 	${libs}
 	${Boost_LIBRARIES}
-  ${CRYPTO_LIBS}
 )
 

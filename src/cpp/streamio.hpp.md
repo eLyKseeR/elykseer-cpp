@@ -8,7 +8,7 @@
 
 #include <iosfwd>
 
-````
+```
 
 namespace [lxr](namespace.list) {
 

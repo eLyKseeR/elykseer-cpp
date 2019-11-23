@@ -9,7 +9,7 @@
 #include "streamio.hpp"
 #include <unordered_map>
 #include <functional>
-#include <experimental/optional>
+#include <optional>
 
 ````
 
@@ -52,7 +52,7 @@ type IDb<'k, 'e> =
       try { return (_map.at(k),true); } catch (...) { return false; }; }
 ```
 
->virtual std::experimental::optional&lt;T&gt; get(K const & k) {
+>virtual std::optional&lt;T&gt; get(K const & k) {
 ```cpp
       try { T & r = _map.at(k); return r; } catch (...) { return {}; }; }
 ```
@@ -82,6 +82,10 @@ type IDb<'k, 'e> =
         f(p.first, p.second); }
     }
 ```
+
+>virtual void inStream(std::istream &) {};
+
+>virtual void outStream(std::ostream &) {};
 
 >protected:
 

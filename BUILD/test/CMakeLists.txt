@@ -23,6 +23,7 @@ include_directories("${CMAKE_HOME_DIRECTORY}/../ext/elykseer-crypto/BUILD/src")
 
 # link external libraries
 link_directories("${CMAKE_HOME_DIRECTORY}/../ext/prngsharp")
+link_directories("${CMAKE_HOME_DIRECTORY}/../ext/elykseer-crypto/BUILD/src")
 set(libs "dl" "z")
 
 file(GLOB SRCS ut*.cpp mocks/*.cpp)
@@ -37,7 +38,6 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
           elykseer-cpp_${CMAKE_BUILD_TYPE}
           ${libs}
           ${Boost_LIBRARIES}
-          ${CRYPTO_LIBS}
         )
 endif()
 
@@ -51,7 +51,6 @@ if (CMAKE_BUILD_TYPE STREQUAL "DebugProfile")
                 #gcov
                 ${libs}
                 ${Boost_LIBRARIES}
-                ${CRYPTO_LIBS}
         )
 
 endif()
