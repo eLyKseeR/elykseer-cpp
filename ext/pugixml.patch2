@@ -1,0 +1,14 @@
+diff --git CMakeLists.txt CMakeLists.txt
+index e5b49ca..7314079 100644
+--- CMakeLists.txt
++++ CMakeLists.txt
+@@ -88,6 +88,8 @@ set_target_properties(pugixml-shared pugixml-static pugixml
+     SOVERSION ${PROJECT_VERSION_MAJOR}
+     VERSION ${PROJECT_VERSION})
+ 
++set_property(TARGET pugixml PROPERTY POSITION_INDEPENDENT_CODE ON)
++
+ # XXX: EXCLUDE_FROM_ALL cannot be set via a generator expression! :(
+ if (BUILD_SHARED_AND_STATIC_LIBS)
+   set_target_properties(pugixml-shared pugixml-static
+
