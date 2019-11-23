@@ -2,6 +2,8 @@
 
 GITALK=`pwd`/../ext/gitalk
 
+mkdir -p src/lxr
+
 cd src
 cd lxr
 for HPP in `bash $GITALK/utils/find_hpp.sh ../../../src/cpp/elykseer-cpp.md`; do
