@@ -1,0 +1,42 @@
+pipeline {
+    agent any
+    stages {
+        stage('init dependencies') {
+            steps {
+                sh 'git submodule update --init --remote'
+            }
+        }
+        stage('build dependencies') {
+            steps {
+                sh 'cd ext/prngsharp; ./build.OSX.jenkins.sh'
+                sh 'cd ext/elykseer-crypto; git submodule update --init --remote'
+                sh 'cd ext/elykseer-crypto/ext/prngsharp; ./build.OSX.jenkins.sh'
+                sh 'cd ext/elykseer-crypto/ext/cryptopp; make -f GNUmakefile'
+                sh 'cd ext/elykseer-crypto/BUILD; ./mk_cpp.sh'
+                sh 'cd ext/elykseer-crypto/BUILD; cmake .'
+                sh 'cd ext/elykseer-crypto/BUILD; make'
+                sh 'cd ext/elykseer-crypto/BUILD; ./ut.sh'
+            }
+        }
+        stage('mk cpp') {
+            steps {
+                sh 'cd BUILD; ./mk_cpp.sh'
+            }
+        }
+        stage('cmake') {
+            steps {
+                sh 'cd BUILD; cmake .'
+            }
+        }
+        stage('compile') {
+            steps {
+                sh 'cd BUILD; make'
+            }
+        }
+        stage('unit tests') {
+            steps {
+                sh 'cd BUILD; ./ut.sh'
+            }
+        }
+    }
+}
