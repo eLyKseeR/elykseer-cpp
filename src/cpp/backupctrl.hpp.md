@@ -74,11 +74,11 @@ module BackupCtrl =
 
 >uint64_t [bytes_out](backupctrl_info.cpp.md)() const;
 
->std::time_t [time_encrypt](backupctrl_info.cpp.md)() const;
+>std::chrono::microseconds [time_encrypt](backupctrl_info.cpp.md)() const;
 
->std::time_t [time_extract](backupctrl_info.cpp.md)() const;
+>std::chrono::microseconds [time_extract](backupctrl_info.cpp.md)() const;
 
->std::time_t [time_write](backupctrl_info.cpp.md)() const;
+>std::chrono::microseconds [time_write](backupctrl_info.cpp.md)() const;
 
 >DbFp const & [getDbFp](backupctrl_info.cpp.md)() const;
 

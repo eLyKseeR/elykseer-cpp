@@ -19,19 +19,19 @@ uint64_t BackupCtrl::bytes_out() const
     return _pimpl->trx_out;
 }
 
-std::time_t BackupCtrl::time_encrypt() const
+std::chrono::microseconds BackupCtrl::time_encrypt() const
 {
-    return 0; // TODO
+    return _pimpl->time_encr;
 }
 
-std::time_t BackupCtrl::time_extract() const
+std::chrono::microseconds BackupCtrl::time_extract() const
 {
-    return 0; // TODO
+    return _pimpl->time_decr;
 }
 
-std::time_t BackupCtrl::time_write() const
+std::chrono::microseconds BackupCtrl::time_write() const
 {
-    return 0; // TODO
+    return _pimpl->time_write;
 }
 
 DbFp const & BackupCtrl::getDbFp() const
