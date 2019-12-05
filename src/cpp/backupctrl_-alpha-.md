@@ -16,7 +16,6 @@
 #include "sizebounded/sizebounded.hpp"
 #include "sizebounded/sizebounded.ipp"
 
-#include <chrono>
 #include <iostream>
 #include <cstdio>
 

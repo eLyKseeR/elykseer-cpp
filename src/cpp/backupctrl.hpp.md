@@ -11,6 +11,7 @@
 #include "lxr/dbkey.hpp"
 #include "boost/filesystem.hpp"
 
+#include <chrono>
 #include <ctime>
 #include <memory>
 
