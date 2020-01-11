@@ -14,7 +14,10 @@
 #include "lxr/sha256.hpp"
 
 #include "sizebounded/sizebounded.hpp"
-#include "sizebounded/sizebounded.ipp"
+//#include "sizebounded/sizebounded.ipp"
+
+#include "stream-cpp/stream.hpp"
+#include "stream-cpp/stream.ipp"
 
 #include <iostream>
 #include <cstdio>
