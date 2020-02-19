@@ -24,12 +24,12 @@ BOOST_AUTO_TEST_SUITE( utBackupCtrl )
 BOOST_AUTO_TEST_CASE( check_startup )
 {
     lxr::Options _o;
-	_o.nChunks(21);
+    _o.nChunks(21);
     lxr::BackupCtrl _ctrl(_o);
 
-	BOOST_CHECK_EQUAL(0UL, _ctrl.bytes_in());
-	BOOST_CHECK_EQUAL(0UL, _ctrl.bytes_out());
-	BOOST_CHECK_EQUAL(lxr::Chunk::height * lxr::Chunk::width * 21, _ctrl.free());
+    BOOST_CHECK_EQUAL(0UL, _ctrl.bytes_in());
+    BOOST_CHECK_EQUAL(0UL, _ctrl.bytes_out());
+    BOOST_CHECK_EQUAL(lxr::Chunk::height * lxr::Chunk::width * 21, _ctrl.free());
 }
 ```
 
@@ -38,24 +38,24 @@ BOOST_AUTO_TEST_CASE( check_startup )
 BOOST_AUTO_TEST_CASE( encrypt_file )
 {
     lxr::Options _o;
-	_o.isCompressed(true);
-	_o.fpathChunks() = "/tmp/LXR";
-	_o.fpathMeta() = "/tmp/meta";
+    _o.isCompressed(true);
+    _o.fpathChunks() = "/tmp/LXR";
+    _o.fpathMeta() = "/tmp/meta";
     lxr::BackupCtrl _ctrl(_o);
 
-	unsigned long _free0 = _ctrl.free();
-	BOOST_CHECK_EQUAL(0UL, _ctrl.bytes_in());
-	BOOST_CHECK_EQUAL(0UL, _ctrl.bytes_out());
+    unsigned long _free0 = _ctrl.free();
+    BOOST_CHECK_EQUAL(0UL, _ctrl.bytes_in());
+    BOOST_CHECK_EQUAL(0UL, _ctrl.bytes_out());
 
-	BOOST_REQUIRE( _ctrl.backup("/bin/bash") );
+    BOOST_REQUIRE( _ctrl.backup("/usr/bin/which") );
 
-	BOOST_CHECK( _ctrl.bytes_in() > 0);
-	BOOST_CHECK( _ctrl.bytes_out() > 0);
-	BOOST_CHECK(_ctrl.free() < _free0);
-	
-	const std::string _fpath = "/tmp/test_dbfp_backup.xml";
-	std::ofstream _outs; _outs.open(_fpath);
-	_ctrl.getDbFp().outStream(_outs);
+    BOOST_CHECK( _ctrl.bytes_in() > 0);
+    BOOST_CHECK( _ctrl.bytes_out() > 0);
+    BOOST_CHECK(_ctrl.free() < _free0);
+
+    const std::string _fpath = "/tmp/test_dbfp_backup.xml";
+    std::ofstream _outs; _outs.open(_fpath);
+    _ctrl.getDbFp().outStream(_outs);
 
 }
 ```
@@ -65,26 +65,26 @@ BOOST_AUTO_TEST_CASE( encrypt_file )
 BOOST_AUTO_TEST_CASE( encrypt_empty_file )
 {
     lxr::Options _o;
-	_o.isCompressed(true);
-	_o.fpathChunks() = "/tmp/LXR";
-	_o.fpathMeta() = "/tmp/meta";
+    _o.isCompressed(true);
+    _o.fpathChunks() = "/tmp/LXR";
+    _o.fpathMeta() = "/tmp/meta";
     lxr::BackupCtrl _ctrl(_o);
 
-	unsigned long _free0 = _ctrl.free();
-	BOOST_CHECK_EQUAL(0UL, _ctrl.bytes_in());
-	BOOST_CHECK_EQUAL(0UL, _ctrl.bytes_out());
+    unsigned long _free0 = _ctrl.free();
+    BOOST_CHECK_EQUAL(0UL, _ctrl.bytes_in());
+    BOOST_CHECK_EQUAL(0UL, _ctrl.bytes_out());
 
-	const std::string _fempty = "/tmp/test_empty_file";
-	{ std::ofstream _fe; _fe.open(_fempty); _fe.close(); }
-	BOOST_REQUIRE( _ctrl.backup(_fempty) );
+    const std::string _fempty = "/tmp/test_empty_file";
+    { std::ofstream _fe; _fe.open(_fempty); _fe.close(); }
+    BOOST_REQUIRE( _ctrl.backup(_fempty) );
 
-	BOOST_CHECK( _ctrl.bytes_in() == 0);
-	BOOST_CHECK( _ctrl.bytes_out() == 0);
-	BOOST_CHECK(_ctrl.free() == _free0);
-	
-	const std::string _fpath = "/tmp/test_dbfp_backup2.xml";
-	std::ofstream _outs; _outs.open(_fpath);
-	_ctrl.getDbFp().outStream(_outs);
+    BOOST_CHECK( _ctrl.bytes_in() == 0);
+    BOOST_CHECK( _ctrl.bytes_out() == 0);
+    BOOST_CHECK(_ctrl.free() == _free0);
+
+    const std::string _fpath = "/tmp/test_dbfp_backup2.xml";
+    std::ofstream _outs; _outs.open(_fpath);
+    _ctrl.getDbFp().outStream(_outs);
 
 }
 ```

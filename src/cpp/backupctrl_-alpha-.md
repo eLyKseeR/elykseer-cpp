@@ -14,10 +14,8 @@
 #include "lxr/sha256.hpp"
 
 #include "sizebounded/sizebounded.hpp"
-//#include "sizebounded/sizebounded.ipp"
-
-#include "stream-cpp/stream.hpp"
-#include "stream-cpp/stream.ipp"
+#include "stream-cpp/zblocks.hpp"
+#include "stream-cpp/zblocks.ipp"
 
 #include <iostream>
 #include <cstdio>
@@ -36,7 +34,7 @@ struct BackupCtrl::pimpl
     bool renew_assembly();
 
     Options _o;
-    std::unique_ptr<Assembly> _ass;
+    std::shared_ptr<Assembly> _ass;
     DbFp _dbfp;
     DbKey _dbkey;
     DbFp _reffp;

@@ -8,43 +8,133 @@ void BackupCtrl::setReference()
 
 void BackupCtrl::finalize()
 {
-    if (! _pimpl->_ass) { return; }
-    _pimpl->_ass->extractChunks();
-}
-
-bool BackupCtrl::pimpl::renew_assembly()
-{
-    if (_ass) {
-        // extract
-        if (! _ass->extractChunks()) {
-            return false;
-        }
-    }
-    _ass.reset(new Assembly(_o.nChunks()));
-    return true;
+    if (_pimpl->_ass) {
+      _pimpl->_ass->extractChunks(); }
 }
 
 class configuration {
   public:
-    configuration() {};
+    configuration(int nc) : _nchunks(nc) {};
     ~configuration() {};
-    void nread(int n) {_nread=n;}
-    void state(BackupCtrl::pimpl* p) {_state=p;}
-    void dbentry(DbFpDat *d) {_dbentry=d;}
+    int nchunks() const { return _nchunks; }
+
   private:
-    pimpl *_state;
-    DbFpDat *_dbentry;
-    int _nread;
+    int _nchunks{256};
 };
 
-template <typename Ct, typename Vt, int sz>
-class assemblystream : public stream<Ct,Vt,sz>
+class state {
+  public:
+    state (configuration *c) : _config(c) {};
+    ~state () {};
+    int next_bidx() {return ++_bidx;}
+    void setcompressed(bool c) {_iscompressed = c;}
+    bool iscompressed() const {return _iscompressed;}
+    size_t fpos() const {return _fpos;}
+    void nread(int n) {_nread += n; _lastread = n; _fpos += n;}
+    int nread() const {return _nread;}
+    int lastread() const {return _lastread;}
+    void ncompressed(int n) {_ncompressed += n; _lastcompressed = n;}
+    int ncompressed() const {return _ncompressed;}
+    int lastcompressed() const {return _lastcompressed;}
+    void nwritten(int n) {_nwritten += n; _lastwritten = n;}
+    int nwritten() const {return _nwritten;}
+    int lastwritten() const {return _lastwritten;}
+    void lastchecksum(const Key128 k) {_md5 = k;}
+    Key128 lastchecksum() const {return _md5;}
+    void dbentry(DbFpDat *d) {_dbentry=d;}
+    DbFpDat* dbentry() const {return _dbentry;}
+    void assembly(std::shared_ptr<Assembly> &a) {_assembly=a;}
+    std::shared_ptr<Assembly>& assembly() {return _assembly;}
+    bool renew_assembly() {
+        if (_assembly) {
+            if (! _assembly->extractChunks()) { return false; } }
+        _assembly.reset(new Assembly(_config->nchunks()));
+        return true;
+    }
+
+  private:
+    configuration *_config;
+    std::shared_ptr<Assembly> _assembly;
+    DbFpDat *_dbentry;
+    bool _iscompressed{true};
+    size_t _fpos{0}; // pos in file
+    Key128 _md5;
+    int _bidx{0}; // block index
+    int _nread{0}; // 1: read from file
+    int _ncompressed{0}; // 2: compressed size
+    int _nwritten{0}; // 3: written to assembly
+    int _lastread{0};
+    int _lastcompressed{0};
+    int _lastwritten{0};
+};
+
+template <typename Ct, typename St, typename Vt, int sz>
+class compressstream : protected stream<Ct,St,Vt,sz>
 {
   public:
-    assemblystream(Ct *c, stream<Ct,Vt,sz> *s, stream<Ct,Vt,sz> *t)
-        : stream<Ct,Vt,sz>(c,s,t) {}
-    virtual int process(Ct const * const c, int len, sizebounded<Vt,sz> &b) const {
-        return b;
+    compressstream(Ct const * const c, St *st, stream<Ct,St,Vt,sz> *s, stream<Ct,St,Vt,sz> *t)
+        : stream<Ct,St,Vt,sz>(st,nullptr,nullptr), lzs(c, st, nullptr, nullptr)
+        , _tgt(t), _config(c) {};
+    virtual void push(int len, sizebounded<Vt,sz> &b) const override {
+      if (_tgt) {
+        int len2 = process(_config, _state, len, b);
+        if (len2 >= 0) {
+          _tgt->push(len2, b);
+          while (len == 0 && len2 > 0) {
+            len2 = process(_config, _state, len, b);
+            _tgt->push(len2, b);
+          }
+        }
+      } else {
+        process(_config, _state, len, b);
+      }
+    }
+    virtual int process(Ct const * const c, St *st, int len, sizebounded<Vt,sz> &b) const override {
+      st->nread(len);
+
+      int compressedlen = lzs.process(nullptr,st,len,b);
+      std::cout << "  compressed " << len << " -> " << compressedlen << std::endl;
+      if (compressedlen == 0) { return -1; }
+      st->setcompressed(true);
+      return compressedlen;
+    }
+  private:
+    deflatestream<Ct,St,Vt,sz> lzs;
+    stream<Ct,St,Vt,sz> *_tgt;
+    Ct const * const _config;
+    St * _state;
+};
+
+template <typename Ct, typename St, typename Vt, int sz>
+class assemblystream : public stream<Ct,St,Vt,sz>
+{
+  public:
+    assemblystream(Ct const * const c, St *st, stream<Ct,St,Vt,sz> *s, stream<Ct,St,Vt,sz> *t)
+        : stream<Ct,St,Vt,sz>(c,st,s,t) {};
+    virtual int process(Ct const * const c, St *st, int len, sizebounded<Vt,sz> &b) const override {
+        st->ncompressed(len);
+        int nwritten = st->assembly()->addData(len, b);
+        st->nwritten(nwritten);
+        std::cout << "     written: " << nwritten << std::endl;
+        int nwritten2 = 0;
+        if (nwritten != len) {
+            st->renew_assembly();
+            nwritten2 = st->assembly()->addData(len - nwritten, b, nwritten);
+            std::cout << "     written2: " << nwritten2 << std::endl;
+        }
+/*      auto dbblock = DbFpBlock(
+            st->next_bidx(),
+            st->assembly()->pos(),
+            st->fpos(),
+            // blen, clen
+            st->lastwritten(), st->lastcompressed(),
+            st->iscompressed(),
+            st->lastchecksum(),
+            //Md5::hash((const char *)buffer.ptr(), st->nwritten()), // checksum
+            st->assembly()->aid()
+            ); */
+        //st->dbentry()->_blocks.push_back(dbblock);
+        return (nwritten + nwritten2);
     };
 };
 
@@ -53,51 +143,35 @@ bool BackupCtrl::backup(boost::filesystem::path const & fp)
     if (! _pimpl->_ass) { return false; }
     if (! FileCtrl::fileExists(fp)) { return false; }
 
-    sizebounded<unsigned char, Assembly::datasz> buffer;
+    constexpr int bsz = Assembly::datasz;
+    sizebounded<unsigned char, bsz> buffer;
     FILE *fptr = fopen(fp.native().c_str(), "r");
     if (! fptr) { return false; }
 
-    // make DbFP entry
+    // make DbFp entry
     auto dbentry = DbFpDat::fromFile(fp);
 
     // setup pipeline
-    configuration config;
-    config.state(_pimpl.get());
-    config.dbentry(&dbentry);
-    constexpr int bsz = Assembly::datasz;
-    assemblystream<configuration,char,bsz> s3(&config, nullptr, nullptr);
-    compressor<configuration,char,bsz> s2(&config, nullptr, &s3);
-    fileinstream<configuration,char,bsz> s1(&config, nullptr, &s2);
+    configuration config(_pimpl->_o.nChunks());
+    state st(&config);
+    st.dbentry(&dbentry);
+    st.assembly(_pimpl->_ass);
+    constexpr int dwidth = 1; // bytes read at once
+    constexpr int readsz = bsz / dwidth;
+    assemblystream<configuration,state,unsigned char,bsz> s3(&config, &st, nullptr, nullptr);
+    compressstream<configuration,state,unsigned char,bsz> s2(&config, &st, nullptr, &s3);
+    //fileinstream<configuration,state,unsigned char,bsz> s1(&config, &st, nullptr, &s2);
 
-    int _bidx = 1;
-    uint64_t _fpos = 0;
     while (! feof(fptr)) {
-        size_t nread = fread((void*)buffer.ptr(), 64, Assembly::datasz / 64, fptr);
-        config.nread(nread);
-        s1.push(buffer);
-        _pimpl->trx_in += nread;
-        int nwritten = _pimpl->_ass->addData(nread * 64, buffer);
-        _pimpl->trx_out += nwritten;
-        auto dbblock = DbFpBlock(
-            _bidx++,
-            _pimpl->_ass->pos(),
-            _fpos,
-            // blen, clen
-            nwritten, nwritten,
-            false, // compressed?
-            Md5::hash((const char *)buffer.ptr(), nwritten), // checksum
-            _pimpl->_ass->aid()
-            );
-
-        // not everything written; 
-        if (nwritten != nread * 64) {
-            if (! _pimpl->renew_assembly()) {
-                return false;
-            }
-            int nwritten2 = _pimpl->_ass->addData(nread * 64 - nwritten, buffer, nwritten);
-        }
+        size_t nread = fread((void*)buffer.ptr(), dwidth, readsz, fptr);
+        std::cout << "   read: " << (nread*dwidth) << std::endl;
+        s2.push(nread*dwidth, buffer);
     }
     fclose(fptr);
+    s2.push(0, buffer);
+    _pimpl->trx_in = st.nread();
+    _pimpl->trx_out = st.nwritten();
+    _pimpl->_ass = st.assembly();
 
     _pimpl->_dbfp.set(fp.native(), dbentry);
 

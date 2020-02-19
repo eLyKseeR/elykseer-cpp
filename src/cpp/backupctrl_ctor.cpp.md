@@ -4,12 +4,12 @@ declared in [BackupCtrl](backupctrl.hpp.md)
 BackupCtrl::BackupCtrl(Options const & o)
   : _pimpl(new pimpl(o))
 {
-
 }
 
 BackupCtrl::~BackupCtrl()
 {
   if (_pimpl) {
+    finalize();
     _pimpl.reset();
   }
 }

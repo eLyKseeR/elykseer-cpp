@@ -29,6 +29,10 @@ find_package( Boost 1.67.0 REQUIRED COMPONENTS system filesystem chrono thread d
 LINK_DIRECTORIES ( ${Boost_LIBRARY_DIRS} )
 INCLUDE_DIRECTORIES (${Boost_INCLUDE_DIRS})
 
+find_package(ZLIB REQUIRED) 
+LINK_DIRECTORIES (${ZLIB_LIBRARY_DIRS})
+INCLUDE_DIRECTORIES (${ZLIB_INCLUDE_DIRS})
+
 # boost/contract
 if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
   # only check preconditions and class invariants (on entry)
