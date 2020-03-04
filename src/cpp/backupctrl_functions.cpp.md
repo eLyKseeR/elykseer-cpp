@@ -24,7 +24,7 @@ class configuration {
 
 class state {
   public:
-    state (configuration *c) : _config(c) {};
+    state (configuration const *c) : _config(c) {};
     ~state () {};
     int next_bidx() {return ++_bidx;}
     void setcompressed(bool c) {_iscompressed = c;}
@@ -39,7 +39,7 @@ class state {
     void nwritten(int n) {_nwritten += n; _lastwritten = n;}
     int nwritten() const {return _nwritten;}
     int lastwritten() const {return _lastwritten;}
-    void lastchecksum(const Key128 k) {_md5 = k;}
+    void lastchecksum(const Key128 &k) {_md5 = k;}
     Key128 lastchecksum() const {return _md5;}
     void dbentry(DbFpDat *d) {_dbentry=d;}
     DbFpDat* dbentry() const {return _dbentry;}
@@ -53,13 +53,13 @@ class state {
     }
 
   private:
-    configuration *_config;
+    configuration const *_config;
     std::shared_ptr<Assembly> _assembly;
     DbFpDat *_dbentry;
-    bool _iscompressed{true};
+    bool _iscompressed{false};
     size_t _fpos{0}; // pos in file
     Key128 _md5;
-    int _bidx{0}; // block index
+    int _bidx{-1}; // block index
     int _nread{0}; // 1: read from file
     int _ncompressed{0}; // 2: compressed size
     int _nwritten{0}; // 3: written to assembly
@@ -74,28 +74,33 @@ class compressstream : protected stream<Ct,St,Vt,sz>
   public:
     compressstream(Ct const * const c, St *st, stream<Ct,St,Vt,sz> *s, stream<Ct,St,Vt,sz> *t)
         : stream<Ct,St,Vt,sz>(st,nullptr,nullptr), lzs(c, st, nullptr, nullptr)
-        , _tgt(t), _config(c) {};
+        , _tgt(t), _config(c), _state(st) {};
     virtual void push(int len, sizebounded<Vt,sz> &b) const override {
+      if (len == 0) { return; } 
+      sizebounded<Vt,sz> bsave;
+      memcopy(bsave, b, sz);
+      auto md5 = Md5::hash((const char *)bsave.ptr(), len);
+      _state->lastchecksum(md5);
+      int len2 = process(_config, _state, len, b);
       if (_tgt) {
-        int len2 = process(_config, _state, len, b);
-        if (len2 >= 0) {
+        if (len2 >= 0 && len2 < len) {
+          _state->setcompressed(true);
+          _state->ncompressed(len2);
           _tgt->push(len2, b);
-          while (len == 0 && len2 > 0) {
-            len2 = process(_config, _state, len, b);
-            _tgt->push(len2, b);
-          }
+        } else {
+          _tgt->push(len, bsave);
         }
       } else {
         process(_config, _state, len, b);
       }
     }
     virtual int process(Ct const * const c, St *st, int len, sizebounded<Vt,sz> &b) const override {
+      if (len <= 0) { return 0; } 
       st->nread(len);
 
-      int compressedlen = lzs.process(nullptr,st,len,b);
+      int compressedlen = lzs.process(nullptr,nullptr,len,b);
       std::cout << "  compressed " << len << " -> " << compressedlen << std::endl;
       if (compressedlen == 0) { return -1; }
-      st->setcompressed(true);
       return compressedlen;
     }
   private:
@@ -112,7 +117,6 @@ class assemblystream : public stream<Ct,St,Vt,sz>
     assemblystream(Ct const * const c, St *st, stream<Ct,St,Vt,sz> *s, stream<Ct,St,Vt,sz> *t)
         : stream<Ct,St,Vt,sz>(c,st,s,t) {};
     virtual int process(Ct const * const c, St *st, int len, sizebounded<Vt,sz> &b) const override {
-        st->ncompressed(len);
         int nwritten = st->assembly()->addData(len, b);
         st->nwritten(nwritten);
         std::cout << "     written: " << nwritten << std::endl;
@@ -122,18 +126,17 @@ class assemblystream : public stream<Ct,St,Vt,sz>
             nwritten2 = st->assembly()->addData(len - nwritten, b, nwritten);
             std::cout << "     written2: " << nwritten2 << std::endl;
         }
-/*      auto dbblock = DbFpBlock(
+        auto dbblock = DbFpBlock(
             st->next_bidx(),
             st->assembly()->pos(),
             st->fpos(),
             // blen, clen
-            st->lastwritten(), st->lastcompressed(),
+            st->lastread(), st->lastcompressed(),
             st->iscompressed(),
             st->lastchecksum(),
-            //Md5::hash((const char *)buffer.ptr(), st->nwritten()), // checksum
             st->assembly()->aid()
-            ); */
-        //st->dbentry()->_blocks.push_back(dbblock);
+            );
+        st->dbentry()->_blocks.push_back(dbblock);
         return (nwritten + nwritten2);
     };
 };
@@ -169,9 +172,13 @@ bool BackupCtrl::backup(boost::filesystem::path const & fp)
     }
     fclose(fptr);
     s2.push(0, buffer);
+    std::cout << "finished." << std::endl;
+
     _pimpl->trx_in = st.nread();
     _pimpl->trx_out = st.nwritten();
     _pimpl->_ass = st.assembly();
+    std::cout << "** read " << _pimpl->trx_in << "   wrote " << _pimpl->trx_out << std::endl;
+
 
     _pimpl->_dbfp.set(fp.native(), dbentry);
 

@@ -47,7 +47,13 @@ BOOST_AUTO_TEST_CASE( encrypt_file )
     BOOST_CHECK_EQUAL(0UL, _ctrl.bytes_in());
     BOOST_CHECK_EQUAL(0UL, _ctrl.bytes_out());
 
-    BOOST_REQUIRE( _ctrl.backup("/usr/bin/which") );
+    const std::string _fdata = "/tmp/test_data_file";
+    { std::ofstream _fe; _fe.open(_fdata);
+     for (int i=0; i<9999; i++) { _fe.write("0123456789",10); }
+     _fe.close();
+    }
+    
+    BOOST_REQUIRE( _ctrl.backup(_fdata) );
 
     BOOST_CHECK( _ctrl.bytes_in() > 0);
     BOOST_CHECK( _ctrl.bytes_out() > 0);

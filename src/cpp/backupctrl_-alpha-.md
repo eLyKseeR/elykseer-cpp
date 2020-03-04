@@ -31,7 +31,7 @@ struct BackupCtrl::pimpl
     }
     ~pimpl() {}
 
-    bool renew_assembly();
+    // bool renew_assembly();
 
     Options _o;
     std::shared_ptr<Assembly> _ass;
