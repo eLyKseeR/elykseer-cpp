@@ -99,7 +99,7 @@ class compressstream : protected stream<Ct,St,Vt,sz>
       st->nread(len);
 
       int compressedlen = lzs.process(nullptr,nullptr,len,b);
-      std::cout << "  compressed " << len << " -> " << compressedlen << std::endl;
+      // std::cout << "  compressed " << len << " -> " << compressedlen << std::endl;
       if (compressedlen == 0) { return -1; }
       return compressedlen;
     }
@@ -119,17 +119,17 @@ class assemblystream : public stream<Ct,St,Vt,sz>
     virtual int process(Ct const * const c, St *st, int len, sizebounded<Vt,sz> &b) const override {
         int nwritten = st->assembly()->addData(len, b);
         st->nwritten(nwritten);
-        std::cout << "     written: " << nwritten << std::endl;
+        // std::cout << "     written: " << nwritten << std::endl;
         int nwritten2 = 0;
         if (nwritten != len) {
             st->renew_assembly();
             nwritten2 = st->assembly()->addData(len - nwritten, b, nwritten);
-            std::cout << "     written2: " << nwritten2 << std::endl;
+            // std::cout << "     written2: " << nwritten2 << std::endl;
         }
         auto dbblock = DbFpBlock(
             st->next_bidx(),
-            st->assembly()->pos(),
-            st->fpos(),
+            st->assembly()->pos() - st->lastcompressed(),
+            st->fpos() - st->lastread(),
             // blen, clen
             st->lastread(), st->lastcompressed(),
             st->iscompressed(),
@@ -167,17 +167,17 @@ bool BackupCtrl::backup(boost::filesystem::path const & fp)
 
     while (! feof(fptr)) {
         size_t nread = fread((void*)buffer.ptr(), dwidth, readsz, fptr);
-        std::cout << "   read: " << (nread*dwidth) << std::endl;
+        // std::cout << "   read: " << (nread*dwidth) << std::endl;
         s2.push(nread*dwidth, buffer);
     }
     fclose(fptr);
     s2.push(0, buffer);
-    std::cout << "finished." << std::endl;
+    // std::cout << "finished." << std::endl;
 
     _pimpl->trx_in = st.nread();
     _pimpl->trx_out = st.nwritten();
     _pimpl->_ass = st.assembly();
-    std::cout << "** read " << _pimpl->trx_in << "   wrote " << _pimpl->trx_out << std::endl;
+    // std::cout << "** read " << _pimpl->trx_in << "   wrote " << _pimpl->trx_out << std::endl;
 
 
     _pimpl->_dbfp.set(fp.native(), dbentry);
