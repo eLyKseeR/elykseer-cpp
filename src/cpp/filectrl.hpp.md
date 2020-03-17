@@ -71,4 +71,7 @@ module FileCtrl =
 
 ```cpp
 } // namespace
+
+inline boost::filesystem::path operator+(boost::filesystem::path leftp, boost::filesystem::path rightp) { return boost::filesystem::path(leftp) += rightp; }
+
 ```

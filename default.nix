@@ -9,6 +9,7 @@ stdenv.mkDerivation rec {
     nativeBuildInputs = [
         cmake
         gcc
+        gdb
         git
         pandoc
         html2text

@@ -88,4 +88,3 @@ BOOST_AUTO_TEST_CASE( readXML )
 ```cpp
 BOOST_AUTO_TEST_SUITE_END()
 ```
-native

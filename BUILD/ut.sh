@@ -1,2 +1,3 @@
-#./test/utelykseer-cpp --show_progress -l all
-./test/utelykseer-cpp --show_progress 
+#!/bin/sh
+
+./test/utelykseer-cpp --show_progress  $*

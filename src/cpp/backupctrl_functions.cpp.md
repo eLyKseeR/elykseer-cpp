@@ -9,7 +9,16 @@ void BackupCtrl::setReference()
 void BackupCtrl::finalize()
 {
     if (_pimpl->_ass) {
-      _pimpl->_ass->extractChunks(); }
+        lxr::Key256 _k;
+        lxr::Key128 _iv;
+        DbKeyBlock keyblock;
+        keyblock._n = _pimpl->_o.nChunks();
+        keyblock._key = _k;
+        keyblock._iv = _iv;
+        if (! _pimpl->_ass->encrypt(_k, _iv)) { return; }
+        _pimpl->_dbkey.set(_pimpl->_ass->said(), keyblock);
+        _pimpl->_ass->extractChunks();
+    }
 }
 
 class configuration {
@@ -43,11 +52,22 @@ class state {
     Key128 lastchecksum() const {return _md5;}
     void dbentry(DbFpDat *d) {_dbentry=d;}
     DbFpDat* dbentry() const {return _dbentry;}
+    void dbkeys(DbKey *db) {_dbkeys=db;}
+    DbKey* dbkeys() const {return _dbkeys;}
     void assembly(std::shared_ptr<Assembly> &a) {_assembly=a;}
     std::shared_ptr<Assembly>& assembly() {return _assembly;}
     bool renew_assembly() {
         if (_assembly) {
-            if (! _assembly->extractChunks()) { return false; } }
+            lxr::Key256 _k;
+            lxr::Key128 _iv;
+            DbKeyBlock keyblock;
+            keyblock._n = _config->nchunks();
+            keyblock._key = _k;
+            keyblock._iv = _iv;
+            if (! _assembly->encrypt(_k, _iv)) { return false; }
+            _dbkeys->set(_assembly->said(), keyblock);
+            if (! _assembly->extractChunks()) { return false; }
+        }
         _assembly.reset(new Assembly(_config->nchunks()));
         return true;
     }
@@ -55,6 +75,7 @@ class state {
   private:
     configuration const *_config;
     std::shared_ptr<Assembly> _assembly;
+    DbKey *_dbkeys;
     DbFpDat *_dbentry;
     bool _iscompressed{false};
     size_t _fpos{0}; // pos in file
@@ -158,6 +179,7 @@ bool BackupCtrl::backup(boost::filesystem::path const & fp)
     configuration config(_pimpl->_o.nChunks());
     state st(&config);
     st.dbentry(&dbentry);
+    st.dbkeys(&_pimpl->_dbkey);
     st.assembly(_pimpl->_ass);
     constexpr int dwidth = 1; // bytes read at once
     constexpr int readsz = bsz / dwidth;

@@ -93,13 +93,13 @@ std::string decodeb64(std::string const & _enc)
 
 const std::string Liz::copyright()
 {
-    static std::string _enc = "Q29weXJpZ2h0IChjKSAyMDE5IEFsZXhhbmRlciBEaWVtYW5k";
+    static std::string _enc = "Q29weXJpZ2h0IChjKSAyMDIwIEFsZXhhbmRlciBEaWVtYW5kCg==";
     return decodeb64(_enc);
 }
 
 const std::string Liz::version()
 {
-    static std::string _enc = "VmVyc2lvbiAxLjQuMC4xIFRSMyAtIGRvIG5vdCB1c2UgZm9yIHByb2R1Y3Rpb24=";
+    static std::string _enc = "VmVyc2lvbiAxLjUuMC4xIFRSNCAtIGRvIG5vdCB1c2UgZm9yIHByb2R1Y3Rpb24K";
     return decodeb64(_enc);
 }
 

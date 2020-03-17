@@ -116,7 +116,7 @@ BOOST_AUTO_TEST_CASE( input_from_xml )
 ```cpp
 BOOST_AUTO_TEST_CASE( instantiate_from_file )
 {
-  const std::string fp = "/bin/bash";
+  const std::string fp = "/bin/sh";
 
   auto _entry = lxr::DbFpDat::fromFile(fp);
 
@@ -131,4 +131,3 @@ BOOST_AUTO_TEST_CASE( instantiate_from_file )
 ```cpp
 BOOST_AUTO_TEST_SUITE_END()
 ```
-native

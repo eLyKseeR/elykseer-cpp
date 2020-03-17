@@ -168,4 +168,3 @@ BOOST_AUTO_TEST_CASE( assembly_encrypt_then_extract_chunks )
 ```cpp
 BOOST_AUTO_TEST_SUITE_END()
 ```
-

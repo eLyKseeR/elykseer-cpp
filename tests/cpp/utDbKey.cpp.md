@@ -79,4 +79,3 @@ BOOST_AUTO_TEST_CASE( input_from_xml )
 ```cpp
 BOOST_AUTO_TEST_SUITE_END()
 ```
-native

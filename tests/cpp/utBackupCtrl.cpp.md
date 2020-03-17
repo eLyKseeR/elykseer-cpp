@@ -39,6 +39,7 @@ BOOST_AUTO_TEST_CASE( encrypt_file )
 {
     lxr::Options _o;
     _o.isCompressed(true);
+    _o.nChunks(16);
     _o.fpathChunks() = "/tmp/LXR";
     _o.fpathMeta() = "/tmp/meta";
     lxr::BackupCtrl _ctrl(_o);
@@ -59,9 +60,16 @@ BOOST_AUTO_TEST_CASE( encrypt_file )
     BOOST_CHECK( _ctrl.bytes_out() > 0);
     BOOST_CHECK(_ctrl.free() < _free0);
 
-    const std::string _fpath = "/tmp/test_dbfp_backup.xml";
-    std::ofstream _outs; _outs.open(_fpath);
-    _ctrl.getDbFp().outStream(_outs);
+    _ctrl.finalize();
+
+    const std::string _fpath1 = "/tmp/test_dbfp_backup.xml";
+    std::ofstream _out1; _out1.open(_fpath1);
+    _ctrl.getDbFp().outStream(_out1);
+    _out1.close();
+    const std::string _fpath2 = "/tmp/test_dbkey_backup.xml";
+    std::ofstream _out2; _out2.open(_fpath2);
+    _ctrl.getDbKey().outStream(_out2);
+    _out2.close();
 
 }
 ```

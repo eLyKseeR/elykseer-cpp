@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include "lxr/options.hpp"
 #include "lxr/dbfp.hpp"
 #include "lxr/dbkey.hpp"
 #include "boost/filesystem.hpp"
@@ -56,11 +55,15 @@ module RestoreCtrl =
 
 >public:
 
->explicit [RestoreCtrl](restorectrl_ctor.cpp.md)(Options const &);
+>explicit [RestoreCtrl](restorectrl_ctor.cpp.md)();
 
 >[~RestoreCtrl](restorectrl_ctor.cpp.md)();
 
->void [restore](restorectrl_functions.cpp.md)(boost::filesystem::path const & root, std::string const & fp);
+>void [addDbFp](restorectrl_functions.cpp.md)(DbFp const &);
+
+>void [addDbKey](restorectrl_functions.cpp.md)(DbKey const &);
+
+>bool [restore](restorectrl_functions.cpp.md)(boost::filesystem::path const & root, std::string const & fp);
 
 >uint64_t [bytes_in](restorectrl_info.cpp.md)() const;
 
@@ -76,7 +79,9 @@ module RestoreCtrl =
 
 >private:
 
->RestoreCtrl();
+>bool load_assembly(Key256 const &);
+
+>bool restore_block(std::ofstream &, DbFpBlock const &);
 
 >struct pimpl;
 
