@@ -8,6 +8,8 @@
 #include "lxr/restorectrl.hpp"
 #include "lxr/assembly.hpp"
 #include "lxr/filectrl.hpp"
+#include "lxr/key.hpp"
+#include "lxr/key128.hpp"
 #include "lxr/key256.hpp"
 #include "lxr/md5.hpp"
 #include "lxr/options.hpp"
@@ -27,6 +29,13 @@ struct RestoreCtrl::pimpl
 {
     pimpl() {}
     ~pimpl() {}
+
+    bool load_assembly(Key256 const &);
+
+    template <typename Ct, typename St, typename Vt, int sz>
+    int restore_block( DbFpBlock const &block
+                     , sizebounded<Vt, sz> &buffer
+                     , inflatestream<Ct,St,Vt,sz> &decomp );
 
     std::shared_ptr<Assembly> _ass;
     DbFp _dbfp;

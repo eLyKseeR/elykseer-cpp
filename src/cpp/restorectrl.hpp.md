@@ -79,10 +79,6 @@ module RestoreCtrl =
 
 >private:
 
->bool load_assembly(Key256 const &);
-
->bool restore_block(std::ofstream &, DbFpBlock const &);
-
 >struct pimpl;
 
 >std::unique_ptr&lt;pimpl&gt; _pimpl;

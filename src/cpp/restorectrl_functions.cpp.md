@@ -13,40 +13,79 @@ void RestoreCtrl::addDbKey(DbKey const & _db) {
 ```
 
 ```cpp
-bool RestoreCtrl::load_assembly(Key256 const & _aid)
+bool RestoreCtrl::pimpl::load_assembly(Key256 const & _aid)
 {
     auto const & said = _aid.toHex();
-    if (_pimpl->_ass && _pimpl->_ass->said() == said) {
+    if (_ass && _ass->said() == said) {
         return true;  // already in scope
     }
-    auto dbkey = _pimpl->_dbkey.get(said);
+    auto dbkey = _dbkey.get(said);
     if (! dbkey) {
         std::cerr << "cannot load keys for aid=" << said << std::endl;
         return false;
     }
-    _pimpl->_ass.reset(new Assembly(_aid, Options::current().nChunks()));
-    if (! _pimpl->_ass->insertChunks()) {
+    _ass.reset(new Assembly(_aid, Options::current().nChunks()));
+    if (! _ass->insertChunks()) {
         std::cerr << "cannot insert chunks into aid=" << said << std::endl;
         return false;
     }
-    if (! _pimpl->_ass->decrypt(dbkey->_key, dbkey->_iv)) {
+    if (! _ass->decrypt(dbkey->_key, dbkey->_iv)) {
         std::cerr << "failed to decrypt aid=" << said << std::endl;
         return false;
     }
 
-    return _pimpl->_ass->isReadable();
+    return _ass->isReadable();
 }
 ```
 
+Datastructures used in streaming data
 ```cpp
-bool RestoreCtrl::restore_block(std::ofstream & fout, DbFpBlock const & block)
+class configuration {
+  public:
+    configuration() {};
+    ~configuration() {};
+};
+
+class state {
+  public:
+    state() {};
+    ~state() {};
+    uint64_t& trx_in() { return _trx_in; }
+    uint64_t& trx_out() { return _trx_out; }
+  private:
+    uint64_t _trx_in {0UL};
+    uint64_t _trx_out {0UL};
+};
+```
+
+```cpp
+template <typename Ct, typename St, typename Vt, int sz>
+int lxr::RestoreCtrl::pimpl::restore_block( DbFpBlock const &block
+                        , sizebounded<Vt, sz> &buffer
+                        , inflatestream<Ct,St,Vt,sz> &decomp )
 {
     if (! load_assembly(block._aid)) {
         std::cerr << "assembly not available" << std::endl;
-        return false;
+        return -1;
     }
-
-    return true;
+    int trsz = block._clen;
+    if (!block._compressed) { trsz = block._blen; }
+    _ass->getData(block._apos, trsz, buffer);
+    // decompress
+    int nwritten = block._blen;
+    if (block._compressed) {
+        if ((nwritten = decomp.process(nullptr, nullptr, trsz, buffer)) != block._blen) {
+            std::cerr << "decompression returned " << nwritten << " bytes; != " << block._blen << std::endl;
+            return -2;
+        }
+    }
+    // check checksum
+    auto const md5 = Md5::hash((const char *)buffer.ptr(), block._blen);
+    if (md5.operator!=(block._checksum)) {
+        std::cerr << "checksum wrong for block " << block._idx << std::endl;
+        return -3;
+    }
+    return block._blen;
 }
 ```
 
@@ -74,11 +113,19 @@ bool RestoreCtrl::restore(boost::filesystem::path const & root, std::string cons
         return false;
     }
 
+    // stream for decompressing data
+    constexpr int bsz = Assembly::datasz;
+    configuration _config;
+    state _state;
+    inflatestream decomp = inflatestream<configuration,state,unsigned char,bsz>(&_config, &_state, nullptr, nullptr);
+    sizebounded<unsigned char, bsz> buffer;
+
     // load blocks
     bool res = true;
-    std::ofstream _fout; _fout.open(targetfp);
+    int trsz = 0;
+    std::ofstream _fout; _fout.open(targetfp.native());
     for (auto const & block : dbfp->_blocks) {
-        if (! restore_block(_fout, block)) {
+        if ((trsz = _pimpl->restore_block<configuration,state,unsigned char,bsz>(block, buffer, decomp)) < 0) {
             std::cerr << "failed to restore block: " << block._idx << std::endl;
             res = false;
             break;

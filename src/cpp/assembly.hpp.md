@@ -103,7 +103,7 @@ module Assembly =
 
 >static constexpr int datasz { 1024*4 };
 
->int [getData](assembly_functions.cpp.md)(int pos0, int pos1, sizebounded&lt;unsigned char,datasz&gt; &) const;
+>int [getData](assembly_functions.cpp.md)(int pos, int len, sizebounded&lt;unsigned char,datasz&gt; &) const;
 
 >int [addData](assembly_functions.cpp.md)(int length, sizebounded&lt;unsigned char, datasz&gt; const &, int startpos = 0);
 
