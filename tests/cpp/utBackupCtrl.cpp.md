@@ -7,6 +7,7 @@
 
 #include "lxr/backupctrl.hpp"
 #include "lxr/chunk.hpp"
+#include "lxr/options.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -23,9 +24,8 @@ BOOST_AUTO_TEST_SUITE( utBackupCtrl )
 ```cpp
 BOOST_AUTO_TEST_CASE( check_startup )
 {
-    lxr::Options _o;
-    _o.nChunks(21);
-    lxr::BackupCtrl _ctrl(_o);
+    lxr::Options::set().nChunks(21);
+    lxr::BackupCtrl _ctrl;
 
     BOOST_CHECK_EQUAL(0UL, _ctrl.bytes_in());
     BOOST_CHECK_EQUAL(0UL, _ctrl.bytes_out());
@@ -37,12 +37,11 @@ BOOST_AUTO_TEST_CASE( check_startup )
 ```cpp
 BOOST_AUTO_TEST_CASE( encrypt_file )
 {
-    lxr::Options _o;
-    _o.isCompressed(true);
-    _o.nChunks(16);
-    _o.fpathChunks() = "/tmp/LXR";
-    _o.fpathMeta() = "/tmp/meta";
-    lxr::BackupCtrl _ctrl(_o);
+    lxr::Options::set().nChunks(16);
+    lxr::Options::set().isCompressed(true);
+    lxr::Options::set().fpathChunks() = "/tmp/LXR";
+    lxr::Options::set().fpathMeta() = "/tmp/meta";
+    lxr::BackupCtrl _ctrl;
 
     unsigned long _free0 = _ctrl.free();
     BOOST_CHECK_EQUAL(0UL, _ctrl.bytes_in());
@@ -78,11 +77,10 @@ BOOST_AUTO_TEST_CASE( encrypt_file )
 ```cpp
 BOOST_AUTO_TEST_CASE( encrypt_empty_file )
 {
-    lxr::Options _o;
-    _o.isCompressed(true);
-    _o.fpathChunks() = "/tmp/LXR";
-    _o.fpathMeta() = "/tmp/meta";
-    lxr::BackupCtrl _ctrl(_o);
+    lxr::Options::set().isCompressed(true);
+    lxr::Options::set().fpathChunks() = "/tmp/LXR";
+    lxr::Options::set().fpathMeta() = "/tmp/meta";
+    lxr::BackupCtrl _ctrl;
 
     unsigned long _free0 = _ctrl.free();
     BOOST_CHECK_EQUAL(0UL, _ctrl.bytes_in());

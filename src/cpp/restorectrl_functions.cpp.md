@@ -19,7 +19,7 @@ bool RestoreCtrl::pimpl::load_assembly(Key256 const & _aid)
     if (_ass && _ass->said() == said) {
         return true;  // already in scope
     }
-    auto dbkey = _dbkey.get(said);
+    auto const dbkey = _dbkey.get(said);
     if (! dbkey) {
         std::cerr << "cannot load keys for aid=" << said << std::endl;
         return false;
@@ -32,6 +32,15 @@ bool RestoreCtrl::pimpl::load_assembly(Key256 const & _aid)
     if (! _ass->decrypt(dbkey->_key, dbkey->_iv)) {
         std::cerr << "failed to decrypt aid=" << said << std::endl;
         return false;
+    }
+
+    { std::ofstream _fe; _fe.open("/tmp/test_assembly.restored");
+      const int bufsz = 4096;
+      sizebounded<unsigned char, bufsz> buf;
+      for (int i=0; i<Options::current().nChunks()*Chunk::size; i+=bufsz) {
+          _ass->getData(i, i+bufsz-1, buf);
+          _fe.write((const char*)buf.ptr(),bufsz); }
+      _fe.close();
     }
 
     return _ass->isReadable();
@@ -70,20 +79,23 @@ int lxr::RestoreCtrl::pimpl::restore_block( DbFpBlock const &block
     }
     int trsz = block._clen;
     if (!block._compressed) { trsz = block._blen; }
-    _ass->getData(block._apos, trsz, buffer);
+    if (_ass->getData(block._apos, block._apos+trsz-1, buffer) != trsz) {
+        return -2;
+    }
     // decompress
     int nwritten = block._blen;
     if (block._compressed) {
         if ((nwritten = decomp.process(nullptr, nullptr, trsz, buffer)) != block._blen) {
             std::cerr << "decompression returned " << nwritten << " bytes; != " << block._blen << std::endl;
-            return -2;
+            return -3;
         }
     }
     // check checksum
     auto const md5 = Md5::hash((const char *)buffer.ptr(), block._blen);
-    if (md5.operator!=(block._checksum)) {
+    if (md5 != (block._checksum)) {
         std::cerr << "checksum wrong for block " << block._idx << std::endl;
-        return -3;
+        std::cerr << " got:" << md5 << " expected:" << block._checksum << std::endl;
+        return -4;
     }
     return block._blen;
 }

@@ -7,8 +7,10 @@
 #include "boost/contract.hpp"
 
 #include "lxr/assembly.hpp"
+#include "lxr/chunk.hpp"
 #include "lxr/key256.hpp"
 #include "lxr/key128.hpp"
+#include "lxr/md5.hpp"
 #include "lxr/options.hpp"
 #include "sizebounded/sizebounded.ipp"
 
@@ -32,7 +34,7 @@ BOOST_AUTO_TEST_CASE( assembly_state_after_init )
   lxr::Assembly _a1(16);
 
   BOOST_CHECK(_a1.isWritable());
-  BOOST_CHECK(! _a1.isReadable());
+  // BOOST_CHECK(! _a1.isReadable());  // temporarily disabled
   BOOST_CHECK(! _a1.isEncrypted());
 }
 ```
@@ -53,13 +55,13 @@ BOOST_AUTO_TEST_CASE( assembly_creation_failed )
 
 ## Test case: access buffer denied if unencrypted
 ```cpp
-BOOST_AUTO_TEST_CASE( access_buffer_denied )
-{
-  lxr::Assembly _a1(16);
-  sizebounded<unsigned char, lxr::Assembly::datasz> buf;
-  // cannot read from unencrypted buffer
-  BOOST_CHECK_EQUAL(0, _a1.getData(0, 10, buf));
-}
+// BOOST_AUTO_TEST_CASE( access_buffer_denied )
+// {
+//   lxr::Assembly _a1(16);
+//   sizebounded<unsigned char, lxr::Assembly::datasz> buf;
+//   // cannot read from unencrypted buffer
+//   BOOST_CHECK_EQUAL(0, _a1.getData(0, 10, buf));
+// }
 ```
 
 ## Test case: access buffer if encrypted
@@ -117,6 +119,31 @@ BOOST_AUTO_TEST_CASE( assembly_encrypt_then_decrypt )
 }
 ```
 
+## Test case: set and get data
+```cpp
+BOOST_AUTO_TEST_CASE( assembly_set_get_data )
+{
+  const std::string msg = "0123456789abcdefghijklmnopqrstuvwxyz";
+  lxr::Assembly _ass(16);
+  sizebounded<unsigned char, lxr::Assembly::datasz> buf;
+  const int msz = msg.size();
+  buf.transform([&msg,msz](int i, unsigned char c)->unsigned char {
+    return (unsigned char)msg[i % msz];
+  });
+  _ass.addData(buf.size(), buf);
+  sizebounded<unsigned char, lxr::Assembly::datasz> buf2;
+  BOOST_CHECK_EQUAL(_ass.getData(0, buf2.size()-1, buf2), buf2.size());
+  char s[msz+1];
+  buf2.map([&s,msz](int i, unsigned char c) {
+    if (i < msz) { s[i] = (char)c; }
+  });
+  s[msz] = '\0';
+  const std::string msg2(s, msz);
+  std::clog << "read back: " << msg2 << std::endl;
+  BOOST_CHECK_EQUAL(msg, msg2);
+}
+```
+
 ## Test case: encrypt assembly then extract chunks
 ```cpp
 BOOST_AUTO_TEST_CASE( assembly_encrypt_then_extract_chunks )
@@ -127,13 +154,28 @@ BOOST_AUTO_TEST_CASE( assembly_encrypt_then_extract_chunks )
   if (! boost::filesystem::exists(outputpath)) {
     boost::filesystem::create_directory(outputpath);
   }
+  lxr::Options::set().nChunks(16);
+  lxr::Options::set().isCompressed(false);
   lxr::Options::set().fpathChunks() = outputpath;
   lxr::Assembly _a1(16);
   sizebounded<unsigned char, lxr::Assembly::datasz> buf;
-  buf.transform([&msg](int i, unsigned char c)->unsigned char {
-    return msg[i % msg.size()];
+  const int msz = msg.size();
+  buf.transform([&msg,msz](int i, unsigned char c)->unsigned char {
+    return (unsigned char)msg[i % msz];
   });
   _a1.addData(buf.size(), buf);
+  auto const md5_1 = lxr::Md5::hash((const char*)buf.ptr(), buf.size());
+  #ifdef DEBUG
+  { std::ofstream fass; fass.open("/tmp/test_assembly.filled");
+    const int bufsz = 4096;
+    sizebounded<unsigned char, bufsz> buf;
+    for (int i=0; i<lxr::Options::current().nChunks()*lxr::Chunk::size; i+=bufsz) {
+        BOOST_CHECK_EQUAL(_a1.getData(i, i+bufsz-1, buf), bufsz);
+        fass.write((const char*)buf.ptr(),bufsz); }
+    fass.close();
+  }
+  #endif
+
   lxr::Key256 _k;
   lxr::Key128 _iv;
   BOOST_CHECK( _a1.encrypt(_k, _iv) );
@@ -147,21 +189,21 @@ BOOST_AUTO_TEST_CASE( assembly_encrypt_then_extract_chunks )
   BOOST_CHECK( _a2.decrypt(_k, _iv) );
   BOOST_CHECK(!_a2.isEncrypted() );
 
-  buf.transform([](int i, unsigned char c)->unsigned char {
-    return '\\0';
-  });
-  _a2.getData(0, buf.size()-1, buf);
-  buf.transform([&msg](int i, unsigned char c)->unsigned char {
-    if (msg[i % msg.size()] == c) {
-        return '\\0'; }
-    else {
-        return '\\1'; }
-  });
-  int count = 0;
-  for (int i=0; i<buf.size(); i++) {
-      count += (int)buf[i];
+  #ifdef DEBUG
+  { std::ofstream fass; fass.open("/tmp/test_assembly.decrypted");
+    const int bufsz = 4096;
+    sizebounded<unsigned char, bufsz> buf;
+    for (int i=0; i<lxr::Options::current().nChunks()*lxr::Chunk::size; i+=bufsz) {
+        BOOST_CHECK_EQUAL(_a2.getData(i, i+bufsz-1, buf), bufsz);
+        fass.write((const char*)buf.ptr(),bufsz); }
+    fass.close();
   }
-  BOOST_CHECK_EQUAL(0, count);
+  #endif
+  
+  sizebounded<unsigned char, lxr::Assembly::datasz> buf2;
+  BOOST_CHECK_EQUAL(_a2.getData(0, buf2.size()-1, buf2), buf2.size());
+  auto const md5_2 = lxr::Md5::hash((const char*)buf2.ptr(), buf2.size());
+  BOOST_CHECK_EQUAL(md5_1, md5_2);
 }
 ```
 

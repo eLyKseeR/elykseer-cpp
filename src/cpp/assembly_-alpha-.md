@@ -60,7 +60,7 @@ struct Assembly::pimpl :
   int _n;
   Key256  _aid;
   int _pos {0};
-  int _state {writable};
+  int _state {writable | readable};
 
 private: 
 pimpl() {}

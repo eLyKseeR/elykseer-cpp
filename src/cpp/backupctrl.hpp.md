@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include "lxr/options.hpp"
 #include "lxr/dbfp.hpp"
 #include "lxr/dbkey.hpp"
 #include "boost/filesystem.hpp"
@@ -59,7 +58,7 @@ module BackupCtrl =
 
 >public:
 
->explicit [BackupCtrl](backupctrl_ctor.cpp.md)(Options const &);
+>explicit [BackupCtrl](backupctrl_ctor.cpp.md)();
 
 >[~BackupCtrl](backupctrl_ctor.cpp.md)();
 
@@ -88,8 +87,6 @@ module BackupCtrl =
 >protected:
 
 >private:
-
->BackupCtrl();
 
 >struct pimpl;
 

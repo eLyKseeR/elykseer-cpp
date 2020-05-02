@@ -8,14 +8,14 @@ void BackupCtrl::setReference()
 
 void BackupCtrl::finalize()
 {
-    if (_pimpl->_ass) {
+    if (_pimpl->_ass && _pimpl->_ass->pos() > 0) {
         lxr::Key256 _k;
         lxr::Key128 _iv;
         DbKeyBlock keyblock;
-        keyblock._n = _pimpl->_o.nChunks();
+        if (! _pimpl->_ass->encrypt(_k, _iv)) { return; }
+        keyblock._n = _pimpl->_nChunks;
         keyblock._key = _k;
         keyblock._iv = _iv;
-        if (! _pimpl->_ass->encrypt(_k, _iv)) { return; }
         _pimpl->_dbkey.set(_pimpl->_ass->said(), keyblock);
         _pimpl->_ass->extractChunks();
     }
@@ -57,14 +57,14 @@ class state {
     void assembly(std::shared_ptr<Assembly> &a) {_assembly=a;}
     std::shared_ptr<Assembly>& assembly() {return _assembly;}
     bool renew_assembly() {
-        if (_assembly) {
+        if (_assembly && _assembly->pos() > 0) {
             lxr::Key256 _k;
             lxr::Key128 _iv;
             DbKeyBlock keyblock;
+            if (! _assembly->encrypt(_k, _iv)) { return false; }
             keyblock._n = _config->nchunks();
             keyblock._key = _k;
             keyblock._iv = _iv;
-            if (! _assembly->encrypt(_k, _iv)) { return false; }
             _dbkeys->set(_assembly->said(), keyblock);
             if (! _assembly->extractChunks()) { return false; }
         }
@@ -104,7 +104,7 @@ class compressstream : protected stream<Ct,St,Vt,sz>
       _state->lastchecksum(md5);
       int len2 = process(_config, _state, len, b);
       if (_tgt) {
-        if (len2 >= 0 && len2 < len) {
+        if (len2 < len && len2 >= 0) {
           _state->setcompressed(true);
           _state->ncompressed(len2);
           _tgt->push(len2, b);
@@ -116,8 +116,10 @@ class compressstream : protected stream<Ct,St,Vt,sz>
       }
     }
     virtual int process(Ct const * const c, St *st, int len, sizebounded<Vt,sz> &b) const override {
-      if (len <= 0) { return 0; } 
+      if (len <= 0) { return 0; }
       st->nread(len);
+      // return the same size if not compressed
+      if (! Options::current().isCompressed()) { return len; }
 
       int compressedlen = lzs.process(nullptr,nullptr,len,b);
       // std::cout << "  compressed " << len << " -> " << compressedlen << std::endl;
@@ -138,18 +140,32 @@ class assemblystream : public stream<Ct,St,Vt,sz>
     assemblystream(Ct const * const c, St *st, stream<Ct,St,Vt,sz> *s, stream<Ct,St,Vt,sz> *t)
         : stream<Ct,St,Vt,sz>(c,st,s,t) {};
     virtual int process(Ct const * const c, St *st, int len, sizebounded<Vt,sz> &b) const override {
+        int _apos = st->assembly()->pos();
         int nwritten = st->assembly()->addData(len, b);
         st->nwritten(nwritten);
         // std::cout << "     written: " << nwritten << std::endl;
         int nwritten2 = 0;
         if (nwritten != len) {
-            st->renew_assembly();
-            nwritten2 = st->assembly()->addData(len - nwritten, b, nwritten);
+            // st->renew_assembly();
+            // nwritten2 = st->assembly()->addData(len - nwritten, b, nwritten);
+            // st->nwritten(nwritten2);
+            // auto dbblock = DbFpBlock(
+            //     st->next_bidx(),
+            //     st->assembly()->pos() - nwritten2,
+            //     st->fpos() - st->lastread(),
+            //     // blen, clen
+            //     st->lastread(), st->lastcompressed(),
+            //     st->iscompressed(),
+            //     st->lastchecksum(),
+            //     st->assembly()->aid()
+            //     );
+            // st->dbentry()->_blocks.push_back(dbblock);
             // std::cout << "     written2: " << nwritten2 << std::endl;
+            std::cout << " written: " << nwritten << " < " << len << std::endl;
         }
         auto dbblock = DbFpBlock(
             st->next_bidx(),
-            st->assembly()->pos() - st->lastcompressed(),
+            _apos,
             st->fpos() - st->lastread(),
             // blen, clen
             st->lastread(), st->lastcompressed(),
@@ -176,7 +192,7 @@ bool BackupCtrl::backup(boost::filesystem::path const & fp)
     auto dbentry = DbFpDat::fromFile(fp);
 
     // setup pipeline
-    configuration config(_pimpl->_o.nChunks());
+    configuration config(_pimpl->_nChunks);
     state st(&config);
     st.dbentry(&dbentry);
     st.dbkeys(&_pimpl->_dbkey);
@@ -185,7 +201,6 @@ bool BackupCtrl::backup(boost::filesystem::path const & fp)
     constexpr int readsz = bsz / dwidth;
     assemblystream<configuration,state,unsigned char,bsz> s3(&config, &st, nullptr, nullptr);
     compressstream<configuration,state,unsigned char,bsz> s2(&config, &st, nullptr, &s3);
-    //fileinstream<configuration,state,unsigned char,bsz> s1(&config, &st, nullptr, &s2);
 
     while (! feof(fptr)) {
         size_t nread = fread((void*)buffer.ptr(), dwidth, readsz, fptr);
@@ -201,8 +216,16 @@ bool BackupCtrl::backup(boost::filesystem::path const & fp)
     _pimpl->_ass = st.assembly();
     // std::cout << "** read " << _pimpl->trx_in << "   wrote " << _pimpl->trx_out << std::endl;
 
+    { std::ofstream _fe; _fe.open("/tmp/test_assembly.backuped");
+      const int bufsz = 4096;
+      sizebounded<unsigned char, bufsz> buf;
+      for (int i=0; i<Options::current().nChunks()*Chunk::size; i+=bufsz) {
+          _pimpl->_ass->getData(i, i+bufsz-1, buf);
+          _fe.write((const char*)buf.ptr(),bufsz); }
+      _fe.close();
+    }
 
-    _pimpl->_dbfp.set(fp.native(), dbentry);
+   _pimpl->_dbfp.set(fp.native(), dbentry);
 
     return true;
 }

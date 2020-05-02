@@ -8,6 +8,8 @@
 
 #include "sizebounded/sizebounded.hpp"
 
+#include "lxr/md5.hpp"
+
 #include "boost/filesystem.hpp"
 #include <memory>
 
@@ -92,6 +94,8 @@ module Chunk =
 >bool [toFile](chunk_functions.cpp.md)(boost::filesystem::path const &) const;
 
 >bool [fromFile](chunk_functions.cpp.md)(boost::filesystem::path const &);
+
+>Key128 [md5](chunk_functions.cpp.md)() const;
 
 >protected:
 
