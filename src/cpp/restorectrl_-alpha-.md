@@ -20,6 +20,8 @@
 #include "stream-cpp/zblocks.hpp"
 #include "stream-cpp/zblocks.ipp"
 
+#include "boost/filesystem.hpp"
+
 #include <iostream>
 #include <chrono>
 #include <fstream>
@@ -36,6 +38,8 @@ struct RestoreCtrl::pimpl
     template <typename Ct, typename St, typename Vt, int sz>
     int restore_block( DbFpBlock const &block
                      , sizebounded<Vt, sz> &buffer
+                     , St &st
+                     , std::ofstream &fout
                      , inflatestream<Ct,St,Vt,sz> &decomp );
 
     std::shared_ptr<Assembly> _ass;

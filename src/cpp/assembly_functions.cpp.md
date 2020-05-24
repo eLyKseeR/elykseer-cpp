@@ -134,7 +134,9 @@ bool Assembly::extractChunk(int cnum) const
   BOOST_CONTRACT_ASSERT(cnum >= 0 && cnum < _pimpl->_n);
   auto fp = mk_chunk_path(mkChunkId(cnum));
   if (! fp) { return false; }
+#ifdef DEBUG
   std::cout << cnum << ":" << *fp << std::endl;
+#endif
   return _pimpl->_chunks[cnum].toFile(*fp);
 }
 
@@ -159,7 +161,9 @@ bool Assembly::insertChunk(int cnum)
   BOOST_CONTRACT_ASSERT(cnum >= 0 && cnum < _pimpl->_n);
   auto fp = mk_chunk_path(mkChunkId(cnum));
   if (! fp) { return false; }
+#ifdef DEBUG
   std::cout << cnum << ":" << *fp << std::endl;
+#endif
   return _pimpl->_chunks[cnum].fromFile(*fp);
 }
 

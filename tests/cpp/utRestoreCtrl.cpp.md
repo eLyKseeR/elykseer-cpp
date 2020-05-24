@@ -35,15 +35,15 @@ BOOST_AUTO_TEST_CASE( check_startup )
 ```cpp
 BOOST_AUTO_TEST_CASE( encrypt_decrypt_file )
 {
+  const std::string _fdata = "/tmp/test_data_file";
   // encrypt file
   {
-    lxr::Options::set().isCompressed(false);
+    lxr::Options::set().isCompressed(true);
     lxr::Options::set().nChunks(16);
     lxr::Options::set().fpathChunks() = "/tmp/LXR";
     lxr::Options::set().fpathMeta() = "/tmp/meta";
     lxr::BackupCtrl _backup;
 
-    const std::string _fdata = "/tmp/test_data_file";
     { std::ofstream _fe; _fe.open(_fdata);
      for (int i=0; i<9999; i++) { _fe.write("0123456789",10); }
      _fe.close();
@@ -85,9 +85,8 @@ BOOST_AUTO_TEST_CASE( encrypt_decrypt_file )
     { std::ifstream _if; _if.open("/tmp/test_dbkey_backup.xml");
       _dbks.inStream(_if); _if.close(); }
     _restore.addDbKey(_dbks);
-    const std::string _fp = "/tmp/test_data_file";
     
-    BOOST_REQUIRE( _restore.restore("/tmp/", _fp) );
+    BOOST_REQUIRE( _restore.restore("/tmp/restored", _fdata) );
 
     BOOST_CHECK( _restore.bytes_in() > 0);
     BOOST_CHECK( _restore.bytes_out() > 0);

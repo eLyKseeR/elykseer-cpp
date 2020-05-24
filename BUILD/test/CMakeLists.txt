@@ -28,6 +28,8 @@ set(libs "dl" "z")
 
 file(GLOB SRCS ut*.cpp mocks/*.cpp)
 
+add_definitions( -UDEBUG )
+
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 
         add_executable ( ut${PROJECT_NAME}

@@ -60,7 +60,9 @@ class state {
     state() {};
     ~state() {};
     uint64_t& trx_in() { return _trx_in; }
+    void trx_in(int v) { _trx_in += v; }
     uint64_t& trx_out() { return _trx_out; }
+    void trx_out(int v) { _trx_out += v; }
   private:
     uint64_t _trx_in {0UL};
     uint64_t _trx_out {0UL};
@@ -71,8 +73,13 @@ class state {
 template <typename Ct, typename St, typename Vt, int sz>
 int lxr::RestoreCtrl::pimpl::restore_block( DbFpBlock const &block
                         , sizebounded<Vt, sz> &buffer
+                        , St &st
+                        , std::ofstream &fout
                         , inflatestream<Ct,St,Vt,sz> &decomp )
 {
+#ifdef DEBUG
+    std::cout << " restore block " << block._idx << " @ " << block._fpos << " len=" << block._blen << " clen=" << block._clen << std::endl;
+#endif
     if (! load_assembly(block._aid)) {
         std::cerr << "assembly not available" << std::endl;
         return -1;
@@ -97,6 +104,13 @@ int lxr::RestoreCtrl::pimpl::restore_block( DbFpBlock const &block
         std::cerr << " got:" << md5 << " expected:" << block._checksum << std::endl;
         return -4;
     }
+
+    // output bytes to file
+    fout.write((const char *)buffer.ptr(), block._blen);
+
+    // set state
+    st.trx_in(trsz);
+    st.trx_out(block._blen);
     return block._blen;
 }
 ```
@@ -114,7 +128,17 @@ bool RestoreCtrl::restore(boost::filesystem::path const & root, std::string cons
     // check output file does not exist
     auto targetfp = root + fp;
     if (FileCtrl::fileExists(targetfp)) {
-        std::cerr << "output file already exists: " << fp << std::endl;
+        std::cerr << "output file already exists: " << targetfp << std::endl;
+        return false;
+    }
+    // checkout output directory exists
+    auto targetdir = targetfp;
+    targetdir.remove_filename();
+    if (! FileCtrl::dirExists(targetdir)) {
+        boost::filesystem::create_directories(targetdir);
+    }
+    if (! FileCtrl::dirExists(targetdir)) {
+        std::cerr << "output directory does not exist: " << targetdir << std::endl;
         return false;
     }
     
@@ -136,15 +160,25 @@ bool RestoreCtrl::restore(boost::filesystem::path const & root, std::string cons
     bool res = true;
     int trsz = 0;
     std::ofstream _fout; _fout.open(targetfp.native());
+    if (! _fout.good()) {
+        std::cerr << "failed to open output file " << targetfp.native() << std::endl;
+        _fout.close();
+        return false;
+    }
     for (auto const & block : dbfp->_blocks) {
-        if ((trsz = _pimpl->restore_block<configuration,state,unsigned char,bsz>(block, buffer, decomp)) < 0) {
+        if ((trsz = _pimpl->restore_block<configuration,state,unsigned char,bsz>(block, buffer, _state, _fout, decomp)) < 0) {
             std::cerr << "failed to restore block: " << block._idx << std::endl;
             res = false;
             break;
         }
     }
     _fout.close();
+    _pimpl->trx_in += _state.trx_in();
+    _pimpl->trx_out += _state.trx_out();
 
+#ifdef DEBUG
+    std::cout << "restored to '" << targetfp.native() << "' in:" << _state.trx_in() << " out:" << _state.trx_out() << std::endl;
+#endif
     return res;
 }
 

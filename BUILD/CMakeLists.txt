@@ -16,6 +16,8 @@ set (${PROJECT_NAME}_VERSION_MINOR 0)
 set (${PROJECT_NAME}_VERSION_PATCH 42)
 set (${PROJECT_NAME}_VERSION_STRING ${elykseer-cpp_VERSION_MAJOR}.${elykseer-cpp_VERSION_MINOR}.${elykseer-cpp_VERSION_PATCH})
 
+add_definitions( -UDEBUG )
+
 # boost
 #set(BOOST_ROOT "${CMAKE_HOME_DIRECTORY}/ext/boost_1_69_0/")
 #set(BOOST_LIBRARYDIR "${CMAKE_HOME_DIRECTORY}/ext/boost_1_69_0/stage/lib")
