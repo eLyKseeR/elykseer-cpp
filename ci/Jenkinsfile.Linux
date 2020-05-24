@@ -13,6 +13,7 @@ pipeline {
                 sh 'cd ext/elykseer-crypto; git submodule update --init --remote'
                 sh 'cd ext/elykseer-crypto/ext/prngsharp; ./build.Linux.jenkins.sh'
                 sh 'cd ext/elykseer-crypto/ext/cryptopp; make -f GNUmakefile'
+                sh 'cd ext/elykseer-crypto/BUILD; rm -rf CMakeFiles CMakeCache.txt'
                 sh 'cd ext/elykseer-crypto/BUILD; ./mk_cpp.sh'
                 sh 'cd ext/elykseer-crypto/BUILD; cmake .'
                 sh 'cd ext/elykseer-crypto/BUILD; make'
@@ -20,6 +21,11 @@ pipeline {
                 sh 'cd ext/pugixml; patch -N < ../pugixml.patch2 || echo ignored'
                 sh 'cd ext/pugixml; cmake .'
                 sh 'cd ext/pugixml; make'
+            }
+        }
+        stage('cleanup') {
+            steps {
+                sh 'cd BUILD; rm -rf CMakeFiles CMakeCache.txt'
             }
         }
         stage('mk cpp') {
