@@ -59,11 +59,17 @@ module RestoreCtrl =
 
 >[~RestoreCtrl](restorectrl_ctor.cpp.md)();
 
+## // provide meta data
+
 >void [addDbFp](restorectrl_functions.cpp.md)(DbFp const &);
 
 >void [addDbKey](restorectrl_functions.cpp.md)(DbKey const &);
 
+## // restore a file (defined by _fp_) and place in directory _root_
+
 >bool [restore](restorectrl_functions.cpp.md)(boost::filesystem::path const & root, std::string const & fp);
+
+## // access counters
 
 >uint64_t [bytes_in](restorectrl_info.cpp.md)() const;
 

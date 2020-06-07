@@ -59,6 +59,14 @@ module FsUtils =
 
 };
 
+
+>const boost::filesystem::path [operator/](fsutils_functions.cpp.md)(std::string const &a, std::string const &b);
+
+>const boost::filesystem::path [operator/](fsutils_functions.cpp.md)(boost::filesystem::path const &a, std::string const &b);
+
+>const boost::filesystem::path [operator/](fsutils_functions.cpp.md)(boost::filesystem::path const &a, boost::filesystem::path const &b);
+
+
 ```cpp
 } // namespace
 ```

@@ -21,6 +21,7 @@ std::string sh(std::string const & script) {
 #endif
 ```
 
+## implementations
 
 ```cpp
 std::string FsUtils::sep()
@@ -71,4 +72,27 @@ std::pair<const std::string, const std::string> FsUtils::osusrgrp(boost::filesys
     return std::make_pair(_osusr, _osgrp);
 #endif
 }
+```
+
+## operators to concat file paths
+
+```cpp
+const boost::filesystem::path operator/(std::string const &a, std::string const &b)
+{
+    boost::filesystem::path fp = a;
+    return fp /= b;
+}
+
+const boost::filesystem::path operator/(boost::filesystem::path const &a, std::string const &b)
+{
+    boost::filesystem::path fp = a;
+    return fp /= b;
+}
+
+const boost::filesystem::path operator/(boost::filesystem::path const &a, boost::filesystem::path const &b)
+{
+    boost::filesystem::path fp = a;
+    return fp /= b;
+}
+
 ```

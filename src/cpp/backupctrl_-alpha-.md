@@ -8,6 +8,7 @@
 #include "lxr/backupctrl.hpp"
 #include "lxr/assembly.hpp"
 #include "lxr/chunk.hpp"
+#include "lxr/fsutils.hpp"
 #include "lxr/filectrl.hpp"
 #include "lxr/dbfp.hpp"
 #include "lxr/dbkey.hpp"

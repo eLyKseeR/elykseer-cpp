@@ -6,6 +6,7 @@
 #include "boost/test/unit_test.hpp"
 
 #include "lxr/dbkey.hpp"
+#include "lxr/fsutils.hpp"
 #include "lxr/key128.hpp"
 #include "lxr/key256.hpp"
 
@@ -62,8 +63,8 @@ BOOST_AUTO_TEST_CASE( output_to_xml )
 	_db.set(aid1, _block1);
 	_db.set(aid2, _block2);
 	BOOST_CHECK_EQUAL(2, _db.count());
-	const std::string _fpath = "/tmp/test_dbkey_1.xml";
-	std::ofstream _outs; _outs.open(_fpath);
+	auto const tmpd = boost::filesystem::temp_directory_path();
+	std::ofstream _outs; _outs.open(tmpd / std::string("test_dbkey_1.xml"));
 	_db.outStream(_outs);
 	strncpy(_k1, key1.toHex().c_str(), 64);
 	strncpy(_k2, key2.toHex().c_str(), 64);
@@ -79,9 +80,9 @@ BOOST_AUTO_TEST_CASE( input_from_xml )
     const std::string aid1 = "94ffed38da8acee6f14be5af8a31d3b8015e008f9b30c7d12a58bfed57ba8d12";
 	const std::string aid2 = "a31d3b8015e00894ffed38da8acee6f14be5af8f9b30c7d12a58bfed57ba8d12";
 	
-	const std::string _fpath = "/tmp/test_dbkey_1.xml";
+  auto const tmpd = boost::filesystem::temp_directory_path();
 	lxr::DbKey _db;
-	std::ifstream _ins; _ins.open(_fpath);
+	std::ifstream _ins; _ins.open(tmpd / std::string("test_dbkey_1.xml"));
 	_db.inStream(_ins);
 	BOOST_CHECK_EQUAL(2, _db.count());
 	auto const keys1 = _db.get(aid1);

@@ -215,7 +215,7 @@ int Assembly::addData(int dlen, const sizebounded<unsigned char, datasz> & d, in
   return wlen;
 }
 
-int Assembly::set_data(int pos, int dlen, sizebounded<unsigned char, datasz> const & d, int p0)
+int Assembly::set_data(const int pos, const int dlen, sizebounded<unsigned char, datasz> const & d, int p0)
 {
   if (dlen + p0 > datasz) { return 0; }
   if (pos < 0) { return 0; }
@@ -240,7 +240,7 @@ int Assembly::getData(int pos0, int pos1, sizebounded<unsigned char, datasz> & d
   return get_data(pos0, pos1 - pos0 + 1, d);
 }
 
-int Assembly::get_data(int pos, int dlen, sizebounded<unsigned char, datasz> & d) const
+int Assembly::get_data(const int pos, const int dlen, sizebounded<unsigned char, datasz> & d) const
 {
   if (dlen > datasz) { return 0; }
   if (pos < 0) { return 0; }

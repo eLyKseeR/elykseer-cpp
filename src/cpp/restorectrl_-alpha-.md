@@ -9,6 +9,7 @@
 #include "lxr/assembly.hpp"
 #include "lxr/chunk.hpp"
 #include "lxr/filectrl.hpp"
+#include "lxr/fsutils.hpp"
 #include "lxr/key.hpp"
 #include "lxr/key128.hpp"
 #include "lxr/key256.hpp"

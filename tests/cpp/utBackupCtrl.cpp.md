@@ -24,12 +24,13 @@ BOOST_AUTO_TEST_SUITE( utBackupCtrl )
 ```cpp
 BOOST_AUTO_TEST_CASE( check_startup )
 {
-    lxr::Options::set().nChunks(21);
+    int nchunks = 21;
+    lxr::Options::set().nChunks(nchunks);
     lxr::BackupCtrl _ctrl;
 
     BOOST_CHECK_EQUAL(0UL, _ctrl.bytes_in());
     BOOST_CHECK_EQUAL(0UL, _ctrl.bytes_out());
-    BOOST_CHECK_EQUAL(lxr::Chunk::height * lxr::Chunk::width * 21, _ctrl.free());
+    BOOST_CHECK_EQUAL(lxr::Chunk::height * lxr::Chunk::width * nchunks - 16, _ctrl.free());
 }
 ```
 
@@ -37,23 +38,25 @@ BOOST_AUTO_TEST_CASE( check_startup )
 ```cpp
 BOOST_AUTO_TEST_CASE( encrypt_file )
 {
+    auto const tmpd = boost::filesystem::temp_directory_path();
     lxr::Options::set().nChunks(16);
     lxr::Options::set().isCompressed(true);
-    lxr::Options::set().fpathChunks() = "/tmp/LXR";
-    lxr::Options::set().fpathMeta() = "/tmp/meta";
+    lxr::Options::set().fpathChunks() = tmpd / "LXR";
+    lxr::Options::set().fpathMeta() = tmpd /"meta";
     lxr::BackupCtrl _ctrl;
 
     unsigned long _free0 = _ctrl.free();
     BOOST_CHECK_EQUAL(0UL, _ctrl.bytes_in());
     BOOST_CHECK_EQUAL(0UL, _ctrl.bytes_out());
 
-    const std::string _fdata = "/tmp/test_data_file";
-    { std::ofstream _fe; _fe.open(_fdata);
+    const std::string datafname = "test_data_file";
+    const std::string datafile = (tmpd / datafname).c_str();
+    { std::ofstream _fe; _fe.open(datafile);
      for (int i=0; i<9999; i++) { _fe.write("0123456789",10); }
      _fe.close();
     }
     
-    BOOST_REQUIRE( _ctrl.backup(_fdata) );
+    BOOST_REQUIRE( _ctrl.backup(datafile) );
 
     BOOST_CHECK( _ctrl.bytes_in() > 0);
     BOOST_CHECK( _ctrl.bytes_out() > 0);
@@ -61,12 +64,12 @@ BOOST_AUTO_TEST_CASE( encrypt_file )
 
     _ctrl.finalize();
 
-    const std::string _fpath1 = "/tmp/test_dbfp_backup.xml";
-    std::ofstream _out1; _out1.open(_fpath1);
+    auto const fp_dbfp = lxr::Options::current().fpathMeta() / "test_dbfp_backup.xml";
+    auto const fp_dbky = lxr::Options::current().fpathMeta() / "test_dbkey_backup.xml";
+    std::ofstream _out1; _out1.open(fp_dbfp);
     _ctrl.getDbFp().outStream(_out1);
     _out1.close();
-    const std::string _fpath2 = "/tmp/test_dbkey_backup.xml";
-    std::ofstream _out2; _out2.open(_fpath2);
+    std::ofstream _out2; _out2.open(fp_dbky);
     _ctrl.getDbKey().outStream(_out2);
     _out2.close();
 
@@ -77,25 +80,26 @@ BOOST_AUTO_TEST_CASE( encrypt_file )
 ```cpp
 BOOST_AUTO_TEST_CASE( encrypt_empty_file )
 {
+    auto const tmpd = boost::filesystem::temp_directory_path();
     lxr::Options::set().isCompressed(true);
-    lxr::Options::set().fpathChunks() = "/tmp/LXR";
-    lxr::Options::set().fpathMeta() = "/tmp/meta";
+    lxr::Options::set().fpathChunks() = tmpd / "LXR";
+    lxr::Options::set().fpathMeta() = tmpd /"meta";
     lxr::BackupCtrl _ctrl;
 
     unsigned long _free0 = _ctrl.free();
     BOOST_CHECK_EQUAL(0UL, _ctrl.bytes_in());
     BOOST_CHECK_EQUAL(0UL, _ctrl.bytes_out());
 
-    const std::string _fempty = "/tmp/test_empty_file";
-    { std::ofstream _fe; _fe.open(_fempty); _fe.close(); }
-    BOOST_REQUIRE( _ctrl.backup(_fempty) );
+    const std::string datafile = (tmpd / "test_empty_file").c_str();
+    { std::ofstream _fe; _fe.open(datafile); _fe.close(); }
+    BOOST_REQUIRE( _ctrl.backup(datafile) );
 
     BOOST_CHECK( _ctrl.bytes_in() == 0);
     BOOST_CHECK( _ctrl.bytes_out() == 0);
     BOOST_CHECK(_ctrl.free() == _free0);
 
-    const std::string _fpath = "/tmp/test_dbfp_backup2.xml";
-    std::ofstream _outs; _outs.open(_fpath);
+    auto const fp_dbfp = lxr::Options::current().fpathMeta() / "test_dbfp_backup.xml";
+    std::ofstream _outs; _outs.open(fp_dbfp);
     _ctrl.getDbFp().outStream(_outs);
 
 }

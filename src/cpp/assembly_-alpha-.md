@@ -60,7 +60,12 @@ struct Assembly::pimpl :
   int _n;
   Key256  _aid;
   int _pos {0};
+#ifdef DEBUG
+  // the data is readable even if not encrypted
   int _state {writable | readable};
+#else
+  int _state {writable};
+#endif
 
 private: 
 pimpl() {}

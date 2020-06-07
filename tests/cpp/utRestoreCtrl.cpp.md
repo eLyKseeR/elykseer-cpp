@@ -6,6 +6,7 @@
 #include "boost/test/unit_test.hpp"
 
 #include "lxr/backupctrl.hpp"
+#include "lxr/fsutils.hpp"
 #include "lxr/restorectrl.hpp"
 #include "lxr/options.hpp"
 
@@ -24,7 +25,7 @@ BOOST_AUTO_TEST_SUITE( utRestoreCtrl )
 ```cpp
 BOOST_AUTO_TEST_CASE( check_startup )
 {
-    lxr::RestoreCtrl _ctrl;
+  lxr::RestoreCtrl _ctrl;
 
 	BOOST_CHECK_EQUAL(0UL, _ctrl.bytes_in());
 	BOOST_CHECK_EQUAL(0UL, _ctrl.bytes_out());
@@ -32,64 +33,81 @@ BOOST_AUTO_TEST_CASE( check_startup )
 ```
 
 ## Test case: decrypt a file
+
+The test may fail on firt execution because the output directory
+`$TMPDIR/restored` does not exist.
+
 ```cpp
-BOOST_AUTO_TEST_CASE( encrypt_decrypt_file )
+BOOST_AUTO_TEST_CASE( backup_restore_file )
 {
-  const std::string _fdata = "/tmp/test_data_file";
+  auto const tmpd = boost::filesystem::temp_directory_path();
+  lxr::Options::set().fpathChunks() = tmpd / "LXR";
+  lxr::Options::set().fpathMeta() = tmpd /"meta";
+
+  auto const outputdir = tmpd / "restored";
+  const std::string datafname = "test_data_file";
+  const std::string datafile = (tmpd / datafname).c_str();
+  auto const fp_dbfp = lxr::Options::current().fpathMeta() / "test_dbfp_restore.xml";
+  auto const fp_dbky = lxr::Options::current().fpathMeta() / "test_dbkey_restore.xml";
+
+  // cleanup
+  {
+    auto restoredfp = outputdir / datafile;
+    if (boost::filesystem::exists(restoredfp)) {
+      boost::filesystem::remove(restoredfp);
+    }
+  }
+
   // encrypt file
   {
     lxr::Options::set().isCompressed(true);
     lxr::Options::set().nChunks(16);
-    lxr::Options::set().fpathChunks() = "/tmp/LXR";
-    lxr::Options::set().fpathMeta() = "/tmp/meta";
     lxr::BackupCtrl _backup;
 
-    { std::ofstream _fe; _fe.open(_fdata);
+    { std::ofstream _fe; _fe.open(datafile);
      for (int i=0; i<9999; i++) { _fe.write("0123456789",10); }
      _fe.close();
     }
 
-    BOOST_REQUIRE( _backup.backup(_fdata) );
+    BOOST_REQUIRE( _backup.backup(datafile) );
 
     BOOST_CHECK( _backup.bytes_in() > 0);
     BOOST_CHECK( _backup.bytes_out() > 0);
+    BOOST_CHECK( _backup.bytes_in() > _backup.bytes_out());  // by compression
 
     _backup.finalize();
 
-    const std::string _fpath1 = "/tmp/test_dbfp_backup.xml";
-    std::ofstream _out1; _out1.open(_fpath1);
+    std::ofstream _out1; _out1.open(fp_dbfp);
     _backup.getDbFp().outStream(_out1);
     _out1.close();
-    const std::string _fpath2 = "/tmp/test_dbkey_backup.xml";
-    std::ofstream _out2; _out2.open(_fpath2);
+    std::ofstream _out2; _out2.open(fp_dbky);
     _backup.getDbKey().outStream(_out2);
     _out2.close();
   }
 
   // decrypt file
   {
-    lxr::Options::set().isCompressed(false);
+    lxr::Options::set().isCompressed(false); // overwritten from meta data
     lxr::Options::set().nChunks(16);
-    lxr::Options::set().fpathChunks() = "/tmp/LXR";
-    lxr::Options::set().fpathMeta() = "/tmp/meta";
     lxr::RestoreCtrl _restore;
 
     BOOST_CHECK_EQUAL(0UL, _restore.bytes_in());
     BOOST_CHECK_EQUAL(0UL, _restore.bytes_out());
 
     lxr::DbFp _dbfp;
-    { std::ifstream _if; _if.open("/tmp/test_dbfp_backup.xml");
+    { std::ifstream _if; _if.open(fp_dbfp);
       _dbfp.inStream(_if); _if.close(); }
     _restore.addDbFp(_dbfp);
     lxr::DbKey _dbks;
-    { std::ifstream _if; _if.open("/tmp/test_dbkey_backup.xml");
+    { std::ifstream _if; _if.open(fp_dbky);
       _dbks.inStream(_if); _if.close(); }
     _restore.addDbKey(_dbks);
     
-    BOOST_REQUIRE( _restore.restore("/tmp/restored", _fdata) );
+    BOOST_REQUIRE( _restore.restore(outputdir, datafile) );
 
     BOOST_CHECK( _restore.bytes_in() > 0);
     BOOST_CHECK( _restore.bytes_out() > 0);
+    BOOST_CHECK( _restore.bytes_out() > _restore.bytes_in());  // by compression
   }
 }
 ```

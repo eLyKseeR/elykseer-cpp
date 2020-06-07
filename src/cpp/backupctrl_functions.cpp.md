@@ -216,7 +216,9 @@ bool BackupCtrl::backup(boost::filesystem::path const & fp)
     _pimpl->_ass = st.assembly();
     // std::cout << "** read " << _pimpl->trx_in << "   wrote " << _pimpl->trx_out << std::endl;
 
-    { std::ofstream _fe; _fe.open("/tmp/test_assembly.backuped");
+#ifdef DEBUG
+    { auto const tmpd = boost::filesystem::temp_directory_path();
+      std::ofstream _fe; _fe.open(tmpd / std::string("test_assembly.backuped"));
       const int bufsz = 4096;
       sizebounded<unsigned char, bufsz> buf;
       for (int i=0; i<Options::current().nChunks()*Chunk::size; i+=bufsz) {
@@ -224,6 +226,7 @@ bool BackupCtrl::backup(boost::filesystem::path const & fp)
           _fe.write((const char*)buf.ptr(),bufsz); }
       _fe.close();
     }
+#endif
 
    _pimpl->_dbfp.set(fp.native(), dbentry);
 

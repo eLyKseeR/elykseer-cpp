@@ -8,6 +8,7 @@
 
 #include "lxr/assembly.hpp"
 #include "lxr/chunk.hpp"
+#include "lxr/fsutils.hpp"
 #include "lxr/key256.hpp"
 #include "lxr/key128.hpp"
 #include "lxr/md5.hpp"
@@ -34,7 +35,11 @@ BOOST_AUTO_TEST_CASE( assembly_state_after_init )
   lxr::Assembly _a1(16);
 
   BOOST_CHECK(_a1.isWritable());
-  // BOOST_CHECK(! _a1.isReadable());  // temporarily disabled
+#ifdef DEBUG
+  BOOST_CHECK(_a1.isReadable());  // temporarily disabled
+#else
+  BOOST_CHECK(! _a1.isReadable());
+#endif
   BOOST_CHECK(! _a1.isEncrypted());
 }
 ```
@@ -53,15 +58,29 @@ BOOST_AUTO_TEST_CASE( assembly_creation_failed )
 }
 ```
 
+## Test case: a new assembly contains random  bytes (128/8 = 16 bytes)
+```cpp
+BOOST_AUTO_TEST_CASE( initialised_assembly_with_random_bytes )
+{
+  lxr::Assembly _a1(16);
+  sizebounded<unsigned char, lxr::Assembly::datasz> buf;
+  BOOST_CHECK_EQUAL(16, _a1.pos());
+}
+```
+
 ## Test case: access buffer denied if unencrypted
 ```cpp
-// BOOST_AUTO_TEST_CASE( access_buffer_denied )
-// {
-//   lxr::Assembly _a1(16);
-//   sizebounded<unsigned char, lxr::Assembly::datasz> buf;
-//   // cannot read from unencrypted buffer
-//   BOOST_CHECK_EQUAL(0, _a1.getData(0, 10, buf));
-// }
+#ifdef DEBUG
+#warning disabled test 'access_buffer_denied'
+#else
+BOOST_AUTO_TEST_CASE( access_buffer_denied )
+{
+  lxr::Assembly _a1(16);
+  sizebounded<unsigned char, lxr::Assembly::datasz> buf;
+  // cannot read from unencrypted buffer
+  BOOST_CHECK_EQUAL(0, _a1.getData(0, 10, buf));
+}
+#endif
 ```
 
 ## Test case: access buffer if encrypted
@@ -104,7 +123,7 @@ BOOST_AUTO_TEST_CASE( assembly_encrypt_then_decrypt )
   buf.transform([](int i, unsigned char c)->unsigned char {
       return '\\0';
   });
-  BOOST_CHECK_EQUAL(10, _a1.getData(0,9,buf));
+  BOOST_CHECK_EQUAL(10, _a1.getData(16,16+9,buf));
   BOOST_CHECK(buf.toString().substr(0,9) != msg.substr(0,9));
 
   BOOST_CHECK(  _a1.decrypt(_k, _iv) );
@@ -114,13 +133,14 @@ BOOST_AUTO_TEST_CASE( assembly_encrypt_then_decrypt )
   buf.transform([](int i, unsigned char c)->unsigned char {
       return '\\0';
   });
-  BOOST_CHECK_EQUAL(10, _a1.getData(0,9,buf));
+  BOOST_CHECK_EQUAL(10, _a1.getData(16,16+9,buf));
   BOOST_CHECK_EQUAL(buf.toString().substr(0,9), msg.substr(0,9));
 }
 ```
 
 ## Test case: set and get data
 ```cpp
+#ifdef DEBUG
 BOOST_AUTO_TEST_CASE( assembly_set_get_data )
 {
   const std::string msg = "0123456789abcdefghijklmnopqrstuvwxyz";
@@ -132,7 +152,8 @@ BOOST_AUTO_TEST_CASE( assembly_set_get_data )
   });
   _ass.addData(buf.size(), buf);
   sizebounded<unsigned char, lxr::Assembly::datasz> buf2;
-  BOOST_CHECK_EQUAL(_ass.getData(0, buf2.size()-1, buf2), buf2.size());
+  // can only access buffer when defined(DEBUG)
+  BOOST_CHECK_EQUAL(_ass.getData(16, buf2.size()-1, buf2), buf2.size()-16);
   char s[msz+1];
   buf2.map([&s,msz](int i, unsigned char c) {
     if (i < msz) { s[i] = (char)c; }
@@ -142,6 +163,7 @@ BOOST_AUTO_TEST_CASE( assembly_set_get_data )
   std::clog << "read back: " << msg2 << std::endl;
   BOOST_CHECK_EQUAL(msg, msg2);
 }
+#endif
 ```
 
 ## Test case: encrypt assembly then extract chunks
@@ -150,7 +172,8 @@ BOOST_AUTO_TEST_CASE( assembly_encrypt_then_extract_chunks )
 {
   const std::string msg = "0123456789abcdefghijklmnopqrstuvwxyz";
 
-  const std::string outputpath = "/tmp/LXR";
+  auto const tmpd = boost::filesystem::temp_directory_path();
+  auto const outputpath = tmpd / "LXR";
   if (! boost::filesystem::exists(outputpath)) {
     boost::filesystem::create_directory(outputpath);
   }
@@ -163,10 +186,10 @@ BOOST_AUTO_TEST_CASE( assembly_encrypt_then_extract_chunks )
   buf.transform([&msg,msz](int i, unsigned char c)->unsigned char {
     return (unsigned char)msg[i % msz];
   });
-  _a1.addData(buf.size(), buf);
-  auto const md5_1 = lxr::Md5::hash((const char*)buf.ptr(), buf.size());
+  _a1.addData(buf.size()-16, buf);  // minus random bytes at beginning
+  auto const md5_1 = lxr::Md5::hash((const char*)buf.ptr(), buf.size()-16);
   #ifdef DEBUG
-  { std::ofstream fass; fass.open("/tmp/test_assembly.filled");
+  { std::ofstream fass; fass.open(tmpd / "test_assembly.filled");
     const int bufsz = 4096;
     sizebounded<unsigned char, bufsz> buf;
     for (int i=0; i<lxr::Options::current().nChunks()*lxr::Chunk::size; i+=bufsz) {
@@ -190,7 +213,7 @@ BOOST_AUTO_TEST_CASE( assembly_encrypt_then_extract_chunks )
   BOOST_CHECK(!_a2.isEncrypted() );
 
   #ifdef DEBUG
-  { std::ofstream fass; fass.open("/tmp/test_assembly.decrypted");
+  { std::ofstream fass; fass.open(tmpd / "test_assembly.decrypted");
     const int bufsz = 4096;
     sizebounded<unsigned char, bufsz> buf;
     for (int i=0; i<lxr::Options::current().nChunks()*lxr::Chunk::size; i+=bufsz) {
@@ -201,8 +224,8 @@ BOOST_AUTO_TEST_CASE( assembly_encrypt_then_extract_chunks )
   #endif
   
   sizebounded<unsigned char, lxr::Assembly::datasz> buf2;
-  BOOST_CHECK_EQUAL(_a2.getData(0, buf2.size()-1, buf2), buf2.size());
-  auto const md5_2 = lxr::Md5::hash((const char*)buf2.ptr(), buf2.size());
+  BOOST_CHECK_EQUAL(_a2.getData(16, buf2.size()-1, buf2), buf2.size()-16);   // same length as input
+  auto const md5_2 = lxr::Md5::hash((const char*)buf2.ptr(), buf2.size()-16);
   BOOST_CHECK_EQUAL(md5_1, md5_2);
 }
 ```

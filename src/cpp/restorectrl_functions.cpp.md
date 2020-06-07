@@ -34,7 +34,9 @@ bool RestoreCtrl::pimpl::load_assembly(Key256 const & _aid)
         return false;
     }
 
-    { std::ofstream _fe; _fe.open("/tmp/test_assembly.restored");
+#ifdef DEBUG
+    { auto const tmpd = boost::filesystem::temp_directory_path();
+      std::ofstream _fe; _fe.open(tmpd / std::string("test_assembly.restored"));
       const int bufsz = 4096;
       sizebounded<unsigned char, bufsz> buf;
       for (int i=0; i<Options::current().nChunks()*Chunk::size; i+=bufsz) {
@@ -42,6 +44,7 @@ bool RestoreCtrl::pimpl::load_assembly(Key256 const & _aid)
           _fe.write((const char*)buf.ptr(),bufsz); }
       _fe.close();
     }
+#endif
 
     return _ass->isReadable();
 }
@@ -87,6 +90,7 @@ int lxr::RestoreCtrl::pimpl::restore_block( DbFpBlock const &block
     int trsz = block._clen;
     if (!block._compressed) { trsz = block._blen; }
     if (_ass->getData(block._apos, block._apos+trsz-1, buffer) != trsz) {
+        std::cerr << "wrong size of data returnd! block " << block._idx << " @ " << block._fpos << " len=" << block._blen << " clen=" << block._clen << std::endl;
         return -2;
     }
     // decompress
@@ -126,7 +130,7 @@ bool RestoreCtrl::restore(boost::filesystem::path const & root, std::string cons
         return false;
     }
     // check output file does not exist
-    auto targetfp = root + fp;
+    auto targetfp = root / fp;
     if (FileCtrl::fileExists(targetfp)) {
         std::cerr << "output file already exists: " << targetfp << std::endl;
         return false;

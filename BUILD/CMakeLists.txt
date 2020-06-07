@@ -16,6 +16,7 @@ set (${PROJECT_NAME}_VERSION_MINOR 0)
 set (${PROJECT_NAME}_VERSION_PATCH 42)
 set (${PROJECT_NAME}_VERSION_STRING ${elykseer-cpp_VERSION_MAJOR}.${elykseer-cpp_VERSION_MINOR}.${elykseer-cpp_VERSION_PATCH})
 
+# set to '-DDEBUG' to turn on debugging output
 add_definitions( -UDEBUG )
 
 # boost
