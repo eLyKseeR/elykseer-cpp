@@ -46,3 +46,11 @@ bool Chunk::toFile(boost::filesystem::path const & fpath) const
 }
 
 ```
+
+compute Md5 checksum over chunk's internal buffer
+```cpp
+Key128 Chunk::md5() const
+{
+  return Md5::hash((const char*)_pimpl->_buffer->ptr(), Chunk::size);
+}
+```

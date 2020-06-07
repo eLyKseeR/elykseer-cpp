@@ -10,6 +10,16 @@ bool Assembly::encrypt(Key256 const & k, Key128 & ivout)
   Key128 iv;
   AesEncrypt aesenc(k, iv);
 
+  #ifdef DEBUG
+  std::clog << "encrypt assembly: " << said() << std::endl;
+  std::clog << "iv = " << iv << std::endl;
+  std::clog << "key = " << k << std::endl;
+  for (int n = 0; n < _pimpl->_n; n++) {
+    auto const md5 = _pimpl->_chunks[n].md5();
+    std::clog << "   chunk " << n << " " << md5 << std::endl;
+  }
+  #endif
+
   //
   sizebounded<unsigned char, Aes::datasz> buf;
   int pos = 0, sz = size();
@@ -59,6 +69,16 @@ bool Assembly::decrypt(Key256 const & k, Key128 const & iv)
   ldec = aesdec.finish(0, buf);
   if (ldec > 0) {
     set_data(lastpos, ldec, buf); }
+
+  #ifdef DEBUG
+  std::clog << "decrypt assembly: " << said() << std::endl;
+  std::clog << "iv = " << iv << std::endl;
+  std::clog << "key = " << k << std::endl;
+  for (int n = 0; n < _pimpl->_n; n++) {
+    auto const md5 = _pimpl->_chunks[n].md5();
+    std::clog << "   chunk " << n << " " << md5 << std::endl;
+  }
+  #endif
 
   // new state
   _pimpl->_state &= ~encrypted;
@@ -114,6 +134,9 @@ bool Assembly::extractChunk(int cnum) const
   BOOST_CONTRACT_ASSERT(cnum >= 0 && cnum < _pimpl->_n);
   auto fp = mk_chunk_path(mkChunkId(cnum));
   if (! fp) { return false; }
+#ifdef DEBUG
+  std::cout << cnum << ":" << *fp << std::endl;
+#endif
   return _pimpl->_chunks[cnum].toFile(*fp);
 }
 
@@ -138,6 +161,9 @@ bool Assembly::insertChunk(int cnum)
   BOOST_CONTRACT_ASSERT(cnum >= 0 && cnum < _pimpl->_n);
   auto fp = mk_chunk_path(mkChunkId(cnum));
   if (! fp) { return false; }
+#ifdef DEBUG
+  std::cout << cnum << ":" << *fp << std::endl;
+#endif
   return _pimpl->_chunks[cnum].fromFile(*fp);
 }
 
@@ -189,22 +215,7 @@ int Assembly::addData(int dlen, const sizebounded<unsigned char, datasz> & d, in
   return wlen;
 }
 
-int Assembly::get_data(int pos, int dlen, sizebounded<unsigned char, datasz> & d) const
-{
-  if (dlen > datasz) { return 0; }
-  if (pos < 0) { return 0; }
-  if (pos + dlen > size()) { return 0; }
-
-  int rlen = 0;
-  while (rlen < dlen) {
-    int cnum = (rlen+pos) % _pimpl->_n;   // 0 .. n-1  ; chunk number
-    int bidx = (rlen+pos) / _pimpl->_n;   // 0 .. dlen/n ; pos in chunk
-    d[rlen++] = _pimpl->_chunks[cnum].get(bidx);
-  }
-  return rlen;
-}
-
-int Assembly::set_data(int pos, int dlen, sizebounded<unsigned char, datasz> const & d, int p0)
+int Assembly::set_data(const int pos, const int dlen, sizebounded<unsigned char, datasz> const & d, int p0)
 {
   if (dlen + p0 > datasz) { return 0; }
   if (pos < 0) { return 0; }
@@ -227,6 +238,21 @@ int Assembly::getData(int pos0, int pos1, sizebounded<unsigned char, datasz> & d
   if (pos0 < 0) { return 0; }
 
   return get_data(pos0, pos1 - pos0 + 1, d);
+}
+
+int Assembly::get_data(const int pos, const int dlen, sizebounded<unsigned char, datasz> & d) const
+{
+  if (dlen > datasz) { return 0; }
+  if (pos < 0) { return 0; }
+  if (pos + dlen > size()) { return 0; }
+
+  int rlen = 0;
+  while (rlen < dlen) {
+    int cnum = (rlen+pos) % _pimpl->_n;   // 0 .. n-1  ; chunk number
+    int bidx = (rlen+pos) / _pimpl->_n;   // 0 .. dlen/n ; pos in chunk
+    d[rlen++] = _pimpl->_chunks[cnum].get(bidx);
+  }
+  return rlen;
 }
 
 ```

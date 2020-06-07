@@ -21,6 +21,7 @@ std::string sh(std::string const & script) {
 #endif
 ```
 
+## implementations
 
 ```cpp
 std::string FsUtils::sep()
@@ -62,13 +63,36 @@ std::pair<const std::string, const std::string> FsUtils::osusrgrp(boost::filesys
     char _buf[_blen];
     struct passwd _pw, *_retpw = NULL;
     if (getpwuid_r(_fi.st_uid, &_pw, _buf, _blen, &_retpw) == 0) {
-        _osusr = _buf;
+        _osusr = _pw.pw_name;
     }
-    struct group _gr, *_retgr = NULL; //getgrgid(info.st_gid);
+    struct group _gr, *_retgr = NULL;
     if (getgrgid_r(_fi.st_gid, &_gr, _buf, _blen, &_retgr) == 0) {
-        _osgrp = _buf;
+        _osgrp = _gr.gr_name;
     }
     return std::make_pair(_osusr, _osgrp);
 #endif
 }
+```
+
+## operators to concat file paths
+
+```cpp
+const boost::filesystem::path operator/(std::string const &a, std::string const &b)
+{
+    boost::filesystem::path fp = a;
+    return fp /= b;
+}
+
+const boost::filesystem::path operator/(boost::filesystem::path const &a, std::string const &b)
+{
+    boost::filesystem::path fp = a;
+    return fp /= b;
+}
+
+const boost::filesystem::path operator/(boost::filesystem::path const &a, boost::filesystem::path const &b)
+{
+    boost::filesystem::path fp = a;
+    return fp /= b;
+}
+
 ```

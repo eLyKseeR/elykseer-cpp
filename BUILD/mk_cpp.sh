@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 GITALK=`pwd`/../ext/gitalk
 

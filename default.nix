@@ -8,6 +8,8 @@ stdenv.mkDerivation rec {
     # Customizable development requirements
     nativeBuildInputs = [
         cmake
+        gcc
+        gdb
         git
         pandoc
         html2text

@@ -6,6 +6,7 @@
 #include "boost/test/unit_test.hpp"
 
 #include "lxr/dbfp.hpp"
+#include "lxr/fsutils.hpp"
 #include "lxr/key128.hpp"
 #include "lxr/key256.hpp"
 
@@ -85,8 +86,8 @@ BOOST_AUTO_TEST_CASE( output_to_xml )
   BOOST_CHECK(ob1);
   BOOST_CHECK(ob2);
   BOOST_CHECK_EQUAL(2, _db.count());
-  const std::string _fpath = "/tmp/test_dbfp_1.xml";
-  std::ofstream _outs; _outs.open(_fpath);
+  auto const tmpd = boost::filesystem::temp_directory_path();
+  std::ofstream _outs; _outs.open(tmpd / std::string("test_dbfp_1.xml"));
   _db.outStream(_outs);
 }
 ```
@@ -98,9 +99,9 @@ BOOST_AUTO_TEST_CASE( input_from_xml )
   const std::string fp1 = "/home/me/Documents/interesting.txt";
   const std::string fp2 = "/Data/photos/2001/motorcycle.jpeg";
 
-  const std::string _fpath = "/tmp/test_dbfp_1.xml";
+  auto const tmpd = boost::filesystem::temp_directory_path();
   lxr::DbFp _db;
-  std::ifstream _ins; _ins.open(_fpath);
+  std::ifstream _ins; _ins.open(tmpd / std::string("test_dbfp_1.xml"));
   _db.inStream(_ins);
   BOOST_CHECK_EQUAL(2, _db.count());
   auto ob1 = _db.get(fp1);
@@ -116,7 +117,7 @@ BOOST_AUTO_TEST_CASE( input_from_xml )
 ```cpp
 BOOST_AUTO_TEST_CASE( instantiate_from_file )
 {
-  const std::string fp = "/bin/bash";
+  const std::string fp = "/bin/sh";
 
   auto _entry = lxr::DbFpDat::fromFile(fp);
 
@@ -131,4 +132,3 @@ BOOST_AUTO_TEST_CASE( instantiate_from_file )
 ```cpp
 BOOST_AUTO_TEST_SUITE_END()
 ```
-native

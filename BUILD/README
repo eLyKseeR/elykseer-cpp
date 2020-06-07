@@ -1,0 +1,3 @@
+./ut.sh --run_test=utRestoreCtrl/encrypt_decrypt_file --log_level=all
+
+./ut.sh --run_test=utAssembly/assembly_encrypt_then_decrypt --log_level=all 

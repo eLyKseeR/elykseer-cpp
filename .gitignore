@@ -14,3 +14,9 @@ BUILD/cmake_install.cmake
 BUILD/src
 BUILD/test
 
+.vscode/settings.json
+.ionide/symbolCache.db
+
+src/cpp/obsolete/
+tests/cpp/obsolete/
+

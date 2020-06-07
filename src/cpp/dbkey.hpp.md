@@ -7,6 +7,7 @@
 #pragma once
 
 #include "lxr/dbctrl.hpp"
+#include "lxr/key128.hpp"
 #include "lxr/key256.hpp"
 #include <string>
 ````
@@ -18,7 +19,7 @@ namespace [lxr](namespace.list) {
 {
     DbKeyBlock() : _n(16) {};
     Key256 _key;
-    Key256 _iv;
+    Key128 _iv;
     int _n;
 };
 std::ostream & operator<<(std::ostream &os, lxr::DbKeyBlock const & block);

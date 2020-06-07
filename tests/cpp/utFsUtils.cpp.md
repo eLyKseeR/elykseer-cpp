@@ -24,7 +24,6 @@ BOOST_AUTO_TEST_CASE( file_stem )
 {
 	std::string fstem = lxr::FsUtils::fstem();
 	//std::clog << lxr::FsUtils::fstem() << std::endl;
-	//std::string md5 = "30616da777172b41a2417ddb986f2ca0";
 	BOOST_CHECK_EQUAL(fstem.substr(0,4), "lxr_");
 }
 ```

@@ -7,6 +7,8 @@
 
 #include "lxr/options.hpp"
 
+#include "boost/filesystem.hpp"
+
 #include <iostream>
 #include "pugixml.hpp"
 
@@ -14,8 +16,9 @@ namespace lxr {
 
 struct Options::pimpl {
   pimpl() {
-    _fpathmeta = "/tmp";
-    _fpathchunks =  "/tmp";
+    auto tmpd = boost::filesystem::temp_directory_path();
+    _fpathmeta = tmpd;
+    _fpathchunks =  tmpd;
   }
   int _nchunks{16};
   int _nredundancy {0};

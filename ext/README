@@ -3,12 +3,21 @@ External Dependencies
 
 the content of the 'ext/' directory:
 
-  elykseer-crypto
+  elykseer-crypto/
   date/
   gitalk/
   prngsharp/
   pugixml/
   sizebounded/
+  stream-cpp/
+
+
+elykseer-crypto
+===============
+
+license: GPL-3.0
+
+https://github.com/eLyKseeR/elykseer-crypto
 
 
 gitalk
@@ -25,6 +34,14 @@ sizebounded
 license: BSD3
 
 https://github.com/CodiePP/sizebounded.git
+
+
+stream-cpp
+==========
+
+license: BSD3
+
+https://github.com/CodiePP/stream-cpp.git
 
 
 date
@@ -51,12 +68,3 @@ parses XML data
 license: MIT
 
 https://github.com/zeux/pugixml.git
-
-
-Boost 1.67.0
-============
-
-license: Boost Software License 1.0
-
-./b2 toolset=clang cflags=-mmacosx-version-min=10.12 cxxflags=-mmacosx-version-min=10.12 mflags=-mmacosx-version-min=10.12 mmflags=-mmacosx-version-min=10.12 linkflags=-mmacosx-version-min=10.12 cxxflags=-std=c++1z stage
-

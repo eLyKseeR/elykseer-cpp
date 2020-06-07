@@ -16,6 +16,9 @@ set (${PROJECT_NAME}_VERSION_MINOR 0)
 set (${PROJECT_NAME}_VERSION_PATCH 42)
 set (${PROJECT_NAME}_VERSION_STRING ${elykseer-cpp_VERSION_MAJOR}.${elykseer-cpp_VERSION_MINOR}.${elykseer-cpp_VERSION_PATCH})
 
+# set to '-DDEBUG' to turn on debugging output
+add_definitions( -UDEBUG )
+
 # boost
 #set(BOOST_ROOT "${CMAKE_HOME_DIRECTORY}/ext/boost_1_69_0/")
 #set(BOOST_LIBRARYDIR "${CMAKE_HOME_DIRECTORY}/ext/boost_1_69_0/stage/lib")
@@ -28,6 +31,10 @@ set(Boost_USE_MULTITHREADED ON)
 find_package( Boost 1.67.0 REQUIRED COMPONENTS system filesystem chrono thread date_time iostreams contract )
 LINK_DIRECTORIES ( ${Boost_LIBRARY_DIRS} )
 INCLUDE_DIRECTORIES (${Boost_INCLUDE_DIRS})
+
+find_package(ZLIB REQUIRED) 
+LINK_DIRECTORIES (${ZLIB_LIBRARY_DIRS})
+INCLUDE_DIRECTORIES (${ZLIB_INCLUDE_DIRS})
 
 # boost/contract
 if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")

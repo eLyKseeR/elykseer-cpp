@@ -5,6 +5,7 @@
 
 #include "boost/test/unit_test.hpp"
 
+#include "lxr/fsutils.hpp"
 #include "lxr/options.hpp"
 
 #include <iostream>
@@ -26,7 +27,8 @@ BOOST_AUTO_TEST_CASE( export_import_XML )
     _opts.nChunks(17);
     _opts.fpathChunks() = "/data/storage";
     _opts.fpathMeta() = "/mnt/secure";
-	const std::string _fpath = "/tmp/test_options_1.xml";
+    auto const tmpd = boost::filesystem::temp_directory_path();
+	auto const _fpath = tmpd / std::string("test_options_1.xml");
 	std::ofstream _outs; _outs.open(_fpath);
     _opts.outStream(_outs);
     _outs.close();
@@ -54,20 +56,20 @@ BOOST_AUTO_TEST_CASE( setters_getters )
     BOOST_CHECK_EQUAL("/data/storage", _opts2.fpathChunks());
     BOOST_CHECK_EQUAL("/mnt/secure", _opts2.fpathMeta());
 
-    const std::string _fpath = "/tmp/test_options.xml";
-    std::ofstream _outs; _outs.open(_fpath);
+    auto const tmpd = boost::filesystem::temp_directory_path();
+    std::ofstream _outs; _outs.open(tmpd / std::string("test_options.xml"));
     _opts.outStream(_outs);
 }
 ```
 
 
 <Options>
-  <memory nchunks="16" redundancy="0" />
+  <memory nchunks="17" redundancy="0" />
   <compression>on</compression>
   <deduplication level="2" />
   <fpaths>
-    <meta>/tmp</meta>
-    <chunks>/tmp/LXR</chunks>
+    <meta>/mnt/secure</meta>
+    <chunks>/data/storage</chunks>
   </fpaths>
 </Options>
 
@@ -77,8 +79,8 @@ BOOST_AUTO_TEST_CASE( readXML )
 {
     lxr::Options & _opts = lxr::Options::set();
     _opts.nChunks(17);
-    const std::string _fpath = "/tmp/test_options.xml";
-    std::ifstream _ins; _ins.open(_fpath);
+    auto const tmpd = boost::filesystem::temp_directory_path();
+    std::ifstream _ins; _ins.open(tmpd / std::string("test_options.xml"));
     _opts.inStream(_ins);
 
     BOOST_CHECK_EQUAL(17, _opts.nChunks());
@@ -88,4 +90,3 @@ BOOST_AUTO_TEST_CASE( readXML )
 ```cpp
 BOOST_AUTO_TEST_SUITE_END()
 ```
-native

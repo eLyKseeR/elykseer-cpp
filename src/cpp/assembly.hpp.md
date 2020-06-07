@@ -87,23 +87,27 @@ module Assembly =
 
 >public:
 
+## // construct an _Assembly_ with a defined size
+
 >explicit [Assembly](assembly_ctor.cpp.md)(int n);
+
+## // construct an _Assembly_ with its identifier set; for reconstruction
 
 >explicit [Assembly](assembly_ctor.cpp.md)(Key256 const & aid, int n);
 
 >[~Assembly](assembly_ctor.cpp.md)();
 
->int size() const;
+>int [size](assembly_functions.cpp.md)() const;
 
->uint32_t pos() const;
+>uint32_t [pos](assembly_functions.cpp.md)() const;
 
->Key256 const aid() const;
+>Key256 const [aid](assembly_functions.cpp.md)() const;
 
->std::string const said() const;
+>std::string const [said](assembly_functions.cpp.md)() const;
 
 >static constexpr int datasz { 1024*4 };
 
->int [getData](assembly_functions.cpp.md)(int pos0, int pos1, sizebounded&lt;unsigned char,datasz&gt; &) const;
+>int [getData](assembly_functions.cpp.md)(int startpos, int endpos, sizebounded&lt;unsigned char,datasz&gt; &) const;
 
 >int [addData](assembly_functions.cpp.md)(int length, sizebounded&lt;unsigned char, datasz&gt; const &, int startpos = 0);
 
@@ -133,9 +137,9 @@ module Assembly =
 
 >bool [insertChunk](assembly_functions.cpp.md)(int idx);
 
->int [get_data](assembly_functions.cpp.md)(int, int, sizebounded&lt;unsigned char, datasz&gt; &) const;
+>int [get_data](assembly_functions.cpp.md)(const int pos, const int len, sizebounded&lt;unsigned char, datasz&gt; &) const;
 
->int [set_data](assembly_functions.cpp.md)(int, int, sizebounded&lt;unsigned char, datasz&gt; const &, int p0 = 0);
+>int [set_data](assembly_functions.cpp.md)(const int pos, const int len, sizebounded&lt;unsigned char, datasz&gt; const &, int p0 = 0);
 
 >struct pimpl;
 

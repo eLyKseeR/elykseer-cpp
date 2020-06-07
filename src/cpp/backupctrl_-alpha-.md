@@ -7,14 +7,18 @@
 
 #include "lxr/backupctrl.hpp"
 #include "lxr/assembly.hpp"
+#include "lxr/chunk.hpp"
+#include "lxr/fsutils.hpp"
 #include "lxr/filectrl.hpp"
 #include "lxr/dbfp.hpp"
 #include "lxr/dbkey.hpp"
 #include "lxr/md5.hpp"
+#include "lxr/options.hpp"
 #include "lxr/sha256.hpp"
 
 #include "sizebounded/sizebounded.hpp"
-#include "sizebounded/sizebounded.ipp"
+#include "stream-cpp/zblocks.hpp"
+#include "stream-cpp/zblocks.ipp"
 
 #include <iostream>
 #include <cstdio>
@@ -23,17 +27,17 @@ namespace lxr {
 
 struct BackupCtrl::pimpl
 {
-    pimpl(Options const & o)
-        : _o(o)
+    pimpl(int n)
+        : _nChunks(n)
     {
-        _ass.reset(new Assembly(o.nChunks()));
+        _ass.reset(new Assembly(n));
     }
     ~pimpl() {}
 
-    bool renew_assembly();
+    // bool renew_assembly();
 
-    Options _o;
-    std::unique_ptr<Assembly> _ass;
+    int _nChunks;
+    std::shared_ptr<Assembly> _ass;
     DbFp _dbfp;
     DbKey _dbkey;
     DbFp _reffp;
@@ -44,7 +48,6 @@ struct BackupCtrl::pimpl
     std::chrono::microseconds time_write {0};
 
     private:
-    pimpl();
 };
 
 ````

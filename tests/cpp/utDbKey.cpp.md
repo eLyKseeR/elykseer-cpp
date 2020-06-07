@@ -6,6 +6,9 @@
 #include "boost/test/unit_test.hpp"
 
 #include "lxr/dbkey.hpp"
+#include "lxr/fsutils.hpp"
+#include "lxr/key128.hpp"
+#include "lxr/key256.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -40,6 +43,11 @@ BOOST_AUTO_TEST_CASE( set_get_record )
 }
 ```
 
+```cpp
+static char _k1[64], _k2[64];
+static char _iv1[32], _iv2[32];
+```
+
 ## Test case: output to XML file
 ```cpp
 BOOST_AUTO_TEST_CASE( output_to_xml )
@@ -47,15 +55,21 @@ BOOST_AUTO_TEST_CASE( output_to_xml )
     const std::string aid1 = "94ffed38da8acee6f14be5af8a31d3b8015e008f9b30c7d12a58bfed57ba8d12";
 	const std::string aid2 = "a31d3b8015e00894ffed38da8acee6f14be5af8f9b30c7d12a58bfed57ba8d12";
 	
+	lxr::Key128 iv1, iv2;
+	lxr::Key256 key1, key2;
 	lxr::DbKey _db;
-	lxr::DbKeyBlock _block1;  _block1._n=64;
-	lxr::DbKeyBlock _block2;  _block2._n=16;
+	lxr::DbKeyBlock _block1;  _block1._n=64; _block1._key=key1; _block1._iv=iv1;
+	lxr::DbKeyBlock _block2;  _block2._n=16; _block2._key=key2; _block2._iv=iv2;
 	_db.set(aid1, _block1);
 	_db.set(aid2, _block2);
 	BOOST_CHECK_EQUAL(2, _db.count());
-	const std::string _fpath = "/tmp/test_dbkey_1.xml";
-	std::ofstream _outs; _outs.open(_fpath);
+	auto const tmpd = boost::filesystem::temp_directory_path();
+	std::ofstream _outs; _outs.open(tmpd / std::string("test_dbkey_1.xml"));
 	_db.outStream(_outs);
+	strncpy(_k1, key1.toHex().c_str(), 64);
+	strncpy(_k2, key2.toHex().c_str(), 64);
+	strncpy(_iv1, iv1.toHex().c_str(), 32);
+	strncpy(_iv2, iv2.toHex().c_str(), 32);
 }
 ```
 
@@ -66,17 +80,20 @@ BOOST_AUTO_TEST_CASE( input_from_xml )
     const std::string aid1 = "94ffed38da8acee6f14be5af8a31d3b8015e008f9b30c7d12a58bfed57ba8d12";
 	const std::string aid2 = "a31d3b8015e00894ffed38da8acee6f14be5af8f9b30c7d12a58bfed57ba8d12";
 	
-	const std::string _fpath = "/tmp/test_dbkey_1.xml";
+  auto const tmpd = boost::filesystem::temp_directory_path();
 	lxr::DbKey _db;
-	std::ifstream _ins; _ins.open(_fpath);
+	std::ifstream _ins; _ins.open(tmpd / std::string("test_dbkey_1.xml"));
 	_db.inStream(_ins);
 	BOOST_CHECK_EQUAL(2, _db.count());
-	BOOST_CHECK(_db.get(aid1));
-	BOOST_CHECK(_db.get(aid2));
+	auto const keys1 = _db.get(aid1);
+	auto const keys2 = _db.get(aid2);
+	BOOST_CHECK_EQUAL(std::string(_k1,64), keys1->_key.toHex());
+	BOOST_CHECK_EQUAL(std::string(_k2,64), keys2->_key.toHex());
+	BOOST_CHECK_EQUAL(std::string(_iv1,32), keys1->_iv.toHex());
+	BOOST_CHECK_EQUAL(std::string(_iv2,32), keys2->_iv.toHex());
 }
 ```
 
 ```cpp
 BOOST_AUTO_TEST_SUITE_END()
 ```
-native

@@ -6,6 +6,7 @@
 #include "boost/test/unit_test.hpp"
 
 #include "lxr/dbbackupjob.hpp"
+#include "lxr/fsutils.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -51,9 +52,11 @@ BOOST_AUTO_TEST_CASE( set_get_record )
 ```cpp
 BOOST_AUTO_TEST_CASE( output_to_xml )
 {
-    const std::string name1 = "all my precious data";
+  const std::string name1 = "all my precious data";
 	const std::string name2 = "the ledger";
 	
+  auto const tmpd = boost::filesystem::temp_directory_path();
+      
 	lxr::DbBackupJob _db;
     lxr::DbJobDat _job1;
     _job1._paths.push_back(std::make_pair("file","/home/me/Data/Performance.ods"));
@@ -65,8 +68,7 @@ BOOST_AUTO_TEST_CASE( output_to_xml )
 	_db.set(name1, _job1);
 	_db.set(name2, _job2);
 	BOOST_CHECK_EQUAL(2, _db.count());
-	const std::string _fpath = "/tmp/test_dbbackupjob_1.xml";
-	std::ofstream _outs; _outs.open(_fpath);
+	std::ofstream _outs; _outs.open(tmpd / std::string("test_dbbackupjob_1.xml"));
 	_db.outStream(_outs);
 }
 ```
@@ -78,9 +80,10 @@ BOOST_AUTO_TEST_CASE( input_from_xml )
   const std::string name1 = "all my precious data";
   const std::string name2 = "the ledger";
 
-  const std::string _fpath = "/tmp/test_dbbackupjob_1.xml";
+  auto const tmpd = boost::filesystem::temp_directory_path();
+
   lxr::DbBackupJob _db;
-  std::ifstream _ins; _ins.open(_fpath);
+  std::ifstream _ins; _ins.open(tmpd / std::string("test_dbbackupjob_1.xml"));
   _db.inStream(_ins);
   BOOST_CHECK_EQUAL(2, _db.count());
   BOOST_CHECK(_db.get(name1));
@@ -91,4 +94,3 @@ BOOST_AUTO_TEST_CASE( input_from_xml )
 ```cpp
 BOOST_AUTO_TEST_SUITE_END()
 ```
-native
