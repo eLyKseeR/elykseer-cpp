@@ -66,10 +66,10 @@ BOOST_AUTO_TEST_CASE( encrypt_file )
 
     auto const fp_dbfp = lxr::Options::current().fpathMeta() / "test_dbfp_backup.xml";
     auto const fp_dbky = lxr::Options::current().fpathMeta() / "test_dbkey_backup.xml";
-    std::ofstream _out1; _out1.open(fp_dbfp);
+    std::ofstream _out1; _out1.open(fp_dbfp.native());
     _ctrl.getDbFp().outStream(_out1);
     _out1.close();
-    std::ofstream _out2; _out2.open(fp_dbky);
+    std::ofstream _out2; _out2.open(fp_dbky.native());
     _ctrl.getDbKey().outStream(_out2);
     _out2.close();
 
@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE( encrypt_empty_file )
     BOOST_CHECK(_ctrl.free() == _free0);
 
     auto const fp_dbfp = lxr::Options::current().fpathMeta() / "test_dbfp_backup.xml";
-    std::ofstream _outs; _outs.open(fp_dbfp);
+    std::ofstream _outs; _outs.open(fp_dbfp.native());
     _ctrl.getDbFp().outStream(_outs);
 
 }

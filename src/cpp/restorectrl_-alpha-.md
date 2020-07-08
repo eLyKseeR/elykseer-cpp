@@ -32,7 +32,9 @@ namespace lxr {
 struct RestoreCtrl::pimpl
 {
     pimpl() {}
-    ~pimpl() {}
+    ~pimpl() {
+        _ass.reset();
+      }
 
     bool load_assembly(Key256 const &);
 
@@ -43,7 +45,7 @@ struct RestoreCtrl::pimpl
                      , std::ofstream &fout
                      , inflatestream<Ct,St,Vt,sz> &decomp );
 
-    std::shared_ptr<Assembly> _ass;
+    std::shared_ptr<Assembly> _ass=nullptr;
     DbFp _dbfp;
     DbKey _dbkey;
     uint64_t trx_in {0UL};

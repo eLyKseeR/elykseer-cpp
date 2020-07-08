@@ -218,7 +218,7 @@ bool BackupCtrl::backup(boost::filesystem::path const & fp)
 
 #ifdef DEBUG
     { auto const tmpd = boost::filesystem::temp_directory_path();
-      std::ofstream _fe; _fe.open(tmpd / std::string("test_assembly.backuped"));
+      std::ofstream _fe; _fe.open((tmpd / std::string("test_assembly.backuped")).native());
       const int bufsz = 4096;
       sizebounded<unsigned char, bufsz> buf;
       for (int i=0; i<Options::current().nChunks()*Chunk::size; i+=bufsz) {

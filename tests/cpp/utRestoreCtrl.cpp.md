@@ -6,6 +6,7 @@
 #include "boost/test/unit_test.hpp"
 
 #include "lxr/backupctrl.hpp"
+#include "lxr/filectrl.hpp"
 #include "lxr/fsutils.hpp"
 #include "lxr/restorectrl.hpp"
 #include "lxr/options.hpp"
@@ -43,10 +44,12 @@ BOOST_AUTO_TEST_CASE( backup_restore_file )
   auto const tmpd = boost::filesystem::temp_directory_path();
   lxr::Options::set().fpathChunks() = tmpd / "LXR";
   lxr::Options::set().fpathMeta() = tmpd /"meta";
+  BOOST_REQUIRE_MESSAGE( lxr::FileCtrl::dirExists(lxr::Options::current().fpathMeta()), "missing directory: meta" );
 
   auto const outputdir = tmpd / "restored";
+  BOOST_REQUIRE_MESSAGE( lxr::FileCtrl::dirExists(outputdir), "missing directory: restored" );
   const std::string datafname = "test_data_file";
-  const std::string datafile = (tmpd / datafname).c_str();
+  const std::string datafile = (tmpd / datafname).native();
   auto const fp_dbfp = lxr::Options::current().fpathMeta() / "test_dbfp_restore.xml";
   auto const fp_dbky = lxr::Options::current().fpathMeta() / "test_dbkey_restore.xml";
 
@@ -77,10 +80,10 @@ BOOST_AUTO_TEST_CASE( backup_restore_file )
 
     _backup.finalize();
 
-    std::ofstream _out1; _out1.open(fp_dbfp);
+    std::ofstream _out1; _out1.open(fp_dbfp.native());
     _backup.getDbFp().outStream(_out1);
     _out1.close();
-    std::ofstream _out2; _out2.open(fp_dbky);
+    std::ofstream _out2; _out2.open(fp_dbky.native());
     _backup.getDbKey().outStream(_out2);
     _out2.close();
   }
@@ -95,14 +98,16 @@ BOOST_AUTO_TEST_CASE( backup_restore_file )
     BOOST_CHECK_EQUAL(0UL, _restore.bytes_out());
 
     lxr::DbFp _dbfp;
-    { std::ifstream _if; _if.open(fp_dbfp);
+    { std::ifstream _if; _if.open(fp_dbfp.native());
       _dbfp.inStream(_if); _if.close(); }
+    BOOST_CHECK_EQUAL(1, _dbfp.count());
     _restore.addDbFp(_dbfp);
     lxr::DbKey _dbks;
-    { std::ifstream _if; _if.open(fp_dbky);
+    { std::ifstream _if; _if.open(fp_dbky.native());
       _dbks.inStream(_if); _if.close(); }
+    BOOST_CHECK_EQUAL(1, _dbks.count());
     _restore.addDbKey(_dbks);
-    
+
     BOOST_REQUIRE( _restore.restore(outputdir, datafile) );
 
     BOOST_CHECK( _restore.bytes_in() > 0);

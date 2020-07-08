@@ -189,7 +189,7 @@ BOOST_AUTO_TEST_CASE( assembly_encrypt_then_extract_chunks )
   _a1.addData(buf.size()-16, buf);  // minus random bytes at beginning
   auto const md5_1 = lxr::Md5::hash((const char*)buf.ptr(), buf.size()-16);
   #ifdef DEBUG
-  { std::ofstream fass; fass.open(tmpd / "test_assembly.filled");
+  { std::ofstream fass; fass.open((tmpd / "test_assembly.filled").native());
     const int bufsz = 4096;
     sizebounded<unsigned char, bufsz> buf;
     for (int i=0; i<lxr::Options::current().nChunks()*lxr::Chunk::size; i+=bufsz) {
@@ -213,7 +213,7 @@ BOOST_AUTO_TEST_CASE( assembly_encrypt_then_extract_chunks )
   BOOST_CHECK(!_a2.isEncrypted() );
 
   #ifdef DEBUG
-  { std::ofstream fass; fass.open(tmpd / "test_assembly.decrypted");
+  { std::ofstream fass; fass.open((tmpd / "test_assembly.decrypted").native());
     const int bufsz = 4096;
     sizebounded<unsigned char, bufsz> buf;
     for (int i=0; i<lxr::Options::current().nChunks()*lxr::Chunk::size; i+=bufsz) {

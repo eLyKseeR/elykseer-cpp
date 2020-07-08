@@ -28,12 +28,12 @@ BOOST_AUTO_TEST_CASE( export_import_XML )
     _opts.fpathChunks() = "/data/storage";
     _opts.fpathMeta() = "/mnt/secure";
     auto const tmpd = boost::filesystem::temp_directory_path();
-	auto const _fpath = tmpd / std::string("test_options_1.xml");
-	std::ofstream _outs; _outs.open(_fpath);
+	auto const _fpath = tmpd / "test_options_1.xml";
+	std::ofstream _outs; _outs.open(_fpath.native());
     _opts.outStream(_outs);
     _outs.close();
     lxr::Options & _opts1 = lxr::Options::set();
-	std::ifstream _ins; _ins.open(_fpath);
+	std::ifstream _ins; _ins.open(_fpath.native());
     _opts1.inStream(_ins);
     auto const _opts2 = lxr::Options::current();
     BOOST_CHECK_EQUAL(17, _opts2.nChunks());
@@ -57,7 +57,8 @@ BOOST_AUTO_TEST_CASE( setters_getters )
     BOOST_CHECK_EQUAL("/mnt/secure", _opts2.fpathMeta());
 
     auto const tmpd = boost::filesystem::temp_directory_path();
-    std::ofstream _outs; _outs.open(tmpd / std::string("test_options.xml"));
+    auto const fp_xml = tmpd / "test_options.xml";
+    std::ofstream _outs; _outs.open(fp_xml.native());
     _opts.outStream(_outs);
 }
 ```
@@ -80,7 +81,8 @@ BOOST_AUTO_TEST_CASE( readXML )
     lxr::Options & _opts = lxr::Options::set();
     _opts.nChunks(17);
     auto const tmpd = boost::filesystem::temp_directory_path();
-    std::ifstream _ins; _ins.open(tmpd / std::string("test_options.xml"));
+    auto const fp_xml = tmpd / "test_options.xml";
+    std::ifstream _ins; _ins.open(fp_xml.native());
     _opts.inStream(_ins);
 
     BOOST_CHECK_EQUAL(17, _opts.nChunks());

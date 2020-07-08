@@ -36,7 +36,7 @@ bool RestoreCtrl::pimpl::load_assembly(Key256 const & _aid)
 
 #ifdef DEBUG
     { auto const tmpd = boost::filesystem::temp_directory_path();
-      std::ofstream _fe; _fe.open(tmpd / std::string("test_assembly.restored"));
+      std::ofstream _fe; _fe.open((tmpd / std::string("test_assembly.restored")).native());
       const int bufsz = 4096;
       sizebounded<unsigned char, bufsz> buf;
       for (int i=0; i<Options::current().nChunks()*Chunk::size; i+=bufsz) {
@@ -55,18 +55,17 @@ Datastructures used in streaming data
 class configuration {
   public:
     configuration() {};
-    ~configuration() {};
 };
 
 class state {
   public:
     state() {};
-    ~state() {};
     uint64_t& trx_in() { return _trx_in; }
     void trx_in(int v) { _trx_in += v; }
     uint64_t& trx_out() { return _trx_out; }
     void trx_out(int v) { _trx_out += v; }
   private:
+    state(state const &) = delete;
     uint64_t _trx_in {0UL};
     uint64_t _trx_out {0UL};
 };
@@ -145,7 +144,7 @@ bool RestoreCtrl::restore(boost::filesystem::path const & root, std::string cons
         std::cerr << "output directory does not exist: " << targetdir << std::endl;
         return false;
     }
-    
+
     // get entry from DbFp
     auto dbfp = _pimpl->_dbfp.get(fp);
     if (! dbfp) {

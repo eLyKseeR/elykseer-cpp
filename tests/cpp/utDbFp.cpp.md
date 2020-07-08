@@ -87,7 +87,8 @@ BOOST_AUTO_TEST_CASE( output_to_xml )
   BOOST_CHECK(ob2);
   BOOST_CHECK_EQUAL(2, _db.count());
   auto const tmpd = boost::filesystem::temp_directory_path();
-  std::ofstream _outs; _outs.open(tmpd / std::string("test_dbfp_1.xml"));
+  auto const fp_xml = tmpd / "test_dbfp_1.xml";
+  std::ofstream _outs; _outs.open(fp_xml.native());
   _db.outStream(_outs);
 }
 ```
@@ -101,7 +102,8 @@ BOOST_AUTO_TEST_CASE( input_from_xml )
 
   auto const tmpd = boost::filesystem::temp_directory_path();
   lxr::DbFp _db;
-  std::ifstream _ins; _ins.open(tmpd / std::string("test_dbfp_1.xml"));
+  auto const fp_xml = tmpd / "test_dbfp_1.xml";
+  std::ifstream _ins; _ins.open(fp_xml.native());
   _db.inStream(_ins);
   BOOST_CHECK_EQUAL(2, _db.count());
   auto ob1 = _db.get(fp1);
