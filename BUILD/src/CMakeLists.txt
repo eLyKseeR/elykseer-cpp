@@ -58,3 +58,4 @@ target_link_libraries (${PROJECT_NAME}_${CMAKE_BUILD_TYPE}_s
 	${Boost_LIBRARIES}
 )
 
+add_subdirectory( cli )

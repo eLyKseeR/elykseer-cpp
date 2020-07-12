@@ -43,7 +43,7 @@ BOOST_AUTO_TEST_CASE( backup_restore_file )
 {
   auto const tmpd = boost::filesystem::temp_directory_path();
   lxr::Options::set().fpathChunks() = tmpd / "LXR";
-  lxr::Options::set().fpathMeta() = tmpd /"meta";
+  lxr::Options::set().fpathMeta() = tmpd / "meta";
   BOOST_REQUIRE_MESSAGE( lxr::FileCtrl::dirExists(lxr::Options::current().fpathMeta()), "missing directory: meta" );
 
   auto const outputdir = tmpd / "restored";

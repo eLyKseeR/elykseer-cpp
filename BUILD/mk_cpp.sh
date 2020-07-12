@@ -15,6 +15,13 @@ for HPP in `bash $GITALK/utils/find_hpp.sh ../../src/cpp/elykseer-cpp.md`; do
   bash $GITALK/utils/make_cpp.sh ${HPP}
 done
 
+cd cli
+for HPP in `bash $GITALK/utils/find_hpp.sh ../../../src/cpp/lxrbackup.md`; do
+  bash $GITALK/utils/make_hpp.sh ${HPP}
+  bash $GITALK/utils/make_cpp.sh ${HPP}
+done
+cd ..
+
 cd ..
 cd test
 

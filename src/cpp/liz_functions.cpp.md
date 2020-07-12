@@ -99,7 +99,7 @@ const std::string Liz::copyright()
 
 const std::string Liz::version()
 {
-    static std::string _enc = "VmVyc2lvbiAxLjUuMC4xIFRSNCAtIGRvIG5vdCB1c2UgZm9yIHByb2R1Y3Rpb24K";
+    static std::string _enc = "VmVyc2lvbiAxLjUuMS4xIFRSNSAtIGRvIG5vdCB1c2UgZm9yIHByb2R1Y3Rpb24=";
     return decodeb64(_enc);
 }
 
