@@ -20,6 +20,10 @@ for HPP in `bash $GITALK/utils/find_hpp.sh ../../../src/cpp/lxrbackup.md`; do
   bash $GITALK/utils/make_hpp.sh ${HPP}
   bash $GITALK/utils/make_cpp.sh ${HPP}
 done
+for HPP in `bash $GITALK/utils/find_hpp.sh ../../../src/cpp/lxrrestore.md`; do
+  bash $GITALK/utils/make_hpp.sh ${HPP}
+  bash $GITALK/utils/make_cpp.sh ${HPP}
+done
 cd ..
 
 cd ..

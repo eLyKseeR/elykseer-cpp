@@ -54,7 +54,11 @@ SET_TARGET_PROPERTIES(libpugixml PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIREC
 #add_library(libelykseer-crypto STATIC IMPORTED)
 #SET_TARGET_PROPERTIES(libelykseer-crypto PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/../ext/elykseer-crypto/BUILD/src/libelykseer-crypto_Debug_s.a)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z -g -O1 -fPIC")
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -g -O1 -fPIC")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O1 -fPIC")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -g -fPIC")
 set(CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS} -fPIC -g")
 # clang also wants its own stdlib

@@ -74,8 +74,10 @@ void output_help() {
   std::cout << "-V --version   shows version information" << std::endl;
   std::cout << "-L --license   shows license" << std::endl;
   std::cout << "-C --copyright shows copyright" << std::endl;
+  std::cout << "--verbose      verbose output" << std::endl;
+  std::cout << "--dry-run      just validate arguments" << std::endl;
   std::cout << "-x --pX        sets output path for encrypted chunks" << std::endl;
-  //std::cout << "-o --pD        sets output path for decrypted data" << std::endl;
+  std::cout << "-o --pD        sets output path for meta data" << std::endl;
   std::cout << "-n --nchunks   sets number of chunks (16-256) per assembly" << std::endl;
   std::cout << "-c --compression  sets compression (0 or 1)" << std::endl;
   std::cout << "-u --deduplication sets duplication mode (0, 1 or 2)" << std::endl;
@@ -107,7 +109,7 @@ void set_chunk_path(std::string const p) {
   }
 }
 
-void set_output_path(std::string const p) {
+void set_meta_path(std::string const p) {
   if (lxr::FileCtrl::dirExists(p)) {
     lxr::Options::set().fpathMeta() = p;
   } else {
@@ -222,7 +224,7 @@ int main (int argc, char * const argv[]) {
       case 'L': output_license(); break;
       case 'C': output_copyright(); break;
       case 'x': set_chunk_path(optarg); break;
-      case 'o': set_output_path(optarg); break;
+      case 'o': set_meta_path(optarg); break;
       case 'r': add_ref_path(ctrl, optarg); break;
       case 'f': backup_file(optarg); break;
       case 'd': backup_dir1(optarg); break;
