@@ -48,7 +48,7 @@ DbFpDat DbFpDat::fromFile(boost::filesystem::path const & fp)
     }
 #else
     #error Such a platform is not yet a good host for this software
-#endif    
+#endif
     return db;
 }
 ```
@@ -72,7 +72,7 @@ void DbFp::inStream(std::istream & ins)
             DbFpDat dat;
             dat._id.fromHex(node.attribute("id").value());
             const std::string _fp = node.attribute("fp").value();
-            //std::clog << "  fp=" << _fp << " id = " << dat._id.toHex() << std::endl;
+            std::clog << "  fp=" << _fp << " id = " << dat._id.toHex() << std::endl;
             for (pugi::xml_node node2: node.children()) {
                 if (cFblock == node2.name()) {
                     DbFpBlock block;
@@ -84,7 +84,7 @@ void DbFp::inStream(std::istream & ins)
                     block._clen = node2.attribute("clen").as_int();
                     block._compressed = node2.attribute("compressed").as_bool();
                     block._checksum.fromHex(node2.attribute("chksum").value());
-                    dat._blocks.push_back(block);
+                    dat._blocks->push_back(std::move(block));
                 }
                 else if (cFattrs == node2.name()) {
                     dat._osusr = node2.child_value("osusr");
@@ -95,8 +95,9 @@ void DbFp::inStream(std::istream & ins)
                     dat._checksum.fromHex(node2.child_value("chksum"));
                 }
             }
-            
-            set(_fp, dat); // add to db
+            //std::clog << "    blocks = " << dat._blocks->size() << std::endl;
+
+            set(_fp, std::move(dat)); // add to db
         }
     }
 }
@@ -141,7 +142,7 @@ void DbFp::outStream(std::ostream & os) const
     appValues([&os](std::string const & k, struct DbFpDat const & v) {
         os << "  <Fp fp=\\"" << k << "\\" id=\\"" << v._id.toHex() << "\\">" << std::endl;
         os << "    <Fattrs><osusr>" << v._osusr << "</osusr><osgrp>" << v._osgrp << "</osgrp><length>" << v._len << "</length><last>" << v._osattr << "</last><chksum>" << v._checksum.toHex() << "</chksum></Fattrs>" << std::endl;
-        for (const auto & b : v._blocks) {
+        for (const auto & b : *v._blocks) {
             os << "    <Fblock idx=\\"" << b._idx << "\\" apos=\\"" << b._apos << "\\" fpos=\\"" << b._fpos << "\\" blen=\\"" << b._blen << "\\" clen=\\"" << b._clen << "\\" compressed=\\"" << b._compressed << "\\" chksum=\\"" << b._checksum.toHex() << "\\">" << b._aid.toHex() << "</Fblock>" << std::endl;
         }
         os << "  </Fp>" << std::endl;

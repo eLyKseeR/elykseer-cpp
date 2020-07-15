@@ -58,14 +58,11 @@ type IDb<'k, 'e> =
 ```
 
 >virtual void set(K const & k, T const & v) {
-      _map[k]=v; }
+      _map[k]=std::move(v); }
 
 >virtual void unionWith(DbCtrl&lt;T,K&gt; const & other) {
 ```cpp
-      other.appValues([this](K const & k, T const & v) {
-        if (! this->contains(k)) {
-          this->set(k, v); }
-      });
+      _map.insert(other._map.begin(), other._map.end());
     }
 ```
 

@@ -20,11 +20,14 @@ include_directories(../src)
 include_directories("${CMAKE_HOME_DIRECTORY}/../ext/prngsharp/src")
 include_directories("${CMAKE_HOME_DIRECTORY}/../ext/pugixml/src")
 include_directories("${CMAKE_HOME_DIRECTORY}/../ext/elykseer-crypto/BUILD/src")
+include_directories("${CMAKE_HOME_DIRECTORY}/../../rapidcheck.git/include")
+include_directories("${CMAKE_HOME_DIRECTORY}/../../rapidcheck.git/extras/boost_test/include")
 
 # link external libraries
 link_directories("${CMAKE_HOME_DIRECTORY}/../ext/prngsharp")
 link_directories("${CMAKE_HOME_DIRECTORY}/../ext/elykseer-crypto/BUILD/src")
-set(libs "dl" "z")
+link_directories("${CMAKE_HOME_DIRECTORY}/../../rapidcheck.git/BUILD/")
+set(libs "dl" "z" "rapidcheck")
 
 file(GLOB SRCS ut*.cpp mocks/*.cpp)
 

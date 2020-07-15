@@ -16,7 +16,7 @@ void BackupCtrl::finalize()
         keyblock._n = _pimpl->_nChunks;
         keyblock._key = _k;
         keyblock._iv = _iv;
-        _pimpl->_dbkey.set(_pimpl->_ass->said(), keyblock);
+        _pimpl->_dbkey.set(_pimpl->_ass->said(), std::move(keyblock));
         _pimpl->_ass->extractChunks();
     }
 }
@@ -33,7 +33,7 @@ class configuration {
 
 class state {
   public:
-    state (configuration const *c) : _config(c) {};
+    state (configuration const *c, DbFpDat *d) : _config(c), _dbentry(d) {};
     ~state () {};
     int next_bidx() {return ++_bidx;}
     void setcompressed(bool c) {_iscompressed = c;}
@@ -50,7 +50,6 @@ class state {
     int lastwritten() const {return _lastwritten;}
     void lastchecksum(const Key128 &k) {_md5 = k;}
     Key128 lastchecksum() const {return _md5;}
-    void dbentry(DbFpDat *d) {_dbentry=d;}
     DbFpDat* dbentry() const {return _dbentry;}
     void dbkeys(DbKey *db) {_dbkeys=db;}
     DbKey* dbkeys() const {return _dbkeys;}
@@ -65,7 +64,7 @@ class state {
             keyblock._n = _config->nchunks();
             keyblock._key = _k;
             keyblock._iv = _iv;
-            _dbkeys->set(_assembly->said(), keyblock);
+            _dbkeys->set(_assembly->said(), std::move(keyblock));
             if (! _assembly->extractChunks()) { return false; }
         }
         _assembly.reset(new Assembly(_config->nchunks()));
@@ -173,7 +172,7 @@ class assemblystream : public stream<Ct,St,Vt,sz>
             st->lastchecksum(),
             st->assembly()->aid()
             );
-        st->dbentry()->_blocks.push_back(dbblock);
+        st->dbentry()->_blocks->push_back(std::move(dbblock));
         return (nwritten + nwritten2);
     };
 };
@@ -189,12 +188,11 @@ bool BackupCtrl::backup(boost::filesystem::path const & fp)
     if (! fptr) { return false; }
 
     // make DbFp entry
-    auto dbentry = DbFpDat::fromFile(fp);
+    auto t_dbentry = DbFpDat::fromFile(fp);
 
     // setup pipeline
     configuration config(_pimpl->_nChunks);
-    state st(&config);
-    st.dbentry(&dbentry);
+    state st(&config, &t_dbentry);
     st.dbkeys(&_pimpl->_dbkey);
     st.assembly(_pimpl->_ass);
     constexpr int dwidth = 1; // bytes read at once
@@ -228,7 +226,7 @@ bool BackupCtrl::backup(boost::filesystem::path const & fp)
     }
 #endif
 
-   _pimpl->_dbfp.set(fp.native(), dbentry);
+    _pimpl->_dbfp.set(fp.native(), std::move(t_dbentry));
 
     return true;
 }

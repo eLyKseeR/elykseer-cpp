@@ -168,7 +168,7 @@ bool RestoreCtrl::restore(boost::filesystem::path const & root, std::string cons
         _fout.close();
         return false;
     }
-    for (auto const & block : dbfp->_blocks) {
+    for (auto const & block : *dbfp->_blocks) {
         if ((trsz = _pimpl->restore_block<configuration,state,unsigned char,bsz>(block, buffer, _state, _fout, decomp)) < 0) {
             std::cerr << "failed to restore block: " << block._idx << std::endl;
             res = false;

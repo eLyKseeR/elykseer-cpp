@@ -12,6 +12,7 @@
 #include "lxr/md5.hpp"
 #include "boost/filesystem.hpp"
 
+#include <iostream>
 #include <string>
 #include <vector>
 ````
@@ -49,7 +50,18 @@ type DbFpDat = {
 ```c++
 {
     DbFpBlock() : _idx(-1) {};
-    DbFpBlock(int,int,uint64_t,int,int,bool,Key128&&, const Key256 &);
+    DbFpBlock(DbFpBlock && b) { _idx = b._idx; _apos = b._apos;
+       _fpos = b._fpos; _blen = b._blen;
+       _clen = b._clen; _compressed = b._compressed;
+       _checksum = b._checksum; _aid = b._aid; }
+    DbFpBlock& operator=(const DbFpBlock && b) { _idx = b._idx; _apos = b._apos;
+       _fpos = b._fpos; _blen = b._blen;
+       _clen = b._clen; _compressed = b._compressed;
+       _checksum = b._checksum; _aid = b._aid;
+       return *this; }
+    DbFpBlock(DbFpBlock const & b) = delete;
+    DbFpBlock& operator=(DbFpBlock const & b) = delete;
+    DbFpBlock(int,int,uint64_t,int,int,bool,Key128 &&,Key256 const &);
     int _idx, _apos;
     uint64_t _fpos;
     int _blen, _clen;
@@ -64,12 +76,24 @@ type DbFpDat = {
 {
     static DbFpDat make(std::string const &);
     static DbFpDat fromFile(boost::filesystem::path const &);
-    DbFpDat() {}
+    DbFpDat() : _blocks(new std::vector<DbFpBlock>()) {}
+    ~DbFpDat() { _blocks.reset(); }
+    DbFpDat(DbFpDat const & d) { _id = d._id; _len = d._len;
+        _osusr = d._osusr; _osgrp = d._osgrp; _osattr = d._osattr;
+        _checksum = d._checksum; _blocks = d._blocks; }
+    DbFpDat(DbFpDat && d) { _id = d._id; _len = d._len;
+        _osusr = d._osusr; _osgrp = d._osgrp; _osattr = d._osattr;
+        _checksum = d._checksum; _blocks = d._blocks; }
+    DbFpDat& operator=(DbFpDat const && d) { _id = d._id; _len = d._len;
+        _osusr = d._osusr; _osgrp = d._osgrp; _osattr = d._osattr;
+        _checksum = d._checksum; _blocks = d._blocks;
+        return *this; }
+    DbFpDat& operator=(DbFpDat const & d) = delete;
     Key128 _id;
     uint64_t _len;
     std::string _osusr, _osgrp, _osattr;
     Key256 _checksum;
-    std::vector<DbFpBlock> _blocks;
+    std::shared_ptr<std::vector<DbFpBlock>> _blocks;
 };
 std::ostream & operator<<(std::ostream &os, lxr::DbFpDat const & dat);
 ```
