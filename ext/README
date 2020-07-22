@@ -8,6 +8,7 @@ the content of the 'ext/' directory:
   gitalk/
   prngsharp/
   pugixml/
+  rapidcheck/
   sizebounded/
   stream-cpp/
 
@@ -68,3 +69,14 @@ parses XML data
 license: MIT
 
 https://github.com/zeux/pugixml.git
+
+
+RapidCheck
+==========
+
+QuickCheck clone for C++
+
+license: BSD2
+
+https://github.com/emil-e/rapidcheck
+

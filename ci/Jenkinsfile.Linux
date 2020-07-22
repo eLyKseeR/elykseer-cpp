@@ -21,6 +21,9 @@ pipeline {
                 sh 'cd ext/pugixml; patch -N < ../pugixml.patch2 || echo ignored'
                 sh 'cd ext/pugixml; cmake .'
                 sh 'cd ext/pugixml; make'
+                sh 'cd ext/rapidcheck; mkdir -p BUILD'
+                sh 'cd ext/rapidcheck/BUILD; cmake ..'
+                sh 'cd ext/rapidcheck/BUILD; make'
             }
         }
         stage('cleanup') {

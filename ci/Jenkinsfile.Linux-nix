@@ -19,6 +19,9 @@ pipeline {
                 sh 'cd ext/pugixml; patch -N < ../pugixml.patch2 || echo ignored'
                 sh 'cd ext/pugixml; nix-shell -p gcc cmake boost zlib --run "cmake ."'
                 sh 'cd ext/pugixml; nix-shell -p gcc cmake boost zlib --run "make"'
+                sh 'cd ext/rapidcheck; mkdir -p BUILD'
+                sh 'cd ext/rapidcheck/BUILD; nix-shell -p gcc cmake boost zlib --run "cmake .."'
+                sh 'cd ext/rapidcheck/BUILD; nix-shell -p gcc cmake boost zlib --run "make"'
             }
         }
         stage('mk cpp') {
