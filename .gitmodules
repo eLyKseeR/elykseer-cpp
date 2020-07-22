@@ -19,3 +19,7 @@
 [submodule "ext/stream-cpp"]
 	path = ext/stream-cpp
 	url = https://github.com/CodiePP/stream-cpp.git
+[submodule "ext/rapidcheck"]
+	path = ext/rapidcheck
+	url = https://github.com/emil-e/rapidcheck.git
+	branch = master
