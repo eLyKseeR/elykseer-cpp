@@ -18,6 +18,9 @@ pipeline {
                 sh 'cd ext/elykseer-crypto/BUILD; ./ut.sh'
                 sh 'cd ext/pugixml; cmake .'
                 sh 'cd ext/pugixml; make'
+                sh 'cd ext/rapidcheck; mkdir -p BUILD'
+                sh 'cd ext/rapidcheck/BUILD; cmake ..'
+                sh 'cd ext/rapidcheck/BUILD; make'
             }
         }
         stage('mk cpp') {
