@@ -40,9 +40,9 @@ type IStreamIO =
 
 >private:
 
->//StreamIO(StreamIO const &) = delete;
+>StreamIO(StreamIO const &) = delete;
 
->//StreamIO & operator=(StreamIO const &) = delete;
+>StreamIO & operator=(StreamIO const &) = delete;
 
 };
 

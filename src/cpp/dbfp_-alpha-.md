@@ -11,7 +11,11 @@
 #include "lxr/sha256.hpp"
 #include "lxr/filectrl.hpp"
 
-#include "pugixml.hpp"
+#include "boost/property_tree/ptree.hpp"
+#include "boost/property_tree/xml_parser.hpp"
+
+#include "boost/chrono.hpp"
+using clk = boost::chrono::high_resolution_clock;
 
 #include <iostream>
 #include <functional>

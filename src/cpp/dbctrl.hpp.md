@@ -58,7 +58,8 @@ type IDb<'k, 'e> =
 ```
 
 >virtual void set(K const & k, T const & v) {
-      _map[k]=std::move(v); }
+      _map[k]=std::move(v);
+    }
 
 >virtual void unionWith(DbCtrl&lt;T,K&gt; const & other) {
 ```cpp
@@ -99,5 +100,6 @@ type IDb<'k, 'e> =
 };
 
 ```cpp
-} // namespace
+} // namespace 1
 ```
+
