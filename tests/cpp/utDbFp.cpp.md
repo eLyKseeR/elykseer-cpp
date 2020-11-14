@@ -13,6 +13,8 @@
 
 #include "boost/chrono.hpp"
 using clk = boost::chrono::high_resolution_clock;
+#include "boost/property_tree/ptree.hpp"
+#include "boost/property_tree/xml_parser.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -101,35 +103,69 @@ BOOST_AUTO_TEST_CASE( output_to_xml )
 
 ## Test case: input from XML file
 ```cpp
-/* DISABLED
 BOOST_AUTO_TEST_CASE( input_from_xml )
 {
   const std::string fp1 = "/home/me/Documents/interesting.txt";
   const std::string fp2 = "/Data/photos/2001/motorcycle.jpeg";
 
-  auto const tmpd = boost::filesystem::temp_directory_path();
+  lxr::Key256 _aid1, _aid2;
   lxr::DbFp _db;
-  auto const fp_xml = tmpd / "test_dbfp_1.xml";
-  std::ifstream _ins; _ins.open(fp_xml.native());
-  _db.inStream(_ins);
-  BOOST_CHECK_EQUAL(2, _db.count());
-  auto ob1 = _db.get(fp1);
-  auto ob2 = _db.get(fp2);
-  BOOST_CHECK(ob1);
-  BOOST_CHECK(ob2);
-  BOOST_CHECK_EQUAL(lxr::Md5::hash(fp1), ob1->_id);
-  BOOST_CHECK_EQUAL(lxr::Md5::hash(fp2), ob2->_id);
-} */
+  lxr::DbFpDat _dat1 = lxr::DbFpDat::make(fp1);
+  lxr::DbFpDat _dat2 = lxr::DbFpDat::make(fp2);
+  _dat1._len = 1378; _dat2._len = 1749302;
+  _dat1._osusr = "me"; _dat1._osgrp = "users";
+  _dat2._osusr = "nobody"; _dat2._osgrp = "nobody";
+  lxr::DbFpBlock _block1 {1, 193943, 0UL, (int)_dat1._len, (int)_dat1._len, false, {}, _aid1.toHex()};
+  _dat1._blocks->push_back(std::move(_block1));
+  int idx = 1;
+  uint64_t len = 0ULL;
+  int bs = (1<<16) - 1;
+  while (len < _dat2._len) {
+    lxr::DbFpBlock _block2 {idx++, 7392+(int)len, len, std::min(bs,int(_dat2._len-len)), std::min(bs,int(_dat2._len-len)), false, {}, _aid2.toHex()};
+    _dat2._blocks->push_back(std::move(_block2));
+    len += bs;
+  }
+  _db.set(fp1, std::move(_dat1));
+  _db.set(fp2, std::move(_dat2));
+
+  std::string _buf;
+  std::ostringstream _outs;
+  _db.outStream(_outs); _outs.flush();
+  _buf = _outs.str();
+
+  std::cout << _buf << std::endl;
+
+  std::istringstream _ins(_buf);
+
+  lxr::DbFp _db2;
+  _db2.inStream(_ins);
+
+  std::ostringstream _outs2;
+  _db2.outStream(_outs2); _outs2.flush();
+  std::string _buf2 = _outs2.str();
+
+  std::cout << _buf2 << std::endl;
+
+  auto const _fpdat11 = _db.get(fp1);
+  auto const _fpdat12 = _db.get(fp2);
+  auto const _fpdat21 = _db2.get(fp1);
+  auto const _fpdat22 = _db2.get(fp2);
+
+  BOOST_CHECK(_fpdat11); BOOST_CHECK(_fpdat12);
+  BOOST_CHECK(_fpdat21); BOOST_CHECK(_fpdat22);
+  BOOST_CHECK_EQUAL(*_fpdat11, *_fpdat21);
+  BOOST_CHECK_EQUAL(*_fpdat12, *_fpdat22);
+}
 ```
 
 ## Test case: instantiate on real file
 ```cpp
 BOOST_AUTO_TEST_CASE( instantiate_from_file )
 {
-#if defined(__linux__) || defined(__APPLE__)
-  const std::string fp = "/bin/sh";
-#else
+#if defined(_WIN32)
   const std::string fp = "\\Windows\\cmd.exe";
+#else
+  const std::string fp = "/bin/sh";
 #endif
 
   auto _entry = lxr::DbFpDat::fromFile(fp);

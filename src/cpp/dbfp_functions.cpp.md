@@ -2,7 +2,7 @@ declared in [DbFp](dbfp.hpp.md)
 
 Create a *DbFpBlock* with given data.
 ```c++
-DbFpBlock::DbFpBlock(int i,int a,uint64_t f,int bl,int cl,bool c,Key128&& chk, const Key256 & aid)
+DbFpBlock::DbFpBlock(int i,int a,uint64_t f,int bl,int cl,bool c, const std::string& chk, const std::string & aid)
   : _idx(i), _apos(a)
   , _fpos(f), _blen(bl)
   , _clen(cl), _compressed(c)
@@ -15,7 +15,7 @@ Helper method to create a *DbFpDat*.
 DbFpDat DbFpDat::make(std::string const & fp)
 {
     DbFpDat db;
-    db._id = Md5::hash(fp);
+    db._id = Md5::hash(fp).toHex();
     return db;
 }
 ```
@@ -28,7 +28,7 @@ DbFpDat DbFpDat::fromFile(boost::filesystem::path const & fp)
     if (! FileCtrl::fileExists(fp)) {
         return db;
     }
-    db._checksum = Sha256::hash(fp);
+    db._checksum = Sha256::hash(fp).toHex();
 
 #if defined(__linux__) || defined(__APPLE__)
     struct stat _fst;
@@ -56,50 +56,58 @@ DbFpDat DbFpDat::fromFile(boost::filesystem::path const & fp)
 ```c++
 void DbFp::inStream(std::istream & ins)
 {
-    pugi::xml_document dbdoc;
-    auto res = dbdoc.load(ins);
-    if (!res) {
-        std::clog << res.description() << std::endl;
-        return;
-    }
-    auto dbroot = dbdoc.child("DbFp");
-    //std::clog << "  host=" << dbroot.child_value("host") << "  user=" << dbroot.child_value("user") << "  date=" << dbroot.child_value("date") << std::endl;
-    const std::string knodename = "Fp";
-    const std::string cFblock = "Fblock";
-    const std::string cFattrs = "Fattrs";
-    for (pugi::xml_node node: dbroot.children()) {
-        if (knodename == node.name()) {
-            DbFpDat dat;
-            dat._id.fromHex(node.attribute("id").value());
-            const std::string _fp = node.attribute("fp").value();
-            std::clog << "  fp=" << _fp << " id = " << dat._id.toHex() << std::endl;
-            for (pugi::xml_node node2: node.children()) {
-                if (cFblock == node2.name()) {
-                    DbFpBlock block;
-                    block._aid.fromHex(node2.child_value());
-                    block._idx = node2.attribute("idx").as_int();
-                    block._apos = node2.attribute("apos").as_int();
-                    block._fpos = node2.attribute("fpos").as_ullong();
-                    block._blen = node2.attribute("blen").as_int();
-                    block._clen = node2.attribute("clen").as_int();
-                    block._compressed = node2.attribute("compressed").as_bool();
-                    block._checksum.fromHex(node2.attribute("chksum").value());
-                    dat._blocks->push_back(std::move(block));
-                }
-                else if (cFattrs == node2.name()) {
-                    dat._osusr = node2.child_value("osusr");
-                    dat._osgrp = node2.child_value("osgrp");
-                    const char *_len = node2.child_value("length");
-                    dat._len = atol(_len);
-                    dat._osattr = node2.child_value("last");
-                    dat._checksum.fromHex(node2.child_value("chksum"));
-                }
-            }
-            //std::clog << "    blocks = " << dat._blocks->size() << std::endl;
+    boost::property_tree::ptree pt;
+    boost::property_tree::xml_parser::read_xml(ins, pt,
+      boost::property_tree::xml_parser::no_comments |
+      boost::property_tree::xml_parser::trim_whitespace);
 
-            set(_fp, std::move(dat)); // add to db
+    int counter = 0;
+    auto t0 = clk::now();
+    for (auto root = pt.begin(); root != pt.end(); root++) {
+        if (root->first == "DbFp") {
+          for (auto db = root->second.begin(); db != root->second.end(); db++) {
+            if (db->first == "Fp") {
+              lxr::DbFpDat dat;
+              std::string _fp;
+              for (auto fp = db->second.begin(); fp != db->second.end(); fp++) {
+                counter++;
+                if (fp->first == "<xmlattr>") {
+                  _fp = fp->second.get<std::string>("fp");
+                  dat._id = fp->second.get<std::string>("id");
+                } else if (fp->first == "Fattrs") {
+                  dat._osusr = fp->second.get<std::string>("osusr");
+                  dat._osgrp = fp->second.get<std::string>("osgrp");
+                  dat._len = fp->second.get<uint64_t>("length");
+                  dat._osattr = fp->second.get<std::string>("last");
+                  dat._checksum = fp->second.get<std::string>("chksum");
+                } else if (fp->first == "Fblock") {
+                  lxr::DbFpBlock block;
+                  block._aid = db->second.get<std::string>("Fblock");
+                  for (auto bl = fp->second.begin(); bl != fp->second.end(); bl++) {
+                    if (bl->first == "<xmlattr>") {
+                      block._idx = bl->second.get<int>("idx");
+                      block._apos = bl->second.get<int>("apos");
+                      block._fpos = bl->second.get<uint64_t>("fpos");
+                      block._blen = bl->second.get<int>("blen");
+                      block._clen = bl->second.get<int>("clen");
+                      block._compressed = 1 == bl->second.get<int>("compressed");
+                      block._checksum = bl->second.get<std::string>("chksum");
+                    }
+                  }
+                  dat._blocks->push_back(std::move(block));
+                }
+              }
+              if (! _fp.empty()) {
+                set(_fp, std::move(dat)); // add to db
+              }
+            }
+          }
         }
     }
+    auto t1 = clk::now();
+    auto tdiff = boost::chrono::round<boost::chrono::microseconds>(t1 - t0).count();
+    std::clog << "inStream took " << tdiff << " microseconds" << std::endl;
+    std::clog << "iterations: " << counter << std::endl;
 }
 ```
 
@@ -119,10 +127,10 @@ void DbFp::inStream(std::istream & ins)
         this.idb.appValues (fun k v ->
              let l1 = sprintf "  <Fp fp=\"%s\" id=\"%s\">" k (Key128.toHex v.id)
              s.WriteLine(l1)
-             let l2 = sprintf "     <Fattrs><osusr>%s</osusr><osgrp>%s</osgrp><length>%d</length><last>%s</last><chksum>%s</chksum></Fattrs>" v.osusr v.osgrp v.len v.osattr (Key256.toHex v.checksum)
+             let l2 = sprintf "     <Fattrs><osusr>%s</osusr><osgrp>%s</osgrp><length>%d</length><last>%s</last><chksum>%s</chksum></Fattrs>" v.osusr v.osgrp v.len v.osattr (Key256.toHex v._checksum)
              s.WriteLine(l2)
              for b in v.blocks do
-                 let l2 = sprintf "    <Fblock idx=\"%d\" apos=\"%d\" fpos=\"%d\" blen=\"%d\" clen=\"%d\" compressed=\"%s\" chksum=\"%s\">%s</Fblock>" b.idx b.apos b.fpos b.blen b.clen (if b.compressed then "1" else "0") (Key128.toHex b.checksum ) (Key256.toHex b.aid)
+                 let l2 = sprintf "    <Fblock idx=\"%d\" apos=\"%d\" fpos=\"%d\" blen=\"%d\" clen=\"%d\" compressed=\"%s\" chksum=\"%s\">%s</Fblock>" b.idx b.apos b.fpos b.blen b.clen (if b.compressed then "1" else "0") (Key128.toHex b._checksum ) (Key256.toHex b.aid)
                  s.WriteLine(l2)
              s.WriteLine("  </Fp>")
          )
@@ -140,10 +148,10 @@ void DbFp::outStream(std::ostream & os) const
     os << "<user>" << OS::username() << "</user>" << std::endl;
     os << "<date>" << OS::timestamp() << "</date>" << std::endl;
     appValues([&os](std::string const & k, struct DbFpDat const & v) {
-        os << "  <Fp fp=\\"" << k << "\\" id=\\"" << v._id.toHex() << "\\">" << std::endl;
-        os << "    <Fattrs><osusr>" << v._osusr << "</osusr><osgrp>" << v._osgrp << "</osgrp><length>" << v._len << "</length><last>" << v._osattr << "</last><chksum>" << v._checksum.toHex() << "</chksum></Fattrs>" << std::endl;
+        os << "  <Fp fp=\\"" << k << "\\" id=\\"" << v._id/* .toHex() */ << "\\">" << std::endl;
+        os << "    <Fattrs><osusr>" << v._osusr << "</osusr><osgrp>" << v._osgrp << "</osgrp><length>" << v._len << "</length><last>" << v._osattr << "</last><chksum>" << v._checksum/* .toHex() */ << "</chksum></Fattrs>" << std::endl;
         for (const auto & b : *v._blocks) {
-            os << "    <Fblock idx=\\"" << b._idx << "\\" apos=\\"" << b._apos << "\\" fpos=\\"" << b._fpos << "\\" blen=\\"" << b._blen << "\\" clen=\\"" << b._clen << "\\" compressed=\\"" << b._compressed << "\\" chksum=\\"" << b._checksum.toHex() << "\\">" << b._aid.toHex() << "</Fblock>" << std::endl;
+            os << "    <Fblock idx=\\"" << b._idx << "\\" apos=\\"" << b._apos << "\\" fpos=\\"" << b._fpos << "\\" blen=\\"" << b._blen << "\\" clen=\\"" << b._clen << "\\" compressed=\\"" << b._compressed << "\\" chksum=\\"" << b._checksum/* .toHex() */ << "\\">" << b._aid/* .toHex() */ << "</Fblock>" << std::endl;
         }
         os << "  </Fp>" << std::endl;
     });
