@@ -10,8 +10,6 @@
 #include "lxr/chunk.hpp"
 #include "lxr/fsutils.hpp"
 #include "lxr/filectrl.hpp"
-#include "lxr/dbfp.hpp"
-#include "lxr/dbkey.hpp"
 #include "lxr/md5.hpp"
 #include "lxr/options.hpp"
 #include "lxr/sha256.hpp"

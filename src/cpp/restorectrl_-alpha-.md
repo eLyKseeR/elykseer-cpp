@@ -36,7 +36,7 @@ struct RestoreCtrl::pimpl
         _ass.reset();
       }
 
-    bool load_assembly(Key256 const &);
+    bool load_assembly(std::string const &);
 
     template <typename Ct, typename St, typename Vt, int sz>
     int restore_block( DbFpBlock const &block

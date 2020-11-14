@@ -66,13 +66,13 @@ type DbFpDat = {
       && _checksum == b._checksum && _aid == b._aid); }
     DbFpBlock(DbFpBlock const & b) = delete;
     DbFpBlock& operator=(DbFpBlock const & b) = delete;
-    DbFpBlock(int,int,uint64_t,int,int,bool,Key128 &&,Key256 const &);
+    DbFpBlock(int,int,uint64_t,int,int,bool,const std::string&, const std::string&);
     int _idx, _apos;
     uint64_t _fpos;
     int _blen, _clen;
     bool _compressed;
-    Key128 _checksum;
-    Key256 _aid;
+    std::string _checksum;
+    std::string _aid;
 };
 ```
 
@@ -100,10 +100,10 @@ type DbFpDat = {
         && _osattr == d._osattr && _checksum == d._checksum
         && _blocks->size() == d._blocks->size()); }
     DbFpDat& operator=(DbFpDat const & d) = delete;
-    Key128 &_id;
+    std::string _id;
     uint64_t _len;
     std::string _osusr, _osgrp, _osattr;
-    Key256 &_checksum;
+    std::string _checksum;
     std::shared_ptr<std::vector<DbFpBlock>> _blocks;
 };
 std::ostream & operator<<(std::ostream &os, lxr::DbFpDat const & dat);

@@ -13,9 +13,8 @@ void RestoreCtrl::addDbKey(DbKey const & _db) {
 ```
 
 ```cpp
-bool RestoreCtrl::pimpl::load_assembly(Key256 const & _aid)
+bool RestoreCtrl::pimpl::load_assembly(std::string const & said)
 {
-    auto const & said = _aid.toHex();
     if (_ass && _ass->said() == said) {
         return true;  // already in scope
     }
@@ -24,7 +23,9 @@ bool RestoreCtrl::pimpl::load_assembly(Key256 const & _aid)
         std::cerr << "cannot load keys for aid=" << said << std::endl;
         return false;
     }
-    _ass.reset(new Assembly(_aid, Options::current().nChunks()));
+    Key256 aid{true};
+    aid.fromHex(said);
+    _ass.reset(new Assembly(aid, Options::current().nChunks()));
     if (! _ass->insertChunks()) {
         std::cerr << "cannot insert chunks into aid=" << said << std::endl;
         return false;
@@ -88,8 +89,10 @@ int lxr::RestoreCtrl::pimpl::restore_block( DbFpBlock const &block
     }
     int trsz = block._clen;
     if (!block._compressed) { trsz = block._blen; }
-    if (_ass->getData(block._apos, block._apos+trsz-1, buffer) != trsz) {
-        std::cerr << "wrong size of data returnd! block " << block._idx << " @ " << block._fpos << " len=" << block._blen << " clen=" << block._clen << std::endl;
+    int checkback = _ass->getData(block._apos, block._apos+trsz-1, buffer);
+    if (checkback != trsz) {
+        std::cerr << "wrong size of data returnd! block " << block._idx << " @ " << block._fpos << " len=" << block._blen << " clen=" << block._clen << " returned=" << checkback << std::endl;
+        std::cerr << "was accessing [" << block._apos << "," << block._apos+trsz-1 << "]" << std::endl;
         return -2;
     }
     // decompress
@@ -101,7 +104,7 @@ int lxr::RestoreCtrl::pimpl::restore_block( DbFpBlock const &block
         }
     }
     // check checksum
-    auto const md5 = Md5::hash((const char *)buffer.ptr(), block._blen);
+    auto const md5 = Md5::hash((const char *)buffer.ptr(), block._blen).toHex();
     if (md5 != (block._checksum)) {
         std::cerr << "checksum wrong for block " << block._idx << std::endl;
         std::cerr << " got:" << md5 << " expected:" << block._checksum << std::endl;

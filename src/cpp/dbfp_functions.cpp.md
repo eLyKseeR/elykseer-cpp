@@ -2,7 +2,7 @@ declared in [DbFp](dbfp.hpp.md)
 
 Create a *DbFpBlock* with given data.
 ```c++
-DbFpBlock::DbFpBlock(int i,int a,uint64_t f,int bl,int cl,bool c,Key128&& chk, const Key256 & aid)
+DbFpBlock::DbFpBlock(int i,int a,uint64_t f,int bl,int cl,bool c, const std::string& chk, const std::string & aid)
   : _idx(i), _apos(a)
   , _fpos(f), _blen(bl)
   , _clen(cl), _compressed(c)
@@ -15,7 +15,7 @@ Helper method to create a *DbFpDat*.
 DbFpDat DbFpDat::make(std::string const & fp)
 {
     DbFpDat db;
-    db._id = Md5::hash(fp);
+    db._id = Md5::hash(fp).toHex();
     return db;
 }
 ```
@@ -28,7 +28,7 @@ DbFpDat DbFpDat::fromFile(boost::filesystem::path const & fp)
     if (! FileCtrl::fileExists(fp)) {
         return db;
     }
-    db._checksum = Sha256::hash(fp);
+    db._checksum = Sha256::hash(fp).toHex();
 
 #if defined(__linux__) || defined(__APPLE__)
     struct stat _fst;
@@ -73,16 +73,16 @@ void DbFp::inStream(std::istream & ins)
                 counter++;
                 if (fp->first == "<xmlattr>") {
                   _fp = fp->second.get<std::string>("fp");
-                  dat._id.fromHex(fp->second.get<std::string>("id"));
+                  dat._id = fp->second.get<std::string>("id");
                 } else if (fp->first == "Fattrs") {
                   dat._osusr = fp->second.get<std::string>("osusr");
                   dat._osgrp = fp->second.get<std::string>("osgrp");
                   dat._len = fp->second.get<uint64_t>("length");
                   dat._osattr = fp->second.get<std::string>("last");
-                  dat._checksum.fromHex(fp->second.get<std::string>("chksum"));
+                  dat._checksum = fp->second.get<std::string>("chksum");
                 } else if (fp->first == "Fblock") {
                   lxr::DbFpBlock block;
-                  block._aid.fromHex(db->second.get<std::string>("Fblock"));
+                  block._aid = db->second.get<std::string>("Fblock");
                   for (auto bl = fp->second.begin(); bl != fp->second.end(); bl++) {
                     if (bl->first == "<xmlattr>") {
                       block._idx = bl->second.get<int>("idx");
@@ -91,7 +91,7 @@ void DbFp::inStream(std::istream & ins)
                       block._blen = bl->second.get<int>("blen");
                       block._clen = bl->second.get<int>("clen");
                       block._compressed = 1 == bl->second.get<int>("compressed");
-                      block._checksum.fromHex(bl->second.get<std::string>("chksum"));
+                      block._checksum = bl->second.get<std::string>("chksum");
                     }
                   }
                   dat._blocks->push_back(std::move(block));
@@ -148,10 +148,10 @@ void DbFp::outStream(std::ostream & os) const
     os << "<user>" << OS::username() << "</user>" << std::endl;
     os << "<date>" << OS::timestamp() << "</date>" << std::endl;
     appValues([&os](std::string const & k, struct DbFpDat const & v) {
-        os << "  <Fp fp=\\"" << k << "\\" id=\\"" << v._id.toHex() << "\\">" << std::endl;
-        os << "    <Fattrs><osusr>" << v._osusr << "</osusr><osgrp>" << v._osgrp << "</osgrp><length>" << v._len << "</length><last>" << v._osattr << "</last><chksum>" << v._checksum.toHex() << "</chksum></Fattrs>" << std::endl;
+        os << "  <Fp fp=\\"" << k << "\\" id=\\"" << v._id/* .toHex() */ << "\\">" << std::endl;
+        os << "    <Fattrs><osusr>" << v._osusr << "</osusr><osgrp>" << v._osgrp << "</osgrp><length>" << v._len << "</length><last>" << v._osattr << "</last><chksum>" << v._checksum/* .toHex() */ << "</chksum></Fattrs>" << std::endl;
         for (const auto & b : *v._blocks) {
-            os << "    <Fblock idx=\\"" << b._idx << "\\" apos=\\"" << b._apos << "\\" fpos=\\"" << b._fpos << "\\" blen=\\"" << b._blen << "\\" clen=\\"" << b._clen << "\\" compressed=\\"" << b._compressed << "\\" chksum=\\"" << b._checksum.toHex() << "\\">" << b._aid.toHex() << "</Fblock>" << std::endl;
+            os << "    <Fblock idx=\\"" << b._idx << "\\" apos=\\"" << b._apos << "\\" fpos=\\"" << b._fpos << "\\" blen=\\"" << b._blen << "\\" clen=\\"" << b._clen << "\\" compressed=\\"" << b._compressed << "\\" chksum=\\"" << b._checksum/* .toHex() */ << "\\">" << b._aid/* .toHex() */ << "</Fblock>" << std::endl;
         }
         os << "  </Fp>" << std::endl;
     });
