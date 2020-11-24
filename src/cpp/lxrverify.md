@@ -1,4 +1,4 @@
-# eLyKseeR _LXRrestore_ cli program
+# eLyKseeR _LXRverify_ cli program
 
 A C++ implementation of eLyKseeR cli (https://github.com/eLyKseeR/elykseer-cpp.git)
 
@@ -9,5 +9,5 @@ A C++ implementation of eLyKseeR cli (https://github.com/eLyKseeR/elykseer-cpp.g
 
 ## header
 
-[lxrrestore.hpp](lxrrestore.hpp.md)
+[lxrverify.hpp](lxrverify.hpp.md)
 

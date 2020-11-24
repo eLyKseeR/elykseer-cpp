@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE( assembly_creation_failed )
 ```cpp
 BOOST_AUTO_TEST_CASE( initialised_assembly_with_random_bytes )
 {
-  lxr::Assembly _a1(16);
+  lxr::Assembly _a1(17);
   sizebounded<unsigned char, lxr::Assembly::datasz> buf;
   BOOST_CHECK_EQUAL(16, _a1.pos());
 }
@@ -87,7 +87,7 @@ BOOST_AUTO_TEST_CASE( access_buffer_denied )
 ```cpp
 BOOST_AUTO_TEST_CASE( access_buffer_allowed )
 {
-  lxr::Assembly _a1(16);
+  lxr::Assembly _a1(17);
   sizebounded<unsigned char, lxr::Assembly::datasz> buf;
   lxr::Key256 _k;
   lxr::Key128 _iv;
@@ -102,7 +102,7 @@ BOOST_AUTO_TEST_CASE( assembly_encrypt_then_decrypt )
 {
   const std::string msg = "all my precious data are save, so I will sleep fine!";
 
-  lxr::Assembly _a1(16);
+  lxr::Assembly _a1(23);
   sizebounded<unsigned char, lxr::Assembly::datasz> buf;
   buf.transform([&msg](int i, unsigned char c)->unsigned char {
       if (i < msg.size()) {
@@ -144,7 +144,7 @@ BOOST_AUTO_TEST_CASE( assembly_encrypt_then_decrypt )
 BOOST_AUTO_TEST_CASE( assembly_set_get_data )
 {
   const std::string msg = "0123456789abcdefghijklmnopqrstuvwxyz";
-  lxr::Assembly _ass(16);
+  lxr::Assembly _ass(21);
   sizebounded<unsigned char, lxr::Assembly::datasz> buf;
   const int msz = msg.size();
   buf.transform([&msg,msz](int i, unsigned char c)->unsigned char {
@@ -177,10 +177,11 @@ BOOST_AUTO_TEST_CASE( assembly_encrypt_then_extract_chunks )
   if (! boost::filesystem::exists(outputpath)) {
     boost::filesystem::create_directory(outputpath);
   }
-  lxr::Options::set().nChunks(16);
+  int nChunks = 17;
+  lxr::Options::set().nChunks(nChunks);
   lxr::Options::set().isCompressed(false);
   lxr::Options::set().fpathChunks() = outputpath;
-  lxr::Assembly _a1(16);
+  lxr::Assembly _a1(nChunks);
   sizebounded<unsigned char, lxr::Assembly::datasz> buf;
   const int msz = msg.size();
   buf.transform([&msg,msz](int i, unsigned char c)->unsigned char {
@@ -192,7 +193,7 @@ BOOST_AUTO_TEST_CASE( assembly_encrypt_then_extract_chunks )
   { std::ofstream fass; fass.open((tmpd / "test_assembly.filled").native());
     const int bufsz = 4096;
     sizebounded<unsigned char, bufsz> buf;
-    for (int i=0; i<lxr::Options::current().nChunks()*lxr::Chunk::size; i+=bufsz) {
+    for (int i=0; i<nChunks()*lxr::Chunk::size; i+=bufsz) {
         BOOST_CHECK_EQUAL(_a1.getData(i, i+bufsz-1, buf), bufsz);
         fass.write((const char*)buf.ptr(),bufsz); }
     fass.close();
@@ -206,7 +207,7 @@ BOOST_AUTO_TEST_CASE( assembly_encrypt_then_extract_chunks )
   BOOST_CHECK( _a1.extractChunks() );
 
   auto const aid = _a1.aid();
-  lxr::Assembly _a2(aid, 16);
+  lxr::Assembly _a2(aid, nChunks);
   BOOST_CHECK( _a2.insertChunks() );
   BOOST_CHECK( _a2.isEncrypted() );
   BOOST_CHECK( _a2.decrypt(_k, _iv) );
@@ -216,7 +217,7 @@ BOOST_AUTO_TEST_CASE( assembly_encrypt_then_extract_chunks )
   { std::ofstream fass; fass.open((tmpd / "test_assembly.decrypted").native());
     const int bufsz = 4096;
     sizebounded<unsigned char, bufsz> buf;
-    for (int i=0; i<lxr::Options::current().nChunks()*lxr::Chunk::size; i+=bufsz) {
+    for (int i=0; i<nChunks()*lxr::Chunk::size; i+=bufsz) {
         BOOST_CHECK_EQUAL(_a2.getData(i, i+bufsz-1, buf), bufsz);
         fass.write((const char*)buf.ptr(),bufsz); }
     fass.close();

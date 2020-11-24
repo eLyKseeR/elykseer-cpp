@@ -133,7 +133,7 @@ BOOST_AUTO_TEST_CASE( input_from_xml )
   _db.outStream(_outs); _outs.flush();
   _buf = _outs.str();
 
-  std::cout << _buf << std::endl;
+  //std::cout << _buf << std::endl;
 
   std::istringstream _ins(_buf);
 
@@ -144,7 +144,7 @@ BOOST_AUTO_TEST_CASE( input_from_xml )
   _db2.outStream(_outs2); _outs2.flush();
   std::string _buf2 = _outs2.str();
 
-  std::cout << _buf2 << std::endl;
+  //std::cout << _buf2 << std::endl;
 
   auto const _fpdat11 = _db.get(fp1);
   auto const _fpdat12 = _db.get(fp2);

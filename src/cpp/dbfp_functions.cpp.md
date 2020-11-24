@@ -61,8 +61,10 @@ void DbFp::inStream(std::istream & ins)
       boost::property_tree::xml_parser::no_comments |
       boost::property_tree::xml_parser::trim_whitespace);
 
+#ifdef DEBUG
     int counter = 0;
     auto t0 = clk::now();
+#endif
     for (auto root = pt.begin(); root != pt.end(); root++) {
         if (root->first == "DbFp") {
           for (auto db = root->second.begin(); db != root->second.end(); db++) {
@@ -70,7 +72,9 @@ void DbFp::inStream(std::istream & ins)
               lxr::DbFpDat dat;
               std::string _fp;
               for (auto fp = db->second.begin(); fp != db->second.end(); fp++) {
+#ifdef DEBUG
                 counter++;
+#endif
                 if (fp->first == "<xmlattr>") {
                   _fp = fp->second.get<std::string>("fp");
                   dat._id = fp->second.get<std::string>("id");
@@ -82,7 +86,7 @@ void DbFp::inStream(std::istream & ins)
                   dat._checksum = fp->second.get<std::string>("chksum");
                 } else if (fp->first == "Fblock") {
                   lxr::DbFpBlock block;
-                  block._aid = db->second.get<std::string>("Fblock");
+                  block._aid = fp->second.data();
                   for (auto bl = fp->second.begin(); bl != fp->second.end(); bl++) {
                     if (bl->first == "<xmlattr>") {
                       block._idx = bl->second.get<int>("idx");
@@ -104,10 +108,12 @@ void DbFp::inStream(std::istream & ins)
           }
         }
     }
+#ifdef DEBUG
     auto t1 = clk::now();
     auto tdiff = boost::chrono::round<boost::chrono::microseconds>(t1 - t0).count();
     std::clog << "inStream took " << tdiff << " microseconds" << std::endl;
     std::clog << "iterations: " << counter << std::endl;
+#endif
 }
 ```
 
@@ -151,7 +157,7 @@ void DbFp::outStream(std::ostream & os) const
         os << "  <Fp fp=\\"" << k << "\\" id=\\"" << v._id/* .toHex() */ << "\\">" << std::endl;
         os << "    <Fattrs><osusr>" << v._osusr << "</osusr><osgrp>" << v._osgrp << "</osgrp><length>" << v._len << "</length><last>" << v._osattr << "</last><chksum>" << v._checksum/* .toHex() */ << "</chksum></Fattrs>" << std::endl;
         for (const auto & b : *v._blocks) {
-            os << "    <Fblock idx=\\"" << b._idx << "\\" apos=\\"" << b._apos << "\\" fpos=\\"" << b._fpos << "\\" blen=\\"" << b._blen << "\\" clen=\\"" << b._clen << "\\" compressed=\\"" << b._compressed << "\\" chksum=\\"" << b._checksum/* .toHex() */ << "\\">" << b._aid/* .toHex() */ << "</Fblock>" << std::endl;
+            os << "    <Fblock idx=\\"" << b._idx << "\\" apos=\\"" << b._apos << "\\" fpos=\\"" << b._fpos << "\\" blen=\\"" << b._blen << "\\" clen=\\"" << b._clen << "\\" compressed=\\"" << b._compressed << "\\" chksum=\\"" << b._checksum << "\\">" << b._aid << "</Fblock>" << std::endl;
         }
         os << "  </Fp>" << std::endl;
     });

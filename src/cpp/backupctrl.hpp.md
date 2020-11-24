@@ -68,6 +68,8 @@ module BackupCtrl =
 
 >bool [backup](backupctrl_functions.cpp.md)(boost::filesystem::path const &);
 
+>bool [backup](backupctrl_functions.cpp.md)(std::istream const & stream, std::string const & name);
+
 >uint32_t [free](backupctrl_info.cpp.md)() const;
 
 >uint64_t [bytes_in](backupctrl_info.cpp.md)() const;
