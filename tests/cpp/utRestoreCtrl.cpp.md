@@ -171,7 +171,16 @@ BOOST_AUTO_TEST_CASE( backup_restore_file_compressed )
 
     { std::ofstream _fe; _fe.open(datafile.native());
       for (int i=0; i<11; i++) {
-        std::ifstream _fi; _fi.open("/bin/sh");
+        std::ifstream _fi;
+#if defined(__APPLE__)
+         _fi.open("/bin/bash");
+#elif defined(__linux__)
+         _fi.open("/bin/sh");
+#elif defined(_WIN32)
+         _fi.open("C:\\Windows\\notepad.exe");
+#else
+         _fi.open("/bin/sh");
+#endif
         char buffer[1025];
         int nread;
         while ((nread = _fi.readsome(buffer, 1024)) > 0) {
