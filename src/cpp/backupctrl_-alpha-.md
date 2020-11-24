@@ -25,16 +25,10 @@ namespace lxr {
 
 struct BackupCtrl::pimpl
 {
-    pimpl(int n)
-        : _nChunks(n)
-    {
-        _ass.reset(new Assembly(n));
-    }
+    pimpl() {}
     ~pimpl() {}
 
-    // bool renew_assembly();
-
-    int _nChunks;
+    int _nChunks {16};
     std::shared_ptr<Assembly> _ass;
     DbFp _dbfp;
     DbKey _dbkey;

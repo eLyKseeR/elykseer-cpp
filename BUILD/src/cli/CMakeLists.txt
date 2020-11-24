@@ -19,3 +19,13 @@ target_link_libraries (LXRrestore PUBLIC
   ${libs}
   ${Boost_LIBRARIES}
 )
+
+add_executable ( LXRverify
+  lxrverify.cpp
+)
+
+target_link_libraries (LXRverify PUBLIC
+  elykseer-cpp_${CMAKE_BUILD_TYPE}
+  ${libs}
+  ${Boost_LIBRARIES}
+)

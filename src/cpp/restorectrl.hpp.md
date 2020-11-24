@@ -1,7 +1,7 @@
 ```cpp
 
 /*
-<fpaste ../../src/copyright.md>
+<fpaste ../../../src/copyright.md>
 */
 
 #pragma once
@@ -68,6 +68,14 @@ module RestoreCtrl =
 ## // restore a file (defined by _fp_) and place in directory _root_
 
 >bool [restore](restorectrl_functions.cpp.md)(boost::filesystem::path const & root, std::string const & fp);
+
+## // restore a file (defined by _fp_) to a stream
+
+>bool [restore](restorectrl_functions.cpp.md)(std::ostream & stream, std::string const & fp);
+
+## // verify a file
+
+>bool [verify](restorectrl_functions.cpp.md)(std::string const & fp);
 
 ## // access counters
 

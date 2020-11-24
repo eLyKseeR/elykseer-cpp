@@ -23,12 +23,15 @@ void BackupCtrl::finalize()
 
 class configuration {
   public:
-    configuration(int nc) : _nchunks(nc) {};
+    configuration(int nc, bool iscmp)
+     : _nchunks(nc), _compress(iscmp) {};
     ~configuration() {};
     int nchunks() const { return _nchunks; }
+    int compress() const { return _compress; }
 
   private:
     int _nchunks{256};
+    bool _compress{false};
 };
 
 class state {
@@ -89,45 +92,67 @@ class state {
 };
 
 template <typename Ct, typename St, typename Vt, int sz>
-class compressstream : protected stream<Ct,St,Vt,sz>
+class md5stream : public stream<Ct,St,Vt,sz>
+{
+  public:
+    md5stream(Ct const * const c, St *st, stream<Ct,St,Vt,sz> *s, stream<Ct,St,Vt,sz> *t)
+        : stream<Ct,St,Vt,sz>(c,st,s,t) {};
+    virtual int process(Ct const * const c, St *st, int len, sizebounded<Vt,sz> &b) const override {
+      if (len <= 0) { return 0; } 
+      auto md5 = Md5::hash((const char *)b.ptr(), len).toHex();
+      //std::cout << "   len = " << len << " chksum = " << md5 << std::endl;
+      st->lastchecksum(md5);
+      st->nread(len);
+      return len;
+    }
+};
+
+template <typename Ct, typename St, typename Vt, int sz>
+class compressstream : public stream<Ct,St,Vt,sz>
 {
   public:
     compressstream(Ct const * const c, St *st, stream<Ct,St,Vt,sz> *s, stream<Ct,St,Vt,sz> *t)
-        : stream<Ct,St,Vt,sz>(st,nullptr,nullptr), lzs(c, st, nullptr, nullptr)
-        , _tgt(t), _config(c), _state(st) {};
-    virtual void push(int len, sizebounded<Vt,sz> &b) const override {
-      if (len == 0) { return; } 
-      auto md5 = Md5::hash((const char *)b.ptr(), len).toHex();
-      _state->lastchecksum(md5);
-      if (_tgt) {
-        int len2 = process(_config, _state, len, b);
-        if (len2 > sz || len2 < 0) {
-          std::cerr << "Error: compression returned len = " << len2 << ", orig len = " << len << std::endl;
-        } else {
-          _state->setcompressed(true);
-          _state->ncompressed(len2);
-          _tgt->push(len2, b);
-        }
-      } else {
-        process(_config, _state, len, b);
-      }
-    }
+        : stream<Ct,St,Vt,sz>(c,st,s,t), lzs(c, st, nullptr, nullptr) {}
+        // , _tgt(t), _config(c), _state(st) {};
+    // virtual void push(int len, sizebounded<Vt,sz> &b) const override {
+    //   if (len == 0) { return; } 
+    //   if (_tgt) {
+    //     int len2 = process(_config, _state, len, b);
+    //     if (len2 > sz || len2 < 0) {
+    //       std::cerr << "Error: compression returned len = " << len2 << ", orig len = " << len << std::endl;
+    //     } else {
+    //       _state->setcompressed(true);
+    //       _state->ncompressed(len2);
+    //       _tgt->push(len2, b);
+    //     }
+    //   } else {
+    //     process(_config, _state, len, b);
+    //   }
+    // }
     virtual int process(Ct const * const c, St *st, int len, sizebounded<Vt,sz> &b) const override {
       if (len <= 0) { return 0; }
-      st->nread(len);
       // return the same size if not compressed
-      if (! Options::current().isCompressed()) { return len; }
+      if (! c->compress()) { return len; }
 
-      int compressedlen = lzs.process(nullptr,nullptr,len,b);
-      // std::cout << "  compressed " << len << " -> " << compressedlen << std::endl;
-      if (compressedlen == 0) { return -1; }
-      return compressedlen;
+      //const int _afree = st->assembly()->free();
+      //if (_afree < sz) {
+      //  st->setcompressed(false);
+      //  st->ncompressed(len);
+      //} else {
+        int compressedlen = lzs.process(nullptr,nullptr,len,b);
+        // std::cout << "  compressed " << len << " -> " << compressedlen << std::endl;
+        if (compressedlen <= 0) { return -1; }
+        st->setcompressed(true);
+        st->ncompressed(compressedlen);
+        return compressedlen;
+      //}
+      //return len;
     }
   private:
     deflatestream<Ct,St,Vt,sz> lzs;
-    stream<Ct,St,Vt,sz> *_tgt;
-    Ct const * const _config;
-    St * _state;
+    // stream<Ct,St,Vt,sz> *_tgt;
+    // Ct const * const _config;
+    // St * _state;
 };
 
 template <typename Ct, typename St, typename Vt, int sz>
@@ -137,13 +162,19 @@ class assemblystream : public stream<Ct,St,Vt,sz>
     assemblystream(Ct const * const c, St *st, stream<Ct,St,Vt,sz> *s, stream<Ct,St,Vt,sz> *t)
         : stream<Ct,St,Vt,sz>(c,st,s,t) {};
     virtual int process(Ct const * const c, St *st, int len, sizebounded<Vt,sz> &b) const override {
+        if (len <= 0) { return 0; }
+        int _afree = st->assembly()->free();
+        if (_afree < len) {
+          st->renew_assembly();
+        }
         int _apos = st->assembly()->pos();
+        int _fpos = st->fpos() - st->lastread();
         int nwritten = st->assembly()->addData(len, b);
         st->nwritten(nwritten);
         auto dbblock = DbFpBlock(
             st->next_bidx(),
             _apos,
-            st->fpos() - st->lastread(),
+            _fpos,
             // blen, clen
             st->lastread(), st->lastcompressed(),
             st->iscompressed(),
@@ -151,24 +182,8 @@ class assemblystream : public stream<Ct,St,Vt,sz>
             st->assembly()->said()
             );
         st->dbentry()->_blocks->push_back(std::move(dbblock));
-        // std::cout << "     written: " << nwritten << std::endl;
         if (nwritten != len) {
-            st->renew_assembly();
-            int nwritten2 = st->assembly()->addData(len - nwritten, b, nwritten);
-            nwritten += nwritten2;
-            st->nwritten(nwritten2);
-            auto dbblock = DbFpBlock(
-                st->next_bidx(),
-                st->assembly()->pos() - nwritten2,
-                st->fpos() - st->lastread(),
-                // blen, clen
-                st->lastread(), st->lastcompressed(),
-                st->iscompressed(),
-                st->lastchecksum(),
-                st->assembly()->said()
-                );
-            st->dbentry()->_blocks->push_back(std::move(dbblock));
-            std::cout << "     written2: " << nwritten2 << std::endl;
+            std::cout << "     only written: " << nwritten << " of len: " << len << std::endl;
         }
         return nwritten;
     };
@@ -176,8 +191,10 @@ class assemblystream : public stream<Ct,St,Vt,sz>
 
 bool BackupCtrl::backup(boost::filesystem::path const & fp)
 {
-    if (! _pimpl->_ass) { return false; }
     if (! FileCtrl::fileExists(fp)) { return false; }
+
+    _pimpl->_nChunks = Options::current().nChunks();
+    if (! _pimpl->_ass) { _pimpl->_ass.reset(new Assembly(_pimpl->_nChunks)); }
 
     constexpr int bsz = Assembly::datasz;
     sizebounded<unsigned char, bsz> buffer;
@@ -188,30 +205,32 @@ bool BackupCtrl::backup(boost::filesystem::path const & fp)
     auto t_dbentry = DbFpDat::fromFile(fp);
 
     // setup pipeline
-    configuration config(_pimpl->_nChunks);
+    bool compressed = Options::current().isCompressed();
+    configuration config(_pimpl->_nChunks, compressed);
     state st(&config, &t_dbentry);
     st.dbkeys(&_pimpl->_dbkey);
     st.assembly(_pimpl->_ass);
     constexpr int dwidth = 1; // bytes read at once
     int margin = 0;
-    if (Options::current().isCompressed()) { margin = 64; };
+    if (compressed) { margin = 64; };
     const int readsz = bsz / dwidth - margin;
     assemblystream<configuration,state,unsigned char,bsz> s3(&config, &st, nullptr, nullptr);
+    stream<configuration,state,unsigned char,bsz> *tgt = &s3;
     compressstream<configuration,state,unsigned char,bsz> s2(&config, &st, nullptr, &s3);
+    if (compressed) {
+      tgt = &s2;
+    }
+    md5stream<configuration,state,unsigned char,bsz> s1(&config, &st, nullptr, tgt);
 
     while (! feof(fptr)) {
         size_t nread = fread((void*)buffer.ptr(), dwidth, readsz, fptr);
-        // std::cout << "   read: " << (nread*dwidth) << std::endl;
-        s2.push(nread*dwidth, buffer);
+        s1.push(nread*dwidth, buffer);
     }
     fclose(fptr);
-    s2.push(0, buffer);
-    // std::cout << "finished." << std::endl;
 
-    _pimpl->trx_in = st.nread();
-    _pimpl->trx_out = st.nwritten();
+    _pimpl->trx_in += st.nread();
+    _pimpl->trx_out += st.nwritten();
     _pimpl->_ass = st.assembly();
-    // std::cout << "** read " << _pimpl->trx_in << "   wrote " << _pimpl->trx_out << std::endl;
 
 #ifdef DEBUG
     { auto const tmpd = boost::filesystem::temp_directory_path();

@@ -12,6 +12,7 @@ void RestoreCtrl::addDbKey(DbKey const & _db) {
 }
 ```
 
+## access an [Assembly](assembly.hpp.md)
 ```cpp
 bool RestoreCtrl::pimpl::load_assembly(std::string const & said)
 {
@@ -25,7 +26,7 @@ bool RestoreCtrl::pimpl::load_assembly(std::string const & said)
     }
     Key256 aid{true};
     aid.fromHex(said);
-    _ass.reset(new Assembly(aid, Options::current().nChunks()));
+    _ass.reset(new Assembly(aid, dbkey->_n));
     if (! _ass->insertChunks()) {
         std::cerr << "cannot insert chunks into aid=" << said << std::endl;
         return false;
@@ -51,7 +52,7 @@ bool RestoreCtrl::pimpl::load_assembly(std::string const & said)
 }
 ```
 
-Datastructures used in streaming data
+## datastructures used in streaming data
 ```cpp
 class configuration {
   public:
@@ -72,6 +73,7 @@ class state {
 };
 ```
 
+## restore a single block
 ```cpp
 template <typename Ct, typename St, typename Vt, int sz>
 int lxr::RestoreCtrl::pimpl::restore_block( DbFpBlock const &block
@@ -82,6 +84,7 @@ int lxr::RestoreCtrl::pimpl::restore_block( DbFpBlock const &block
 {
 #ifdef DEBUG
     std::cout << " restore block " << block._idx << " @ " << block._fpos << " len=" << block._blen << " clen=" << block._clen << std::endl;
+    std::cout << "      in assembly: " << block._aid << " @ " << block._apos << std:: endl;
 #endif
     if (! load_assembly(block._aid)) {
         std::cerr << "assembly not available" << std::endl;
@@ -89,38 +92,40 @@ int lxr::RestoreCtrl::pimpl::restore_block( DbFpBlock const &block
     }
     int trsz = block._clen;
     if (!block._compressed) { trsz = block._blen; }
-    int checkback = _ass->getData(block._apos, block._apos+trsz-1, buffer);
+    int checkback = _ass->getData(block._apos, block._apos + trsz - 1, buffer);
     if (checkback != trsz) {
-        std::cerr << "wrong size of data returnd! block " << block._idx << " @ " << block._fpos << " len=" << block._blen << " clen=" << block._clen << " returned=" << checkback << std::endl;
+        std::cerr << "wrong size of data returned! block " << block._idx << " @ " << block._fpos << " len=" << block._blen << " clen=" << block._clen << " returned=" << checkback << std::endl;
         std::cerr << "was accessing [" << block._apos << "," << block._apos+trsz-1 << "]" << std::endl;
         return -2;
     }
     // decompress
-    int nwritten = block._blen;
+    int nread = trsz;
     if (block._compressed) {
-        if ((nwritten = decomp.process(nullptr, nullptr, trsz, buffer)) != block._blen) {
-            std::cerr << "decompression returned " << nwritten << " bytes; != " << block._blen << std::endl;
+        if ((nread = decomp.process(nullptr, nullptr, trsz, buffer)) != block._blen) {
+            std::cerr << "decompression returned " << nread << " bytes; != " << block._blen << std::endl;
             return -3;
         }
     }
     // check checksum
-    auto const md5 = Md5::hash((const char *)buffer.ptr(), block._blen).toHex();
+    auto const md5 = Md5::hash((const char *)buffer.ptr(), nread).toHex();
     if (md5 != (block._checksum)) {
-        std::cerr << "checksum wrong for block " << block._idx << std::endl;
+        std::cerr << "checksum wrong for block " << block._idx << " len = " << nread << std::endl;
         std::cerr << " got:" << md5 << " expected:" << block._checksum << std::endl;
+        std::cerr << "was accessing [" << block._apos << "," << block._apos+trsz-1 << "]" << std::endl;
         return -4;
     }
 
     // output bytes to file
-    fout.write((const char *)buffer.ptr(), block._blen);
+    fout.write((const char *)buffer.ptr(), nread);
 
     // set state
     st.trx_in(trsz);
-    st.trx_out(block._blen);
-    return block._blen;
+    st.trx_out(nread);
+    return nread;
 }
 ```
 
+## restore a file
 The _restore_ function that decrypts a single file from the archive and outputs
 it in the indicated directory.
 ```cpp
@@ -185,6 +190,51 @@ bool RestoreCtrl::restore(boost::filesystem::path const & root, std::string cons
 #ifdef DEBUG
     std::cout << "restored to '" << targetfp.native() << "' in:" << _state.trx_in() << " out:" << _state.trx_out() << std::endl;
 #endif
+    return res;
+}
+
+```
+
+## verify restoration of a file
+The _verify_ function reproduces a single file from the archive block by block
+and outputs whether they all are valid.
+```cpp
+bool RestoreCtrl::verify(std::string const & fp)
+{
+    // get entry from DbFp
+    auto dbfp = _pimpl->_dbfp.get(fp);
+    if (! dbfp) {
+        std::cerr << "db entry not found: " << fp << std::endl;
+        return false;
+    }
+
+    // stream for decompressing data
+    constexpr int bsz = Assembly::datasz;
+    configuration _config;
+    state _state;
+    inflatestream decomp = inflatestream<configuration,state,unsigned char,bsz>(&_config, &_state, nullptr, nullptr);
+    sizebounded<unsigned char, bsz> buffer;
+
+    // load blocks
+    bool res = true;
+    int trsz = 0;
+    std::ofstream _fout; _fout.open("/dev/null");
+    if (! _fout.good()) {
+        std::cerr << "failed to open /dev/null" << std::endl;
+        _fout.close();
+        return false;
+    }
+    for (auto const & block : *dbfp->_blocks) {
+        if ((trsz = _pimpl->restore_block<configuration,state,unsigned char,bsz>(block, buffer, _state, _fout, decomp)) < 0) {
+            std::cerr << "failed to restore block: " << block._idx << std::endl;
+            res = false;
+            break;
+        }
+    }
+    _fout.close();
+    _pimpl->trx_in += _state.trx_in();
+    _pimpl->trx_out += _state.trx_out();
+
     return res;
 }
 

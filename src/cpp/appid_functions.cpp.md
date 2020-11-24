@@ -4,7 +4,7 @@ declared in [AppId](appid.hpp.md)
 
 const Key256 AppId::salt()
 {
-    Key256 k;
+    Key256 k{true};
     k.fromHex("a7261fc15f4e515c024810aef0350c2a295e13057b81695f87fa03778ec57e1d");
     return k;
 }

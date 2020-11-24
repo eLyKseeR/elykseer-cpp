@@ -1,7 +1,7 @@
 ```cpp
 
 /*
-<fpaste ../../src/copyright.md>
+<fpaste ../../../src/copyright.md>
 */
 
 #include "lxr/backupctrl.hpp"

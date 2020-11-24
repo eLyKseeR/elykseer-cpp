@@ -2,8 +2,9 @@ declared in [BackupCtrl](backupctrl.hpp.md)
 
 ```cpp
 BackupCtrl::BackupCtrl()
-  : _pimpl(new pimpl(Options::current().nChunks()))
+  : _pimpl(new pimpl())
 {
+  _pimpl->_nChunks = Options::current().nChunks();
 }
 
 BackupCtrl::~BackupCtrl()

@@ -26,7 +26,6 @@
 ```cpp
     static int dry_run = 0;
     static int verbose_out = 0;
-    static std::string output_path = "";
     static lxr::DbFp db_fp;
     static struct option longopts[] = {
              { "dry-run",   no_argument,        &dry_run,       1   },
@@ -36,7 +35,6 @@
              { "license",   no_argument,        NULL,           'L' },
              { "copyright", no_argument,        NULL,           'C' },
              { "pChunks",   required_argument,  NULL,           'x' },
-             { "pData",     required_argument,  NULL,           'o' },
              { "pDbFp",     required_argument,  NULL,           'p' },
              { "pKeys",     required_argument,  NULL,           'k' },
              { "file",      required_argument,  NULL,           'f' },
@@ -74,7 +72,6 @@ void output_help() {
   std::cout << "--verbose      verbose output" << std::endl;
   std::cout << "--dry-run      just validate arguments" << std::endl;
   std::cout << "-x --pChunks   sets path for encrypted chunks" << std::endl;
-  std::cout << "-o --pData     sets output path for decrypted data" << std::endl;
   std::cout << "-p --pDbFp     adds backup meta data dbfp (*)" << std::endl;
   std::cout << "-k --pKeys     adds backup encryption keys dbks (*)" << std::endl;
   std::cout << "-f --file      file to be restored (*)" << std::endl;
@@ -99,15 +96,6 @@ void set_chunk_path(std::string const p) {
     lxr::Options::set().fpathChunks() = p;
   } else {
     std::clog << "chunk output directory does not exist: " << p << std::endl;
-    output_error();
-  }
-}
-
-void set_output_path(std::string const p) {
-  if (lxr::FileCtrl::dirExists(p)) {
-    output_path = p;
-  } else {
-    std::clog << "data output directory does not exist: " << p << std::endl;
     output_error();
   }
 }
@@ -160,7 +148,8 @@ void restore_dir(std::string const p) {
   list_dirs[counter_dirs++] = p;
 }
 
-bool hasPrefix(std::string_view prefix, std::string_view str) {
+bool hasPrefix(std::string_view prefix, std::string_view str)
+{
     return prefix == str.substr(0, prefix.size());
 }
 ```
@@ -183,7 +172,6 @@ int main (int argc, char * const argv[]) {
       case 'L': output_license(); break;
       case 'C': output_copyright(); break;
       case 'x': set_chunk_path(optarg); break;
-      case 'o': set_output_path(optarg); break;
       case 'p': add_dbfp_path(ctrl, optarg); break;
       case 'k': add_dbkey_path(ctrl, optarg); break;
       case 'f': restore_file(optarg); break;
@@ -195,12 +183,6 @@ int main (int argc, char * const argv[]) {
   argv += optind;
   if (optind < 2) {
     std::clog << "no arguments; use '-h' for help" << std::endl;
-    output_error(); return 1;
-  }
-
-  // check output path
-  if (output_path == "") {
-    std::clog << "no output path for decrypted data given." << std::endl;
     output_error(); return 1;
   }
 
@@ -231,7 +213,7 @@ int main (int argc, char * const argv[]) {
   // TODO
 
   // output count of files
-  std::cout << "going to restore " << (counter_files - corr_files) << " files." << std::endl;
+  std::cout << "going to verify " << (counter_files - corr_files) << " files." << std::endl;
   {
     for (int i = 0; i < counter_files; i++) {
       std::cout << "    " << (i+1) << "  " << list_files[i] << std::endl;
@@ -244,9 +226,10 @@ int main (int argc, char * const argv[]) {
   }
 
   // run program
+  bool res = true;
   for (int i = 0; i < counter_files; i++) {
     if (list_files[i] != "") {
-      ctrl.restore(output_path, list_files[i]);
+      res &= ctrl.verify(list_files[i]);
     }
   }
 
@@ -257,8 +240,10 @@ int main (int argc, char * const argv[]) {
     std::clog << "decryption time: " << ctrl.time_decrypt() << std::endl;
     std::clog << "extracting time: " << ctrl.time_extract() << std::endl;
     std::clog << "reading time: " << ctrl.time_read() << std::endl;
+    std::clog << "result: " << (res?1:0) << std::endl;
   }
 
-  return 0;
+  // exit with status code 1 on failure; success = 0
+  return (res ? 0 : 1);
 }
 ```
