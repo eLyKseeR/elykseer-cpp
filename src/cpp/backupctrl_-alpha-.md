@@ -37,6 +37,7 @@ struct BackupCtrl::pimpl
     uint64_t trx_out {0UL};
     std::chrono::microseconds time_encr {0};
     std::chrono::microseconds time_decr {0};
+    std::chrono::microseconds time_read {0};
     std::chrono::microseconds time_write {0};
 
     private:

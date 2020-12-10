@@ -223,7 +223,10 @@ bool BackupCtrl::backup(boost::filesystem::path const & fp)
     md5stream<configuration,state,unsigned char,bsz> s1(&config, &st, nullptr, tgt);
 
     while (! feof(fptr)) {
+        auto t0 = clk::now();
         size_t nread = fread((void*)buffer.ptr(), dwidth, readsz, fptr);
+        auto t1 = clk::now();
+        _pimpl->time_read = _pimpl->time_read + std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0);
         s1.push(nread*dwidth, buffer);
     }
     fclose(fptr);

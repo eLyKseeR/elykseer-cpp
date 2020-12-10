@@ -80,6 +80,8 @@ module BackupCtrl =
 
 >std::chrono::microseconds [time_extract](backupctrl_info.cpp.md)() const;
 
+>std::chrono::microseconds [time_read](backupctrl_info.cpp.md)() const;
+
 >std::chrono::microseconds [time_write](backupctrl_info.cpp.md)() const;
 
 >DbFp const & [getDbFp](backupctrl_info.cpp.md)() const;

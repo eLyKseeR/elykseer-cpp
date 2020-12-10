@@ -8,6 +8,7 @@
 #include "lxr/backupctrl.hpp"
 #include "lxr/filectrl.hpp"
 #include "lxr/fsutils.hpp"
+#include "lxr/os.hpp"
 #include "lxr/key256.hpp"
 #include "lxr/sha256.hpp"
 #include "lxr/restorectrl.hpp"
@@ -154,6 +155,7 @@ BOOST_AUTO_TEST_CASE( backup_restore_file_compressed )
 
   // will compare SHA256 checksums
   lxr::Key256 hash_0{true}, hash_1{true};
+  int expected_blocks = 2;
 
   // cleanup
   {
@@ -170,10 +172,11 @@ BOOST_AUTO_TEST_CASE( backup_restore_file_compressed )
     lxr::BackupCtrl _backup;
 
     { std::ofstream _fe; _fe.open(datafile.native());
-      for (int i=0; i<11; i++) {
+      for (int i=0; i<14; i++) {
         std::ifstream _fi;
 #if defined(__APPLE__)
-         _fi.open("/bin/bash");
+         _fi.open("/bin/bash", std::ifstream::in | std::ifstream::binary);
+         expected_blocks = 3;
 #elif defined(__linux__)
          _fi.open("/bin/sh");
 #elif defined(_WIN32)
@@ -182,8 +185,10 @@ BOOST_AUTO_TEST_CASE( backup_restore_file_compressed )
          _fi.open("/bin/sh");
 #endif
         char buffer[1025];
-        int nread;
-        while ((nread = _fi.readsome(buffer, 1024)) > 0) {
+        int nread = 0;
+        while (_fi.good()) {
+          _fi.read(buffer, 1024);
+          nread = _fi.gcount();
           _fe.write(buffer, nread);
         }
         _fi.close();
@@ -199,6 +204,10 @@ BOOST_AUTO_TEST_CASE( backup_restore_file_compressed )
     if (lxr::Options::current().isCompressed()) {
       BOOST_CHECK( _backup.bytes_in() > _backup.bytes_out());  // by compression
     }
+    std::clog << "bytes in: " << _backup.bytes_in() << " out: " << _backup.bytes_out() << std::endl;
+    std::clog << "encryption time: " << _backup.time_encrypt() << std::endl;
+    std::clog << "extraction time: " << _backup.time_extract() << std::endl;
+    std::clog << "write time: " << _backup.time_write() << std::endl;
 
     _backup.finalize();
 
@@ -227,7 +236,7 @@ BOOST_AUTO_TEST_CASE( backup_restore_file_compressed )
     lxr::DbKey _dbks;
     { std::ifstream _if; _if.open(fp_dbky.native());
       _dbks.inStream(_if); _if.close(); }
-    BOOST_CHECK_EQUAL(2, _dbks.count());
+    BOOST_CHECK_EQUAL(expected_blocks, _dbks.count());
     _restore.addDbKey(_dbks);
 
     BOOST_REQUIRE( _restore.restore(outputdir, datafile.native()) );
@@ -238,6 +247,11 @@ BOOST_AUTO_TEST_CASE( backup_restore_file_compressed )
     BOOST_CHECK( _restore.bytes_out() > _restore.bytes_in());  // by compression
     BOOST_CHECK_EQUAL( hash_0.toHex(), hash_1.toHex() );
     // std::cout << "  sha256 = " << hash_0.toHex() << std::endl;
+    std::clog << "bytes in: " << _restore.bytes_in() << " out: " << _restore.bytes_out() << std::endl;
+    std::clog << "decryption time: " << _restore.time_decrypt() << std::endl;
+    std::clog << "decompression time: " << _restore.time_decompress() << std::endl;
+    std::clog << "read time: " << _restore.time_read() << std::endl;
+    std::clog << "write time: " << _restore.time_write() << std::endl;
   }
 }
 ```

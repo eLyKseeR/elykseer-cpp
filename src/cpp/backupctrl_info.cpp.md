@@ -29,6 +29,11 @@ std::chrono::microseconds BackupCtrl::time_extract() const
     return _pimpl->time_decr;
 }
 
+std::chrono::microseconds BackupCtrl::time_read() const
+{
+    return _pimpl->time_read;
+}
+
 std::chrono::microseconds BackupCtrl::time_write() const
 {
     return _pimpl->time_write;

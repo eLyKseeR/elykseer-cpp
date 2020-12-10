@@ -27,6 +27,8 @@
 #include <chrono>
 #include <fstream>
 
+using clk = std::chrono::high_resolution_clock;
+
 namespace lxr {
 
 struct RestoreCtrl::pimpl
@@ -52,6 +54,7 @@ struct RestoreCtrl::pimpl
     uint64_t trx_out {0UL};
     std::chrono::microseconds time_read {0};
     std::chrono::microseconds time_decr {0};
+    std::chrono::microseconds time_decomp {0};
     std::chrono::microseconds time_write {0};
     
     private:

@@ -10,6 +10,7 @@
 #include "lxr/dbkey.hpp"
 #include "boost/filesystem.hpp"
 
+#include <chrono>
 #include <ctime>
 #include <memory>
 
@@ -83,11 +84,13 @@ module RestoreCtrl =
 
 >uint64_t [bytes_out](restorectrl_info.cpp.md)() const;
 
->std::time_t [time_decrypt](restorectrl_info.cpp.md)() const;
+>std::chrono::microseconds [time_decrypt](restorectrl_info.cpp.md)() const;
 
->std::time_t [time_extract](restorectrl_info.cpp.md)() const;
+>std::chrono::microseconds [time_decompress](restorectrl_info.cpp.md)() const;
 
->std::time_t [time_read](restorectrl_info.cpp.md)() const;
+>std::chrono::microseconds [time_read](restorectrl_info.cpp.md)() const;
+
+>std::chrono::microseconds [time_write](restorectrl_info.cpp.md)() const;
 
 >protected:
 
