@@ -7,6 +7,7 @@
 #pragma once
 
 #include <string>
+#include <chrono>
 #include <ctime>
 
 ````
@@ -40,5 +41,8 @@ namespace [lxr](namespace.list) {
 };
 
 ```cpp
-} // namespace
+} /* namespace */
+
+std::ostream& operator<<(std::ostream& os, std::chrono::microseconds const &us); 
+
 ```

@@ -83,3 +83,12 @@ const std::string OS::time2string(time_t _t)
 ```cpp
 } // namespace
 ```
+
+## formatted output of std::chrono::microseconds
+```cpp
+std::ostream&
+operator<<(std::ostream& os, std::chrono::microseconds const &us) {
+    os << us.count() << " µs";
+    return os;
+}
+```

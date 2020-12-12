@@ -18,8 +18,11 @@
 #include "stream-cpp/zblocks.hpp"
 #include "stream-cpp/zblocks.ipp"
 
+#include <chrono>
 #include <iostream>
 #include <cstdio>
+
+using clk = std::chrono::high_resolution_clock;
 
 namespace lxr {
 
@@ -36,8 +39,10 @@ struct BackupCtrl::pimpl
     uint64_t trx_in {0UL};
     uint64_t trx_out {0UL};
     std::chrono::microseconds time_encr {0};
-    std::chrono::microseconds time_decr {0};
-    std::chrono::microseconds time_write {0};
+    std::chrono::microseconds time_extract {0};
+    std::chrono::microseconds time_read {0};
+    std::chrono::microseconds time_compress {0};
+    std::chrono::microseconds time_backup {0};
 
     private:
 };

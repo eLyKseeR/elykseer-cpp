@@ -26,12 +26,22 @@ std::chrono::microseconds BackupCtrl::time_encrypt() const
 
 std::chrono::microseconds BackupCtrl::time_extract() const
 {
-    return _pimpl->time_decr;
+    return _pimpl->time_extract;
 }
 
-std::chrono::microseconds BackupCtrl::time_write() const
+std::chrono::microseconds BackupCtrl::time_read() const
 {
-    return _pimpl->time_write;
+    return _pimpl->time_read;
+}
+
+std::chrono::microseconds BackupCtrl::time_compression() const
+{
+    return _pimpl->time_compress;
+}
+
+std::chrono::microseconds BackupCtrl::time() const
+{
+    return _pimpl->time_backup;
 }
 
 DbFp const & BackupCtrl::getDbFp() const

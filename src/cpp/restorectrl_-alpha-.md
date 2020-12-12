@@ -23,9 +23,11 @@
 
 #include "boost/filesystem.hpp"
 
-#include <iostream>
 #include <chrono>
+#include <iostream>
 #include <fstream>
+
+using clk = std::chrono::high_resolution_clock;
 
 namespace lxr {
 
@@ -52,7 +54,9 @@ struct RestoreCtrl::pimpl
     uint64_t trx_out {0UL};
     std::chrono::microseconds time_read {0};
     std::chrono::microseconds time_decr {0};
+    std::chrono::microseconds time_decomp {0};
     std::chrono::microseconds time_write {0};
+    std::chrono::microseconds time_restore {0};
     
     private:
 };
