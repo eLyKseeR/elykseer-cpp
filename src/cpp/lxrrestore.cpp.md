@@ -258,6 +258,8 @@ int main (int argc, char * const argv[]) {
     std::clog << "decompression time: " << ctrl.time_decompress() << std::endl;
     std::clog << "reading time: " << ctrl.time_read() << std::endl;
     std::clog << "writing time: " << ctrl.time_write() << std::endl;
+    std::clog << "time elapsed: " << ctrl.time() << std::endl;
+    std::clog << "bps: " << ctrl.bytes_out() * 1e6 / ctrl.time().count() << std::endl;
   }
 
   return 0;

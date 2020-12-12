@@ -142,6 +142,8 @@ it in the indicated directory.
 ```cpp
 bool RestoreCtrl::restore(boost::filesystem::path const & root, std::string const & fp)
 {
+    auto time_begin = clk::now();
+
     // checkout output directory
     if (! FileCtrl::dirExists(root)) {
         std::cerr << "output directory does not exist: " << root << std::endl;
@@ -197,6 +199,9 @@ bool RestoreCtrl::restore(boost::filesystem::path const & root, std::string cons
     _fout.close();
     _pimpl->trx_in += _state.trx_in();
     _pimpl->trx_out += _state.trx_out();
+
+    auto time_end = clk::now();
+    _pimpl->time_restore = _pimpl->time_restore + std::chrono::duration_cast<std::chrono::microseconds>(time_end - time_begin);
 
 #ifdef DEBUG
     std::cout << "restored to '" << targetfp.native() << "' in:" << _state.trx_in() << " out:" << _state.trx_out() << std::endl;

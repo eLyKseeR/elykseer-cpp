@@ -237,10 +237,12 @@ int main (int argc, char * const argv[]) {
   if (verbose_out > 0) {
     std::clog << "bytes read: " << ctrl.bytes_in() << std::endl;
     std::clog << "bytes written: " << ctrl.bytes_out() << std::endl;
-    std::clog << "decryption time: " << (ctrl.time_decrypt()) << std::endl;
-    std::clog << "decompression time: " << (ctrl.time_decompress()) << std::endl;
-    std::clog << "reading time: " << (ctrl.time_read()) << std::endl;
-    std::clog << "writing time: " << (ctrl.time_write()) << std::endl;
+    std::clog << "decryption time: " << ctrl.time_decrypt() << std::endl;
+    std::clog << "decompression time: " << ctrl.time_decompress() << std::endl;
+    std::clog << "reading time: " << ctrl.time_read() << std::endl;
+    std::clog << "writing time: " << ctrl.time_write() << std::endl;
+    std::clog << "time elapsed: " << ctrl.time() << std::endl;
+    std::clog << "bps: " << ctrl.bytes_out() * 1e6 / ctrl.time().count() << std::endl;
     std::clog << "result: " << (res?1:0) << std::endl;
   }
 

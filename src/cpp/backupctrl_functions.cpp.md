@@ -59,20 +59,29 @@ class state {
     void assembly(std::shared_ptr<Assembly> &a) {_assembly=a;}
     std::shared_ptr<Assembly>& assembly() {return _assembly;}
     bool renew_assembly() {
+        auto t0 = clk::now();
         if (_assembly && _assembly->pos() > 0) {
             lxr::Key256 _k;
             lxr::Key128 _iv;
             DbKeyBlock keyblock;
+            auto t0 = clk::now();
             if (! _assembly->encrypt(_k, _iv)) { return false; }
+            auto t1 = clk::now();
             keyblock._n = _config->nchunks();
             keyblock._key = _k;
             keyblock._iv = _iv;
             _dbkeys->set(_assembly->said(), std::move(keyblock));
             if (! _assembly->extractChunks()) { return false; }
+            auto t2 = clk::now();
+            time_encr = time_encr + std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0);
+            time_extract = time_extract + std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
         }
         _assembly.reset(new Assembly(_config->nchunks()));
         return true;
     }
+    std::chrono::microseconds time_encr {0};
+    std::chrono::microseconds time_extract {0};
+    std::chrono::microseconds time_compress {0};
 
   private:
     configuration const *_config;
@@ -113,46 +122,23 @@ class compressstream : public stream<Ct,St,Vt,sz>
   public:
     compressstream(Ct const * const c, St *st, stream<Ct,St,Vt,sz> *s, stream<Ct,St,Vt,sz> *t)
         : stream<Ct,St,Vt,sz>(c,st,s,t), lzs(c, st, nullptr, nullptr) {}
-        // , _tgt(t), _config(c), _state(st) {};
-    // virtual void push(int len, sizebounded<Vt,sz> &b) const override {
-    //   if (len == 0) { return; } 
-    //   if (_tgt) {
-    //     int len2 = process(_config, _state, len, b);
-    //     if (len2 > sz || len2 < 0) {
-    //       std::cerr << "Error: compression returned len = " << len2 << ", orig len = " << len << std::endl;
-    //     } else {
-    //       _state->setcompressed(true);
-    //       _state->ncompressed(len2);
-    //       _tgt->push(len2, b);
-    //     }
-    //   } else {
-    //     process(_config, _state, len, b);
-    //   }
-    // }
     virtual int process(Ct const * const c, St *st, int len, sizebounded<Vt,sz> &b) const override {
       if (len <= 0) { return 0; }
       // return the same size if not compressed
       if (! c->compress()) { return len; }
 
-      //const int _afree = st->assembly()->free();
-      //if (_afree < sz) {
-      //  st->setcompressed(false);
-      //  st->ncompressed(len);
-      //} else {
-        int compressedlen = lzs.process(nullptr,nullptr,len,b);
-        // std::cout << "  compressed " << len << " -> " << compressedlen << std::endl;
-        if (compressedlen <= 0) { return -1; }
-        st->setcompressed(true);
-        st->ncompressed(compressedlen);
-        return compressedlen;
-      //}
-      //return len;
+      auto t0 = clk::now();
+      int compressedlen = lzs.process(nullptr,nullptr,len,b);
+      // std::cout << "  compressed " << len << " -> " << compressedlen << std::endl;
+      if (compressedlen <= 0) { return -1; }
+      auto t1 = clk::now();
+      st->time_compress = st->time_compress + std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0);
+      st->setcompressed(true);
+      st->ncompressed(compressedlen);
+      return compressedlen;
     }
   private:
     deflatestream<Ct,St,Vt,sz> lzs;
-    // stream<Ct,St,Vt,sz> *_tgt;
-    // Ct const * const _config;
-    // St * _state;
 };
 
 template <typename Ct, typename St, typename Vt, int sz>
@@ -193,6 +179,7 @@ bool BackupCtrl::backup(boost::filesystem::path const & fp)
 {
     if (! FileCtrl::fileExists(fp)) { return false; }
 
+    auto time_begin = clk::now();
     _pimpl->_nChunks = Options::current().nChunks();
     if (! _pimpl->_ass) { _pimpl->_ass.reset(new Assembly(_pimpl->_nChunks)); }
 
@@ -234,6 +221,9 @@ bool BackupCtrl::backup(boost::filesystem::path const & fp)
     _pimpl->trx_in += st.nread();
     _pimpl->trx_out += st.nwritten();
     _pimpl->_ass = st.assembly();
+    _pimpl->time_encr = st.time_encr;
+    _pimpl->time_extract = st.time_extract;
+    _pimpl->time_compress = st.time_compress;
 
 #ifdef DEBUG
     { auto const tmpd = boost::filesystem::temp_directory_path();
@@ -248,6 +238,8 @@ bool BackupCtrl::backup(boost::filesystem::path const & fp)
 #endif
 
     _pimpl->_dbfp.set(fp.native(), std::move(t_dbentry));
+    auto time_end = clk::now();
+    _pimpl->time_backup = _pimpl->time_backup + std::chrono::duration_cast<std::chrono::microseconds>(time_end - time_begin);
 
     return true;
 }

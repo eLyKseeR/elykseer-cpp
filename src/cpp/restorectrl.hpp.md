@@ -92,6 +92,8 @@ module RestoreCtrl =
 
 >std::chrono::microseconds [time_write](restorectrl_info.cpp.md)() const;
 
+>std::chrono::microseconds [time](restorectrl_info.cpp.md)() const;
+
 >protected:
 
 >private:

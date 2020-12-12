@@ -205,9 +205,12 @@ BOOST_AUTO_TEST_CASE( backup_restore_file_compressed )
       BOOST_CHECK( _backup.bytes_in() > _backup.bytes_out());  // by compression
     }
     std::clog << "bytes in: " << _backup.bytes_in() << " out: " << _backup.bytes_out() << std::endl;
+    std::clog << "read time: " << _backup.time_read() << std::endl;
+    std::clog << "compression time: " << _backup.time_compression() << std::endl;
     std::clog << "encryption time: " << _backup.time_encrypt() << std::endl;
     std::clog << "extraction time: " << _backup.time_extract() << std::endl;
-    std::clog << "write time: " << _backup.time_write() << std::endl;
+    std::clog << "overall time: " << _backup.time() << std::endl;
+    std::clog << "bps: " << _backup.bytes_in() * 1e6 / _backup.time().count() << std::endl;
 
     _backup.finalize();
 
@@ -252,6 +255,8 @@ BOOST_AUTO_TEST_CASE( backup_restore_file_compressed )
     std::clog << "decompression time: " << _restore.time_decompress() << std::endl;
     std::clog << "read time: " << _restore.time_read() << std::endl;
     std::clog << "write time: " << _restore.time_write() << std::endl;
+    std::clog << "overall time: " << _restore.time() << std::endl;
+    std::clog << "bps: " << _restore.bytes_out() * 1e6 / _restore.time().count() << std::endl;
   }
 }
 ```

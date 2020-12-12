@@ -30,4 +30,9 @@ std::chrono::microseconds RestoreCtrl::time_write() const
 {
     return _pimpl->time_write;
 }
+
+std::chrono::microseconds RestoreCtrl::time() const
+{
+    return _pimpl->time_restore;
+}
 ```
