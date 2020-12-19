@@ -20,7 +20,7 @@ using clk = boost::chrono::high_resolution_clock;
 #include <iostream>
 #include <functional>
 
-#if defined(__linux__) || defined(__APPLE__)
+#if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
 #include <sys/stat.h>
 #endif
 
