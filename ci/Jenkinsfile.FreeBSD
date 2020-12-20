@@ -9,7 +9,7 @@ pipeline {
         stage('build dependencies') {
             steps {
                 sh 'cd ext/prngsharp; ./build.FreeBSD.jenkins.sh'
-                sh 'cd ext/elykseer-crypto; ./build.FreeBSD.jenkins.sh'
+                sh 'cd ext/elykseer-crypto; ./ci/build.FreeBSD.jenkins.sh'
                 sh 'cd ext/pugixml; cmake .'
                 sh 'cd ext/pugixml; gmake'
                 sh 'cd ext/rapidcheck; mkdir -p BUILD'
