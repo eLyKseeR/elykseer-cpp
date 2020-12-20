@@ -3,7 +3,6 @@ pipeline {
     stages {
         stage('init dependencies') {
             steps {
-                sh 'cd ext/pugixml; git checkout CMakeLists.txt Makefile'
                 sh 'git submodule update --init --remote'
             }
         }
