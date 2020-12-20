@@ -1,0 +1,47 @@
+pipeline {
+    agent any
+    stages {
+        stage('init dependencies') {
+            steps {
+                sh 'cd ext/pugixml; git checkout CMakeLists.txt Makefile'
+                sh 'git submodule update --init --remote'
+            }
+        }
+        stage('build dependencies') {
+            steps {
+                sh 'cd ext/prngsharp; ./build.FreeBSD.jenkins.sh'
+                sh 'cd ext/elykseer-crypto; ./build.FreeBSD.jenkins.sh'
+                sh 'cd ext/pugixml; cmake .'
+                sh 'cd ext/pugixml; gmake'
+                sh 'cd ext/rapidcheck; mkdir -p BUILD'
+                sh 'cd ext/rapidcheck/BUILD; cmake ..'
+                sh 'cd ext/rapidcheck/BUILD; gmake'
+            }
+        }
+        stage('cleanup') {
+            steps {
+                sh 'cd BUILD; rm -rf CMakeFiles CMakeCache.txt'
+            }
+        }
+        stage('mk cpp') {
+            steps {
+                sh 'cd BUILD; ./mk_cpp.sh'
+            }
+        }
+        stage('cmake') {
+            steps {
+                sh 'cd BUILD; cmake .'
+            }
+        }
+        stage('compile') {
+            steps {
+                sh 'cd BUILD; gmake'
+            }
+        }
+        stage('unit tests') {
+            steps {
+                sh 'cd BUILD; ./ut.sh'
+            }
+        }
+    }
+}

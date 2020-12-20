@@ -30,7 +30,7 @@ DbFpDat DbFpDat::fromFile(boost::filesystem::path const & fp)
     }
     db._checksum = Sha256::hash(fp).toHex();
 
-#if defined(__linux__) || defined(__APPLE__)
+#if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
     struct stat _fst;
     if (stat(fp.native().c_str(), &_fst) == 0) {
         db._len = _fst.st_size;
@@ -39,10 +39,9 @@ DbFpDat DbFpDat::fromFile(boost::filesystem::path const & fp)
         db._osusr = _buf;
         snprintf(_buf, 65, "%d", _fst.st_gid);
         db._osgrp = _buf;
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(__FreeBSD__)
         db._osattr = OS::time2string(_fst.st_mtimespec.tv_sec);
-#endif
-#ifdef __linux__
+#elif defined(__linux__)
         db._osattr = OS::time2string(_fst.st_mtim.tv_sec);
 #endif
     }
