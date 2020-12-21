@@ -158,7 +158,7 @@ BOOST_AUTO_TEST_CASE( backup_restore_file_compressed )
 
   // will compare SHA256 checksums
   lxr::Key256 hash_0{true}, hash_1{true};
-  int expected_blocks = 2;
+  int expected_blocks = 1;
 
   // cleanup
   {
