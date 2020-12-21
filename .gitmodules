@@ -13,9 +13,6 @@
 [submodule "ext/gitalk"]
 	path = ext/gitalk
 	url = https://github.com/CodiePP/gitalk.git
-[submodule "ext/pugixml"]
-	path = ext/pugixml
-	url = https://github.com/zeux/pugixml.git
 [submodule "ext/stream-cpp"]
 	path = ext/stream-cpp
 	url = https://github.com/CodiePP/stream-cpp.git

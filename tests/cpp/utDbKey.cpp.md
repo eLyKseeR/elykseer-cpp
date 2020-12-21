@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE( input_from_xml )
     const std::string aid1 = "94ffed38da8acee6f14be5af8a31d3b8015e008f9b30c7d12a58bfed57ba8d12";
 	const std::string aid2 = "a31d3b8015e00894ffed38da8acee6f14be5af8f9b30c7d12a58bfed57ba8d12";
 	
-  auto const tmpd = boost::filesystem::temp_directory_path();
+	auto const tmpd = boost::filesystem::temp_directory_path();
 	lxr::DbKey _db;
 	auto const fp_xml = tmpd / "test_dbkey_1.xml";
 	std::ifstream _ins; _ins.open(fp_xml.native());

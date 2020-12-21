@@ -48,6 +48,49 @@ BOOST_AUTO_TEST_CASE( set_get_record )
 }
 ```
 
+```xml
+<?xml version="1.0"?>
+<DbBackupJob xmlns="http://spec.sbclab.com/lxr/v1.0">
+<library><name>LXR</name><version>Version 1.5.1.1 TR5 - do not use for production</version></library>
+<host>AlexBook.fritz.box</host>
+<user>root</user>
+<date>20201219T091914</date>
+  <Job name="the ledger">
+<Options>
+  <memory nchunks="16" redundancy="0" />
+  <compression>on</compression>
+  <deduplication level="2" />
+  <fpaths>
+    <meta>/var/folders/kn/cplf9ykx42v2g07g98zjqgs40000zq/T/</meta>
+    <chunks>/var/folders/kn/cplf9ykx42v2g07g98zjqgs40000zq/T/</chunks>
+  </fpaths>
+</Options>
+    <Paths>
+    <path type="file">/home/me/Blocks.dat</path>
+    </Paths>
+    <Filters>
+    </Filters>
+  </Job>
+  <Job name="all my precious data">
+<Options>
+  <memory nchunks="16" redundancy="0" />
+  <compression>on</compression>
+  <deduplication level="2" />
+  <fpaths>
+    <meta>/var/folders/kn/cplf9ykx42v2g07g98zjqgs40000zq/T/</meta>
+    <chunks>/var/folders/kn/cplf9ykx42v2g07g98zjqgs40000zq/T/</chunks>
+  </fpaths>
+</Options>
+    <Paths>
+    <path type="file">/home/me/Data/Performance.ods</path>
+    <path type="file">/home/me/Data/Base_Input.csv</path>
+    </Paths>
+    <Filters>
+    </Filters>
+  </Job>
+</DbBackupJob>
+```
+
 ## Test case: output to XML file
 ```cpp
 BOOST_AUTO_TEST_CASE( output_to_xml )

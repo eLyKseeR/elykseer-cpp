@@ -8,7 +8,7 @@
 
 #include "lxr/streamio.hpp"
 #include "boost/filesystem.hpp"
-#include "pugixml.hpp"
+#include "boost/property_tree/ptree.hpp"
 
 #include <memory>
 #include <iosfwd>
@@ -74,7 +74,7 @@ type Options =
 
 >[~Options](options_ctor.cpp.md)();
 
->void fromXML(pugi::xml_node&);
+>void [fromXML](options_functions.cpp.md)(boost::property_tree::ptree::iterator &);
 
 >virtual void inStream(std::istream&) override;
 
@@ -119,5 +119,6 @@ type Options =
 ```cpp
 std::ostream & operator<<(std::ostream &os, Options const & opt);
 
-} // namespace
+} //namespace
+
 ```

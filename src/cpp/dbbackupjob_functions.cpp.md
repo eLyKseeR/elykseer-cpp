@@ -38,56 +38,54 @@ void DbJobDat::addRecursive(std::string const & fp)
 ```c++
 void DbBackupJob::inStream(std::istream & ins)
 {
-    pugi::xml_document dbdoc;
-    auto res = dbdoc.load(ins);
-    if (!res) {
-        std::clog << res.description() << std::endl;
-        return;
-    }
-    auto dbroot = dbdoc.child("DbBackupJob");
-    //std::clog << "  host=" << dbroot.child_value("host") << "  user=" << dbroot.child_value("user") << "  date=" << dbroot.child_value("date") << std::endl;
-    const std::string knodename = "Job";
-    const std::string cOptions = "Options";
-    const std::string cPaths = "Paths";
-    const std::string cPath = "path";
-    const std::string cFilters = "Filters";
-    const std::string cFilterIncl = "include";
-    const std::string cFilterExcl = "exclude";
-    for (pugi::xml_node node: dbroot.children()) {
-        if (knodename == node.name()) {
-            DbJobDat dat;
-            const std::string _name = node.attribute("name").value();
-            //std::clog << "  job = " << _name << std::endl;
-            for (pugi::xml_node node2: node.children()) {
-                if (cOptions == node2.name()) {
-                    Options::set().fromXML(node2);
-                }
-                else if (cPaths == node2.name()) {
-                    for (pugi::xml_node node3: node2.children()) {
-                        if (cPath == node3.name()) {
-                            dat._paths.push_back(std::make_pair(node3.attribute("type").value(), node3.child_value()));
-                            //std::clog << "   p = " << node3.child_value() << std::endl;
+    boost::property_tree::ptree pt;
+    boost::property_tree::xml_parser::read_xml(ins, pt,
+      boost::property_tree::xml_parser::no_comments |
+      boost::property_tree::xml_parser::trim_whitespace);
+    for (auto root = pt.begin(); root != pt.end(); root++) {
+        if (root->first == "DbBackupJob") {
+            for (auto dbj = root->second.begin(); dbj != root->second.end(); dbj++) {
+                if (dbj->first == "Job") {
+                    DbJobDat dat;
+                    std::string _name;
+                    for (auto job = dbj->second.begin(); job != dbj->second.end(); job++) {
+                        if (job->first == "<xmlattr>") {
+                            _name = job->second.get<std::string>("name");
+                        } else if (job->first == "Options") {
+                            dat._options = Options();
+                            dat._options.fromXML(job);
+                        } else if (job->first == "Paths") {
+                            for (auto p = job->second.begin(); p != job->second.end(); p++) {
+                                if (p->first == "path") {
+                                    std::string _type("file");
+                                    for (auto attr = p->second.begin(); attr != p->second.end(); attr++) {
+                                        if (attr->first == "<xmlattr>") {
+                                            _type = attr->second.get<std::string>("type");
+                                        }
+                                    }
+                                    dat._paths.push_back(std::make_pair(_type, p->second.data()));
+                                }
+                            }
+                        } else if (job->first == "Filters") {
+                            for (auto fl = job->second.begin(); fl != job->second.end(); fl++) {
+                                if (fl->first == "include") {
+                                    auto s = fl->second.data();
+                                    dat._strincl.push_back(s);
+                                    dat._regexincl.push_back(std::regex(s));
+                                } else if (fl->first == "exclude") {
+                                    auto s = fl->second.data();
+                                    dat._strexcl.push_back(s);
+                                    dat._regexexcl.push_back(std::regex(s));
+                                }
+                            }
                         }
                     }
-                }
-                else if (cFilters == node2.name()) {
-                    for (pugi::xml_node node3: node2.children()) {
-                        if (cFilterExcl == node3.name()) {
-                            auto s = node3.child_value();
-                            dat._strexcl.push_back(s);
-                            dat._regexexcl.push_back(std::regex(s));
-                        }
-                        else if (cFilterIncl == node3.name()) {
-                            auto s = node3.child_value();
-                            dat._strincl.push_back(s);
-                            dat._regexincl.push_back(std::regex(s));
-                        }
-                    }
+                    set(_name, dat);
                 }
             }
-            set(_name, dat); // add to db
         }
-    }
+        break;
+    }  
 }
 ```
 
@@ -134,7 +132,7 @@ void DbBackupJob::outStream(std::ostream & os) const
     os << "<date>" << OS::timestamp() << "</date>" << std::endl;
     appValues([&os](std::string const & k, struct DbJobDat const & v) {
         os << "  <Job name=\\"" << k << "\\">" << std::endl;
-        Options::current().outStream(os);
+        v._options.outStream(os);
         os << "    <Paths>" << std::endl;
         for (auto const & p : v._paths) {
             os << "    <path type=\\"" << p.first << "\\">" << p.second << "</path>" << std::endl;

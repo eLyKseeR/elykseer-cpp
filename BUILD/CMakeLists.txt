@@ -48,9 +48,6 @@ if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
   add_definitions(-DBOOST_CONTRACT_NO_CHECKS)
 endif()
 
-add_library(libpugixml STATIC IMPORTED)
-SET_TARGET_PROPERTIES(libpugixml PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/../ext/pugixml/libpugixml.a)
-
 #add_library(libelykseer-crypto STATIC IMPORTED)
 #SET_TARGET_PROPERTIES(libelykseer-crypto PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/../ext/elykseer-crypto/BUILD/src/libelykseer-crypto_Debug_s.a)
 
