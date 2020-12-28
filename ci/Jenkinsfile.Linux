@@ -3,7 +3,6 @@ pipeline {
     stages {
         stage('init dependencies') {
             steps {
-                sh 'cd ext/pugixml; git checkout CMakeLists.txt Makefile'
                 sh 'git submodule update --init --remote'
             }
         }
@@ -18,9 +17,6 @@ pipeline {
                 sh 'cd ext/elykseer-crypto/BUILD; cmake .'
                 sh 'cd ext/elykseer-crypto/BUILD; make'
                 sh 'cd ext/elykseer-crypto/BUILD; ./ut.sh'
-                sh 'cd ext/pugixml; patch -N < ../pugixml.patch2 || echo ignored'
-                sh 'cd ext/pugixml; cmake .'
-                sh 'cd ext/pugixml; make'
                 sh 'cd ext/rapidcheck; mkdir -p BUILD'
                 sh 'cd ext/rapidcheck/BUILD; cmake ..'
                 sh 'cd ext/rapidcheck/BUILD; make'
