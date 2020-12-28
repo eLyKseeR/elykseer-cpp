@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE( backup_restore_file_compressed )
       std::ifstream _fi;
 #if defined(__APPLE__)
          _fi.open("/bin/bash", std::ifstream::in | std::ifstream::binary);
-         expected_blocks = 3;
+         expected_blocks = 1;
 #elif defined(__FreeBSD__)
          _fi.open("/bin/csh", std::ifstream::in | std::ifstream::binary);
          expected_blocks = 1;
