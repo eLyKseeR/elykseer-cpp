@@ -19,7 +19,7 @@ declared in [OS](os.hpp.md)
 
 const std::string OS::hostname()
 {
-#if defined( __linux__ ) || defined( __APPLE__ )
+#if defined( __linux__ ) || defined( __APPLE__ ) || defined(__FreeBSD__)
     char hostname[1024];
     hostname[1023] = '\0';
     gethostname(hostname, 1023);
@@ -36,7 +36,7 @@ const std::string OS::hostname()
 
 const std::string OS::username()
 {
-#if defined( __linux__ ) || defined( __APPLE__ )
+#if defined( __linux__ ) || defined( __APPLE__ ) || defined(__FreeBSD__)
     char username[1024];
     username[1023] = '\0';
     getlogin_r(username, 1023);
@@ -53,7 +53,7 @@ const std::string OS::username()
 
 const std::string OS::timestamp()
 {
-#if defined( __linux__ ) || defined( __APPLE__ )
+#if defined( __linux__ ) || defined( __APPLE__ ) || defined(__FreeBSD__)
     auto now = std::chrono::system_clock::now();
     return date::format("%Y%m%dT%H%M%S", date::floor<std::chrono::seconds>(now));
 #else
@@ -67,7 +67,7 @@ const std::string OS::timestamp()
 
 const std::string OS::time2string(time_t _t)
 {
-#if defined( __linux__ ) || defined( __APPLE__ )
+#if defined( __linux__ ) || defined( __APPLE__ ) || defined(__FreeBSD__)
     auto ts = std::chrono::system_clock::from_time_t(_t);
     return date::format("%Y%m%dT%H%M%S", date::floor<std::chrono::seconds>(ts));
 #else

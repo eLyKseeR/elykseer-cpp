@@ -1,5 +1,9 @@
 #!/bin/sh
 
+if [ -z "$TMPDIR" ]; then
+   export TMPDIR=/tmp/
+fi
+
 D=$TMPDIR/restored
 test -d $D || mkdir $D
 D=$TMPDIR/meta
