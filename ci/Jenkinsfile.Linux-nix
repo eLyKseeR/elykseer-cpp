@@ -12,6 +12,7 @@ pipeline {
                 sh 'cd ext/elykseer-crypto; git submodule update --init --remote'
                 sh 'cd ext/elykseer-crypto/ext/prngsharp; ./build.Linux.jenkins.nix'
                 sh 'cd ext/elykseer-crypto/ext/cryptopp; nix-shell -p gcc --run "make -f GNUmakefile"'
+                sh 'cd ext/elykseer-crypto/BUILD; rm -rf CMakeFiles CMakeCache.txt"
                 sh 'cd ext/elykseer-crypto/BUILD; nix-shell -p gcc pandoc html2text --run "./mk_cpp.sh"'
                 sh 'cd ext/elykseer-crypto/BUILD; nix-shell -p gcc cmake boost zlib --run "cmake ."'
                 sh 'cd ext/elykseer-crypto/BUILD; nix-shell -p gcc cmake boost zlib --run "make"'
