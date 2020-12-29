@@ -16,7 +16,7 @@ pipeline {
                 sh 'cd ext/elykseer-crypto/BUILD; nix-shell -p gcc pandoc html2text --run "./mk_cpp.sh"'
                 sh 'cd ext/elykseer-crypto/BUILD; nix-shell -p gcc cmake boost zlib --run "cmake ."'
                 sh 'cd ext/elykseer-crypto/BUILD; nix-shell -p gcc cmake boost zlib --run "make"'
-                sh 'cd ext/elykseer-crypto/BUILD; nix-shell -p gcc cmake boost zlib --run "./ut.sh"'
+                sh 'cd ext/elykseer-crypto/BUILD; nix-shell -p gcc cmake boost zlib busybox --run "./ut.sh"'
                 sh 'cd ext/rapidcheck; mkdir -p BUILD'
                 sh 'cd ext/rapidcheck/BUILD; nix-shell -p gcc cmake boost zlib --run "cmake .."'
                 sh 'cd ext/rapidcheck/BUILD; nix-shell -p gcc cmake boost zlib --run "make"'
