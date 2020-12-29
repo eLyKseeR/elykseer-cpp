@@ -16,7 +16,7 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 IF(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
   # specific code
-  set(libs "dl" "z" "prngCpp.freebsd.1.0.5" "libpugixml" "elykseer-crypto_${CMAKE_BUILD_TYPE}")
+  set(libs "dl" "z" "prngCpp.freebsd.1.0.5" "elykseer-crypto_${CMAKE_BUILD_TYPE}")
 ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   # Linux specific code
