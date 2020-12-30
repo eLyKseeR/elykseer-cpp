@@ -9,8 +9,10 @@
 #include "lxr/liz.hpp"
 #include "lxr/os.hpp"
 
+#include "boost/property_tree/ptree.hpp"
+#include "boost/property_tree/xml_parser.hpp"
+
 #include <iostream>
-#include "pugixml.hpp"
 
 namespace lxr {
 

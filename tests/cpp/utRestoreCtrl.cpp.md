@@ -145,17 +145,20 @@ BOOST_AUTO_TEST_CASE( backup_restore_file_compressed )
   }
 
   auto const outputdir = tmpd / "restored";
-  if(! lxr::FileCtrl::dirExists(outputdir)) {
+  if (! lxr::FileCtrl::dirExists(outputdir)) {
     boost::filesystem::create_directory(outputdir);
   }
   const std::string datafname = "test_data_file2";
   auto const datafile = (tmpd / datafname);
+    if (boost::filesystem::exists(datafile)) {
+      boost::filesystem::remove(datafile);
+    }
   auto const fp_dbfp = lxr::Options::current().fpathMeta() / "test_dbfp_restore2.xml";
   auto const fp_dbky = lxr::Options::current().fpathMeta() / "test_dbkey_restore2.xml";
 
   // will compare SHA256 checksums
   lxr::Key256 hash_0{true}, hash_1{true};
-  int expected_blocks = 2;
+  int expected_blocks = 1;
 
   // cleanup
   {
@@ -172,30 +175,29 @@ BOOST_AUTO_TEST_CASE( backup_restore_file_compressed )
     lxr::BackupCtrl _backup;
 
     { std::ofstream _fe; _fe.open(datafile.native());
-      for (int i=0; i<14; i++) {
-        std::ifstream _fi;
+      std::ifstream _fi;
 #if defined(__APPLE__)
          _fi.open("/bin/bash", std::ifstream::in | std::ifstream::binary);
-         expected_blocks = 3;
+         expected_blocks = 1;
 #elif defined(__FreeBSD__)
          _fi.open("/bin/csh", std::ifstream::in | std::ifstream::binary);
          expected_blocks = 1;
 #elif defined(__linux__)
-         _fi.open("/bin/sh");
+        _fi.open("/bin/sh");
 #elif defined(_WIN32)
-         _fi.open("C:\\Windows\\notepad.exe");
+        _fi.open("C:\\Windows\\notepad.exe");
 #else
-         _fi.open("/bin/sh");
+        _fi.open("/bin/sh");
 #endif
-        char buffer[1025];
-        int nread = 0;
-        while (_fi.good()) {
-          _fi.read(buffer, 1024);
-          nread = _fi.gcount();
+      char buffer[1025];
+      int nread;
+      for (int i=0; i<11; i++) {
+        _fi.read(buffer, 1024);
+        if ((nread = _fi.gcount()) > 0) {
           _fe.write(buffer, nread);
         }
-        _fi.close();
       }
+      _fi.close();
       _fe.close();
     }
     hash_0 = lxr::Sha256::hash(datafile);

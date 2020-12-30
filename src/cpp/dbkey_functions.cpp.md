@@ -1,26 +1,42 @@
 declared in [DbKey](dbkey.hpp.md)
 
+```xml
+<?xml version="1.0"?>
+<DbKey xmlns="http://spec.sbclab.com/lxr/v1.0">
+<library><name>LXR</name><version>Version 1.5.1.1 TR5 - do not use for production</version></library>
+<host>AlexBook.fritz.box</host>
+<user>axeld</user>
+<date>20201221T192020</date>
+  <Key aid="a31d3b8015e00894ffed38da8acee6f14be5af8f9b30c7d12a58bfed57ba8d12" n="16" iv="5e945f0036e2d926bcf25a96d4a4333e">f1fdd850cb786a9be605fea3ab9da3b495ced136d30f7b9c2d35225797bd8ffd</Key>
+  <Key aid="94ffed38da8acee6f14be5af8a31d3b8015e008f9b30c7d12a58bfed57ba8d12" n="64" iv="5708895eca21865e18269476c8491bed">7de1def001d68a95ae23bced73c8dcfa3a190a9971a2317f9a5d3de357c8b3fa</Key>
+</DbKey>
+
+```
+
 ```cpp
 void DbKey::inStream(std::istream & ins)
 {
-    pugi::xml_document dbdoc;
-    auto res = dbdoc.load(ins);
-    if (!res) {
-        std::clog << res.description() << std::endl;
-        return;
-    }
-    auto dbroot = dbdoc.child("DbKey");
-    //std::clog << "  host=" << dbroot.child_value("host") << "  user=" << dbroot.child_value("user") << "  date=" << dbroot.child_value("date") << std::endl;
-    const std::string knodename = "Key";
-    for (pugi::xml_node node: dbroot.children()) {
-        if (knodename == node.name()) {
-            DbKeyBlock block;
-            block._n = node.attribute("n").as_int();
-            block._iv.fromHex(node.attribute("iv").value());
-            block._key.fromHex(node.child_value());
-            const std::string _aid = node.attribute("aid").value();
-            //std::clog << "  aid=" << _aid << " block = " << block << std::endl;
-            set(_aid, block); // add to db
+    boost::property_tree::ptree pt;
+    boost::property_tree::xml_parser::read_xml(ins, pt,
+      boost::property_tree::xml_parser::no_comments |
+      boost::property_tree::xml_parser::trim_whitespace);
+    for (auto root = pt.begin(); root != pt.end(); root++) {
+        if (root->first == "DbKey") {
+            for (auto k = root->second.begin(); k != root->second.end(); k++) {
+                if (k->first == "Key") {
+                    DbKeyBlock block;
+                    block._key.fromHex(k->second.data());
+                    std::string _aid;
+                    for (auto attr = k->second.begin(); attr != k->second.end(); attr++) {
+                        if (attr->first == "<xmlattr>") {
+                            block._n = attr->second.get<int>("n");
+                            _aid = attr->second.get<std::string>("aid");
+                            block._iv.fromHex(attr->second.get<std::string>("iv"));
+                        }
+                    }
+                    set(_aid, block);
+                }
+            }
         }
     }
 }

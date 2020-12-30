@@ -4,7 +4,6 @@ cmake_minimum_required(VERSION 2.8)
 include_directories(".")
 include_directories("${CMAKE_HOME_DIRECTORY}/../ext/prngsharp/src")
 include_directories("${CMAKE_HOME_DIRECTORY}/../ext/date/include")
-include_directories("${CMAKE_HOME_DIRECTORY}/../ext/pugixml/src")
 include_directories("${CMAKE_HOME_DIRECTORY}/../ext/elykseer-crypto/BUILD/src")
 
 # link external libraries
@@ -13,15 +12,15 @@ link_directories("${CMAKE_HOME_DIRECTORY}/../ext/elykseer-crypto/BUILD/src/")
 
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
    # Mac OS X specific code
-   set(libs "dl" "z" "prngCpp_s.osx.1.0.5" "libpugixml" "elykseer-crypto_${CMAKE_BUILD_TYPE}")
+   set(libs "dl" "z" "prngCpp_s.osx.1.0.5" "elykseer-crypto_${CMAKE_BUILD_TYPE}")
 ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 IF(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
   # specific code
-  set(libs "dl" "z" "prngCpp.freebsd.1.0.5" "libpugixml" "elykseer-crypto_${CMAKE_BUILD_TYPE}")
+  set(libs "dl" "z" "prngCpp.freebsd.1.0.5" "elykseer-crypto_${CMAKE_BUILD_TYPE}")
 ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   # Linux specific code
-  set(libs "dl" "z" "prngCpp_s.linux.1.0.5" "libpugixml" "elykseer-crypto_${CMAKE_BUILD_TYPE}")
+  set(libs "dl" "z" "prngCpp_s.linux.1.0.5" "elykseer-crypto_${CMAKE_BUILD_TYPE}")
 ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
 # list of source files to be compiled

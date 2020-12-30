@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 ````
 
 # Test suite: utOptions
@@ -56,14 +57,26 @@ BOOST_AUTO_TEST_CASE( setters_getters )
     BOOST_CHECK_EQUAL("/data/storage", _opts2.fpathChunks());
     BOOST_CHECK_EQUAL("/mnt/secure", _opts2.fpathMeta());
 
-    auto const tmpd = boost::filesystem::temp_directory_path();
-    auto const fp_xml = tmpd / "test_options.xml";
-    std::ofstream _outs; _outs.open(fp_xml.native());
-    _opts.outStream(_outs);
+    std::string _buf;
+    std::ostringstream _outs;
+    _opts.outStream(_outs); _outs.flush();
+    _buf = _outs.str();
+
+    std::string goldxml =
+        "<Options>\\n"
+        "  <memory nchunks=\\"17\\" redundancy=\\"0\\" />\\n"
+        "  <compression>on</compression>\\n"
+        "  <deduplication level=\\"2\\" />\\n"
+        "  <fpaths>\\n"
+        "    <meta>/mnt/secure</meta>\\n"
+        "    <chunks>/data/storage</chunks>\\n"
+        "  </fpaths>\\n"
+        "</Options>\\n";
+    BOOST_CHECK_EQUAL(goldxml, _buf);
 }
 ```
 
-
+```xml
 <Options>
   <memory nchunks="17" redundancy="0" />
   <compression>on</compression>
@@ -73,19 +86,33 @@ BOOST_AUTO_TEST_CASE( setters_getters )
     <chunks>/data/storage</chunks>
   </fpaths>
 </Options>
+```
 
 ## Test case: read from XML
 ```cpp
 BOOST_AUTO_TEST_CASE( readXML )
 {
+    std::string goldxml =
+        "<Options>"
+        "  <memory nchunks=\\"17\\" redundancy=\\"0\\" />"
+        "  <compression>on</compression>"
+        "  <deduplication level=\\"2\\" />"
+        "  <fpaths>"
+        "    <meta>/mnt/secure</meta>"
+        "    <chunks>/data/storage</chunks>"
+        "  </fpaths>"
+        "</Options>";
     lxr::Options & _opts = lxr::Options::set();
-    _opts.nChunks(17);
-    auto const tmpd = boost::filesystem::temp_directory_path();
-    auto const fp_xml = tmpd / "test_options.xml";
-    std::ifstream _ins; _ins.open(fp_xml.native());
+    _opts.nChunks(27);
+    std::istringstream _ins; _ins.str(goldxml);
     _opts.inStream(_ins);
 
     BOOST_CHECK_EQUAL(17, _opts.nChunks());
+    BOOST_CHECK_EQUAL(0, _opts.nRedundancy());
+    BOOST_CHECK_EQUAL(true, _opts.isCompressed());
+    BOOST_CHECK_EQUAL(2, _opts.isDeduplicated());
+    BOOST_CHECK_EQUAL("/data/storage", _opts.fpathChunks());
+    BOOST_CHECK_EQUAL("/mnt/secure", _opts.fpathMeta());
 }
 ```
 

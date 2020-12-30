@@ -76,36 +76,44 @@ boost::filesystem::path & Options::fpathMeta()
 
 void Options::inStream(std::istream & ins)
 {
-    pugi::xml_document dbdoc;
-    auto res = dbdoc.load(ins);
-    if (!res) {
-        std::clog << res.description() << std::endl;
-        return;
+    boost::property_tree::ptree pt;
+    boost::property_tree::xml_parser::read_xml(ins, pt,
+      boost::property_tree::xml_parser::no_comments |
+      boost::property_tree::xml_parser::trim_whitespace);
+    for (auto root = pt.begin(); root != pt.end(); root++) {
+        if (root->first == "Options") {
+          fromXML(root);
+          break;
+        }
     }
-    auto dbroot = dbdoc.child("Options");
-    fromXML(dbroot);
 }
 
-void Options::fromXML(pugi::xml_node & dbroot)
+void Options::fromXML(boost::property_tree::ptree::iterator &root)
 {
-    const std::string cMemory = "memory";
-    const std::string cFPaths = "fpaths";
-    const std::string comp = dbroot.child_value("compression");
-    if (comp == "on" || comp == "ON") {
-      isCompressed(true);
-    } else {
-      isCompressed(false);
-    }
-    for (pugi::xml_node node: dbroot.children()) {
-        if (cMemory == node.name()) {
-          nChunks(node.attribute("nchunks").as_int());
-          nRedundancy(node.attribute("redundancy").as_int());
+  if (root->first == "Options") {
+    for (auto ops = root->second.begin(); ops != root->second.end(); ops++) {
+      if (ops->first == "memory") {
+        for (auto mem = ops->second.begin(); mem != ops->second.end(); mem++) {
+          if (mem->first == "<xmlattr>") {
+            nChunks(mem->second.get<int>("nchunks"));
+            nRedundancy(mem->second.get<int>("redundancy"));
+          }
         }
-        else if (cFPaths == node.name()) {
-          fpathChunks() = node.child_value("chunks");
-          fpathMeta() = node.child_value("meta");
+      } else if (ops->first == "compression") {
+        std::string o = ops->second.data();
+        isCompressed(o == "on");
+      } else if (ops->first == "deduplication") {
+        for (auto ded = ops->second.begin(); ded != ops->second.end(); ded++) {
+          if (ded->first == "<xmlattr>") {
+            isDeduplicated(ded->second.get<int>("level"));
+          }
         }
+      } else if (ops->first == "fpaths") {
+        fpathChunks() = std::move(ops->second.get<std::string>("chunks"));
+        fpathMeta() = std::move(ops->second.get<std::string>("meta"));
+      }
     }
+  }
 }
 
 void Options::outStream(std::ostream & os) const
