@@ -9,6 +9,9 @@ pipeline {
         stage('build dependencies') {
             steps {
                 sh 'cd ext/prngsharp; ./build.Linux.jenkins.nix'
+                sh 'cd ext/gpgme; nix-shell -p autoconf automake libtool m4 --run "./autogen.sh"'
+                sh 'cd ext/gpgme; nix-shell -p gcc libgpgerror libassuan --run "./configure --enable-languages=cpp"'
+                sh 'cd ext/gpgme; nix-shell -p gcc libgpgerror libassuan --run "make"'
                 sh 'cd ext/elykseer-crypto; git submodule update --init --remote'
                 sh 'cd ext/elykseer-crypto/ext/prngsharp; ./build.Linux.jenkins.nix'
                 sh 'cd ext/elykseer-crypto/ext/cryptopp; nix-shell -p gcc --run "make -f GNUmakefile"'
