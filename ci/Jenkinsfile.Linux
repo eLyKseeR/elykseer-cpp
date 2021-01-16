@@ -9,6 +9,9 @@ pipeline {
         stage('build dependencies') {
             steps {
                 sh 'cd ext/prngsharp; ./build.Linux.jenkins.sh'
+                sh 'cd ext/gpgme; ./autogen.sh'
+                sh 'cd ext/gpgme; ./configure --enable-languages=cpp'
+                sh 'cd ext/gpgme; make'
                 sh 'cd ext/elykseer-crypto; git submodule update --init --remote'
                 sh 'cd ext/elykseer-crypto/ext/prngsharp; ./build.Linux.jenkins.sh'
                 sh 'cd ext/elykseer-crypto/ext/cryptopp; make -f GNUmakefile'
