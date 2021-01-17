@@ -10,7 +10,7 @@ pipeline {
             steps {
                 sh 'cd ext/prngsharp; ./build.FreeBSD.jenkins.sh'
                 sh 'cd ext/gpgme; ./autogen.sh'
-                sh 'cd ext/gpgme; ./configure --enable-languages=cpp'
+                sh 'cd ext/gpgme; ./configure --enable-static --disable-shared --enable-languages=cpp --disable-gpgsm-test --disable-g13-test --disable-gpg-test --disable-gpgconf-test'
                 sh 'cd ext/gpgme; make'
                 sh 'cd ext/elykseer-crypto; git submodule update --init --remote'
                 sh 'cd ext/elykseer-crypto/ext/prngsharp; ./build.FreeBSD.jenkins.sh'
