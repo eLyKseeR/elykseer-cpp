@@ -8,6 +8,11 @@ ELSE()
 	SET(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release DebugProfile RelWithDebInfo MinSizeRel.")
 ENDIF()
 
+find_program(CCACHE_PROGRAM ccache)
+if(CCACHE_PROGRAM)
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
+endif()
+
 project(elykseer-cpp)
 
 # The version number.
@@ -21,10 +26,7 @@ set (${PROJECT_NAME}_VERSION_STRING ${elykseer-cpp_VERSION_MAJOR}.${elykseer-cpp
 add_definitions( -UDEBUG )
 
 # boost
-#set(BOOST_ROOT "${CMAKE_HOME_DIRECTORY}/ext/boost_1_69_0/")
-#set(BOOST_LIBRARYDIR "${CMAKE_HOME_DIRECTORY}/ext/boost_1_69_0/stage/lib")
 add_definitions( -DBOOST_ALL_DYN_LINK )
-#set(Boost_ADDITIONAL_VERSIONS "1.49")
 set(Boost_DEBUG OFF)
 set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_USE_STATIC_RUNTIME OFF)
@@ -48,16 +50,19 @@ if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
   add_definitions(-DBOOST_CONTRACT_NO_CHECKS)
 endif()
 
-#add_library(libelykseer-crypto STATIC IMPORTED)
-#SET_TARGET_PROPERTIES(libelykseer-crypto PROPERTIES IMPORTED_LOCATION ${CMAKE_HOME_DIRECTORY}/../ext/elykseer-crypto/BUILD/src/libelykseer-crypto_Debug_s.a)
-
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -g -O1 -fPIC")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O1 -fPIC")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -g -fPIC")
-set(CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS} -fPIC -g")
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+if (CMAKE_COMPILER_IS_GNUCC)
+  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O")
+  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O")
+endif (CMAKE_COMPILER_IS_GNUCC)
+
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O1 -fPIC")
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -g -fPIC")
+#set(CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS} -fPIC -g")
 # clang also wants its own stdlib
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -stdlib=libc++ -g -O0")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -g -O0 -fPIC")

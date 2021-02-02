@@ -1,3 +1,17 @@
 ./ut.sh --run_test=utRestoreCtrl/encrypt_decrypt_file --log_level=all
 
 ./ut.sh --run_test=utAssembly/assembly_encrypt_then_decrypt --log_level=all 
+
+
+using ccache
+============
+
+mkdir -p _ccache
+export CCACHE_BASEDIR=$(pwd)
+export CCACHE_DIR=${CCACHE_BASEDIR}/_ccache/
+
+and as soon as "ccache" is available, then it will be used.
+
+outputs a summary of cache usage:
+
+$> ccache -s

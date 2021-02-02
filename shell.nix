@@ -8,6 +8,7 @@ stdenv.mkDerivation rec {
     # Customizable development requirements
     nativeBuildInputs = [
         cmake
+        ccache
         gcc
         gdb
         git
