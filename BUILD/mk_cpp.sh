@@ -31,8 +31,8 @@ done
 cd ..
 
 cd ..
-cd test
+#cd test
 
-$GITALK/utils/make_test.sh ../../tests/cpp/elykseer-cpp-ut.md
+#$GITALK/utils/make_test.sh ../../tests/cpp/elykseer-cpp-ut.md
 
-cd ..
+#cd ..
