@@ -16,6 +16,7 @@ pipeline {
                 sh 'cd ext/elykseer-crypto/ext/prngsharp; ./build.Linux.jenkins.sh'
                 sh 'cd ext/elykseer-crypto/ext/cryptopp; make -f GNUmakefile'
                 sh 'cd ext/elykseer-crypto/BUILD; rm -rf CMakeFiles CMakeCache.txt'
+                sh 'cd ext/elykseer-crypto/BUILD; rm -rf src/*.cpp src/lxr/*.hpp test/*.cpp'
                 sh 'cd ext/elykseer-crypto/BUILD; ./mk_cpp.sh'
                 sh 'cd ext/elykseer-crypto/BUILD; cmake .'
                 sh 'cd ext/elykseer-crypto/BUILD; make'
@@ -25,13 +26,10 @@ pipeline {
                 sh 'cd ext/rapidcheck/BUILD; make'
             }
         }
-        stage('cleanup') {
-            steps {
-                sh 'cd BUILD; rm -rf CMakeFiles CMakeCache.txt'
-            }
-        }
         stage('mk cpp') {
             steps {
+                sh 'cd BUILD; rm -rf CMakeFiles CMakeCache.txt'
+                sh 'cd BUILD; rm -rf src/*.cpp src/lxr/*.hpp test/*.cpp'
                 sh 'cd BUILD; ./mk_cpp.sh'
             }
         }
