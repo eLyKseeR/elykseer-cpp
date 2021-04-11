@@ -81,7 +81,7 @@ void output_help() {
   std::cout << "-n --nchunks   sets number of chunks (16-256) per assembly" << std::endl;
   std::cout << "-c --compression  sets compression (0 or 1)" << std::endl;
   std::cout << "-u --deduplication sets duplication mode (0, 1 or 2)" << std::endl;
-  std::cout << "-r --ref --pR  adds reference dbfp for deduplication (*)" << std::endl;
+  std::cout << "-r --ref       adds reference dbfp for deduplication (*)" << std::endl;
   std::cout << "-f             backups a file (*)" << std::endl;
   std::cout << "-d --d1        backups files in a directory (*)" << std::endl;
   std::cout << "-D --dr        recursively backups a directory and all its content (*)" << std::endl;
@@ -119,13 +119,13 @@ void set_meta_path(std::string const p) {
 }
 
 void add_ref_path(lxr::BackupCtrl & ctrl, std::string const p) {
-  std::clog << "reference dbfp ignored; not yet iplemented" << std::endl;
-  output_error();
-
   if (lxr::FileCtrl::fileExists(p)) {
-    //ctrl.setReference(p);
+    lxr::DbFp _dbfp;
+    { std::ifstream _if; _if.open(p);
+      _dbfp.inStream(_if); _if.close(); }
+    ctrl.addReference(_dbfp);
   } else {
-    std::clog << "reference dbfp does not exist: " << p << std::endl;
+    std::clog << "reference DbFp does not exist: " << p << std::endl;
     output_error();
   }
 }

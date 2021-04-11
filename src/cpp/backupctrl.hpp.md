@@ -62,7 +62,7 @@ module BackupCtrl =
 
 >[~BackupCtrl](backupctrl_ctor.cpp.md)();
 
->void [setReference](backupctrl_functions.cpp.md)();
+>void [addReference](backupctrl_functions.cpp.md)(DbFp const &);
 
 >void [finalize](backupctrl_functions.cpp.md)();
 

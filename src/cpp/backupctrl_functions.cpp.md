@@ -1,9 +1,9 @@
 declared in [BackupCtrl](backupctrl.hpp.md)
 
 ```cpp
-void BackupCtrl::setReference()
+void BackupCtrl::addReference(DbFp const &_db)
 {
- // TODO
+  _pimpl->_dbfpref.unionWith(_db);
 }
 
 void BackupCtrl::finalize()
@@ -20,7 +20,9 @@ void BackupCtrl::finalize()
         _pimpl->_ass->extractChunks();
     }
 }
+```
 
+```cpp
 class configuration {
   public:
     configuration(int nc, bool iscmp)
@@ -73,8 +75,8 @@ class state {
             _dbkeys->set(_assembly->said(), std::move(keyblock));
             if (! _assembly->extractChunks()) { return false; }
             auto t2 = clk::now();
-            time_encr = time_encr + std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0);
-            time_extract = time_extract + std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
+            time_encr += std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0);
+            time_extract += std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
         }
         _assembly.reset(new Assembly(_config->nchunks()));
         return true;
@@ -99,7 +101,10 @@ class state {
     int _lastcompressed{0};
     int _lastwritten{0};
 };
+```
 
+A stream that computes a hash over each buffer passed to them
+```cpp
 template <typename Ct, typename St, typename Vt, int sz>
 class md5stream : public stream<Ct,St,Vt,sz>
 {
@@ -107,7 +112,7 @@ class md5stream : public stream<Ct,St,Vt,sz>
     md5stream(Ct const * const c, St *st, stream<Ct,St,Vt,sz> *s, stream<Ct,St,Vt,sz> *t)
         : stream<Ct,St,Vt,sz>(c,st,s,t) {};
     virtual int process(Ct const * const c, St *st, int len, sizebounded<Vt,sz> &b) const override {
-      if (len <= 0) { return 0; } 
+      if (len <= 0) { return len; }
       auto md5 = Md5::hash((const char *)b.ptr(), len).toHex();
       //std::cout << "   len = " << len << " chksum = " << md5 << std::endl;
       st->lastchecksum(md5);
@@ -115,7 +120,10 @@ class md5stream : public stream<Ct,St,Vt,sz>
       return len;
     }
 };
+```
 
+A stream that compresses each buffer and passes it on
+```cpp
 template <typename Ct, typename St, typename Vt, int sz>
 class compressstream : public stream<Ct,St,Vt,sz>
 {
@@ -123,16 +131,14 @@ class compressstream : public stream<Ct,St,Vt,sz>
     compressstream(Ct const * const c, St *st, stream<Ct,St,Vt,sz> *s, stream<Ct,St,Vt,sz> *t)
         : stream<Ct,St,Vt,sz>(c,st,s,t), lzs(c, st, nullptr, nullptr) {}
     virtual int process(Ct const * const c, St *st, int len, sizebounded<Vt,sz> &b) const override {
-      if (len <= 0) { return 0; }
-      // return the same size if not compressed
-      if (! c->compress()) { return len; }
+      if (len <= 0) { return len; }
 
       auto t0 = clk::now();
       int compressedlen = lzs.process(nullptr,nullptr,len,b);
       // std::cout << "  compressed " << len << " -> " << compressedlen << std::endl;
       if (compressedlen <= 0) { return -1; }
       auto t1 = clk::now();
-      st->time_compress = st->time_compress + std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0);
+      st->time_compress += std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0);
       st->setcompressed(true);
       st->ncompressed(compressedlen);
       return compressedlen;
@@ -140,7 +146,10 @@ class compressstream : public stream<Ct,St,Vt,sz>
   private:
     deflatestream<Ct,St,Vt,sz> lzs;
 };
+```
 
+This stream outputs the incoming buffer data to an Assembly and does some bookkeeping
+```cpp
 template <typename Ct, typename St, typename Vt, int sz>
 class assemblystream : public stream<Ct,St,Vt,sz>
 {
@@ -148,7 +157,7 @@ class assemblystream : public stream<Ct,St,Vt,sz>
     assemblystream(Ct const * const c, St *st, stream<Ct,St,Vt,sz> *s, stream<Ct,St,Vt,sz> *t)
         : stream<Ct,St,Vt,sz>(c,st,s,t) {};
     virtual int process(Ct const * const c, St *st, int len, sizebounded<Vt,sz> &b) const override {
-        if (len <= 0) { return 0; }
+        if (len <= 0) { return len; }
         int _afree = st->assembly()->free();
         if (_afree < len) {
           st->renew_assembly();
@@ -174,12 +183,29 @@ class assemblystream : public stream<Ct,St,Vt,sz>
         return nwritten;
     };
 };
+```
 
+The backup procedure:
+```cpp
 bool BackupCtrl::backup(boost::filesystem::path const & fp)
 {
     if (! FileCtrl::fileExists(fp)) { return false; }
 
     auto time_begin = clk::now();
+
+    // make DbFp entry; calculates file checksum (SHA256)
+    auto t_dbentry = DbFpDat::fromFile(fp);
+
+    if (Options::current().isDeduplicated() > 0) {
+      auto fpref = _pimpl->_dbfpref.get(fp.native());
+      if (fpref && fpref->_checksum == t_dbentry._checksum) {
+        std::clog << "deduplication: skipping redundant file " << fp << std::endl;
+        auto time_end = clk::now();
+        _pimpl->time_backup += std::chrono::duration_cast<std::chrono::microseconds>(time_end - time_begin);
+        return true;
+      }
+    }
+
     _pimpl->_nChunks = Options::current().nChunks();
     if (! _pimpl->_ass) { _pimpl->_ass.reset(new Assembly(_pimpl->_nChunks)); }
 
@@ -187,9 +213,6 @@ bool BackupCtrl::backup(boost::filesystem::path const & fp)
     sizebounded<unsigned char, bsz> buffer;
     FILE *fptr = fopen(fp.native().c_str(), "r");
     if (! fptr) { return false; }
-
-    // make DbFp entry
-    auto t_dbentry = DbFpDat::fromFile(fp);
 
     // setup pipeline
     bool compressed = Options::current().isCompressed();
@@ -213,7 +236,7 @@ bool BackupCtrl::backup(boost::filesystem::path const & fp)
         auto t0 = clk::now();
         size_t nread = fread((void*)buffer.ptr(), dwidth, readsz, fptr);
         auto t1 = clk::now();
-        _pimpl->time_read = _pimpl->time_read + std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0);
+        _pimpl->time_read += std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0);
         s1.push(nread*dwidth, buffer);
     }
     fclose(fptr);
@@ -239,7 +262,7 @@ bool BackupCtrl::backup(boost::filesystem::path const & fp)
 
     _pimpl->_dbfp.set(fp.native(), std::move(t_dbentry));
     auto time_end = clk::now();
-    _pimpl->time_backup = _pimpl->time_backup + std::chrono::duration_cast<std::chrono::microseconds>(time_end - time_begin);
+    _pimpl->time_backup += std::chrono::duration_cast<std::chrono::microseconds>(time_end - time_begin);
 
     return true;
 }

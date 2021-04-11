@@ -118,6 +118,42 @@ BOOST_AUTO_TEST_CASE( encrypt_file_raw )
 }
 ```
 
+## Test case: reencrypt a file; detect duplication
+```cpp
+BOOST_AUTO_TEST_CASE( reencrypt_duplicate_file )
+{
+    auto const tmpd = boost::filesystem::temp_directory_path();
+    auto const fp_dbfp = lxr::Options::current().fpathMeta() / "test_dbfp_backup2.xml";
+    lxr::Options::set().nChunks(16);
+    lxr::Options::set().isCompressed(false);
+    lxr::Options::set().isDeduplicated(1);
+    lxr::Options::set().fpathChunks() = tmpd / "LXR";
+    lxr::Options::set().fpathMeta() = tmpd /"meta";
+    lxr::BackupCtrl _ctrl;
+
+    lxr::DbFp _db0;
+    {
+        std::ifstream _in0; _in0.open(fp_dbfp.native());
+        _db0.inStream(_in0);
+    }
+    _ctrl.addReference(_db0);
+
+    BOOST_CHECK_EQUAL(0UL, _ctrl.free());
+    BOOST_CHECK_EQUAL(0UL, _ctrl.bytes_in());
+    BOOST_CHECK_EQUAL(0UL, _ctrl.bytes_out());
+
+    const std::string datafname = "test_data_file2";
+    const std::string datafile = (tmpd / datafname).c_str();
+    
+    BOOST_REQUIRE( _ctrl.backup(datafile) );
+
+    BOOST_CHECK( _ctrl.bytes_in() == 0);
+    BOOST_CHECK( _ctrl.bytes_out() == 0);
+
+    _ctrl.finalize();
+}
+```
+
 ## Test case: encrypt empty file
 ```cpp
 BOOST_AUTO_TEST_CASE( encrypt_empty_file )
