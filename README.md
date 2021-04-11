@@ -15,7 +15,7 @@ read [more](https://github.com/eLyKseeR/elykseer-cpp)
 
 >  $ ./mk_cpp.sh
 
-2. compilation
+2. compilation (in directory `BUILD`)
 
 > $ cmake .
 
@@ -28,7 +28,7 @@ read [more](https://github.com/eLyKseeR/elykseer-cpp)
 
 # copyright
 
-Copyright 2018, 2019 by Alexander Diemand
+Copyright 2018-2021 by Alexander Diemand
 
 # license
 
