@@ -63,6 +63,45 @@ BOOST_AUTO_TEST_CASE( set_get_record )
 }
 ```
 
+## Test case: union of records
+```cpp
+BOOST_AUTO_TEST_CASE( union_record )
+{
+  const std::string fp1 = "/home/me/Documents/interesting.txt";
+  const std::string fp2 = "/Data/photos/2001/motorcycle.jpeg";
+
+  lxr::DbFp _db, _db1;
+  lxr::DbFpDat _dat1 = lxr::DbFpDat::make(fp1);
+  lxr::DbFpDat _dat2 = lxr::DbFpDat::make(fp2);
+  _dat1._len = 1378; _dat2._len = 1749302;
+  _dat1._osusr = "me"; _dat1._osgrp = "users";
+  _dat2._osusr = "nobody"; _dat2._osgrp = "nobody";
+  lxr::DbFpBlock _block1 {1, 193943, 0UL, (int)_dat1._len, (int)_dat1._len, false, {}, {}};
+  _dat1._blocks->push_back(std::move(_block1));
+  int idx = 1;
+  uint64_t len = 0ULL;
+  int bs = (1<<16) - 1;
+  while (len < _dat2._len) {
+    lxr::DbFpBlock _block2 {idx++, 7392+(int)len, len, std::min(bs,int(_dat2._len-len)), std::min(bs,int(_dat2._len-len)), false, {}, {}};
+    _dat2._blocks->push_back(std::move(_block2));
+    len += bs;
+  }
+  _db.set(fp1, _dat1);
+  _db1.set(fp2, _dat2);
+  _db.unionWith(_db1);
+  auto ob1 = _db.get(fp1);
+  auto ob2 = _db.get(fp2);
+  BOOST_CHECK(ob1);
+  BOOST_CHECK(ob2);
+  BOOST_CHECK(_db.contains(fp1));
+  BOOST_CHECK(_db.contains(fp2));
+  BOOST_CHECK(_db1.contains(fp2));
+  BOOST_CHECK_EQUAL(2, _db.count());
+  BOOST_CHECK_EQUAL(_dat1._len, ob1->_len);
+  BOOST_CHECK_EQUAL(_dat2._len, ob2->_len);
+}
+```
+
 ## Test case: output to XML file
 ```cpp
 /* DISABLED

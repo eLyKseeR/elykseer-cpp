@@ -33,9 +33,9 @@ struct BackupCtrl::pimpl
 
     int _nChunks {16};
     std::shared_ptr<Assembly> _ass;
+    DbFp _dbfpref;
     DbFp _dbfp;
     DbKey _dbkey;
-    DbFp _reffp;
     uint64_t trx_in {0UL};
     uint64_t trx_out {0UL};
     std::chrono::microseconds time_encr {0};
