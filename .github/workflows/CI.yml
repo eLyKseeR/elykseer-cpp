@@ -21,7 +21,7 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Install dependencies
-      run: sudo apt-get -y install cmake pandoc html2text libboost-all-dev
+      run: sudo apt-get -y install cmake pandoc html2text libboost-all-dev libgpg-error-dev libassuan-dev
 
     - name: Update submodules
       run: git submodule update --init --remote
