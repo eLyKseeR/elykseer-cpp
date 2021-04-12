@@ -49,6 +49,7 @@ BOOST_AUTO_TEST_CASE( setters_getters )
 {
     lxr::Options & _opts = lxr::Options::set();
     _opts.nChunks(17);
+    _opts.isDeduplicated(2);
     _opts.fpathChunks() = "/data/storage";
     _opts.fpathMeta() = "/mnt/secure";
 
