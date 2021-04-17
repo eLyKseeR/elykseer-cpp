@@ -127,13 +127,9 @@ add_custom_command(
   COMMAND rm -f utOS.cpp
   COMMAND ${EXTRACT_CPP_CMD} "${LITERATE_SRC_PATH}/utOS.cpp.md"  utOS.cpp
   DEPENDS "${LITERATE_SRC_PATH}/utOS.cpp.md"
-  OUTPUT utOS.cpp
-  )
+  OUTPUT utOS.cpp)
 add_custom_command(
   COMMAND rm -f utRestoreCtrl.cpp
   COMMAND ${EXTRACT_CPP_CMD} "${LITERATE_SRC_PATH}/utRestoreCtrl.cpp.md"  utRestoreCtrl.cpp
   DEPENDS "${LITERATE_SRC_PATH}/utRestoreCtrl.cpp.md"
-  OUTPUT utRestoreCtrl.cpp
-  )
-
-
+  OUTPUT utRestoreCtrl.cpp)
