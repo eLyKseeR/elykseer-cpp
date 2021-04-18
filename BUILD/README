@@ -1,6 +1,19 @@
+compilation
+===========
+
+1. generate Makefile using: `cmake .`
+
+2. extract and build sources: `make -j 4`
+
+3. run unit tests: `./ut.sh`
+
+
+unit tests
+==========
+
 ./ut.sh --run_test=utRestoreCtrl/encrypt_decrypt_file --log_level=all
 
-./ut.sh --run_test=utAssembly/assembly_encrypt_then_decrypt --log_level=all 
+./ut.sh --run_test=utAssembly/assembly_encrypt_then_decrypt --log_level=all
 
 
 using ccache

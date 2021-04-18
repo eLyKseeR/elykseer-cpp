@@ -24,14 +24,71 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
 # list of source files to be compiled
-file(GLOB SRCS *.cpp)
+#file(GLOB SRCS *.cpp)
+set(GENERATED_SRCS
+	appid.cpp
+	assembly.cpp
+	backupctrl.cpp
+	chunk.cpp
+	dbbackupjob.cpp
+	dbfp.cpp
+	dbkey.cpp
+	filectrl.cpp
+	fsutils.cpp
+	liz.cpp
+	options.cpp
+	os.cpp
+	restorectrl.cpp)
+set_source_files_properties(${GENERATED_SRCS} GENERATED)
+set(GENERATED_HDRS
+	lxr/appid.hpp
+	lxr/assembly.hpp
+	lxr/backupctrl.hpp
+	lxr/chunk.hpp
+	lxr/dbbackupjob.hpp
+	lxr/dbctrl.hpp
+	lxr/dbfp.hpp
+	lxr/dbkey.hpp
+	lxr/filectrl.hpp
+	lxr/fsutils.hpp
+	lxr/liz.hpp
+	lxr/lxr.hpp
+	lxr/options.hpp
+	lxr/os.hpp
+	lxr/restorectrl.hpp
+	lxr/streamio.hpp)
+set_source_files_properties(${GENERATED_HDRS} GENERATED)
+
+# generate sources from literate c++ files
+set(MAKE_CPP_CMD "${CMAKE_CURRENT_SOURCE_DIR}/../../ext/gitalk/utils/make_all_cpp.sh")
+set(MAKE_HPP_CMD "${CMAKE_CURRENT_SOURCE_DIR}/../../ext/gitalk/utils/make_all_hpp.sh")
+
+set(LITERATE_SRC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../src/cpp")
+
+add_custom_command(
+	WORKING_DIRECTORY "lxr"
+  	#COMMAND rm -f *.hpp
+	COMMAND ${MAKE_HPP_CMD} "${LITERATE_SRC_PATH}/elykseer-cpp.md"
+	MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/elykseer-cpp.md"
+    DEPENDS "${LITERATE_SRC_PATH}/*.hpp.md"
+	OUTPUT ${GENERATED_HDRS})
+
+add_custom_command(
+	#COMMAND rm -f *.cpp
+	COMMAND ${MAKE_CPP_CMD} "${LITERATE_SRC_PATH}/elykseer-cpp.md"
+	MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/elykseer-cpp.md"
+    DEPENDS "${LITERATE_SRC_PATH}/*.cpp.md"
+	OUTPUT ${GENERATED_SRCS})
+
 
 add_library (${PROJECT_NAME}_${CMAKE_BUILD_TYPE} SHARED
-	${SRCS}
+	${GENERATED_SRCS}
+	${GENERATED_HDRS}
 )
 
 add_library (${PROJECT_NAME}_${CMAKE_BUILD_TYPE}_s STATIC
-	${SRCS}
+	${GENERATED_SRCS}
+	${GENERATED_HDRS}
 )
 
 set_target_properties(${PROJECT_NAME}_${CMAKE_BUILD_TYPE} PROPERTIES
@@ -40,7 +97,7 @@ set_target_properties(${PROJECT_NAME}_${CMAKE_BUILD_TYPE} PROPERTIES
 
 if (CMAKE_BUILD_TYPE STREQUAL "DebugProfile")
 	add_library (${PROJECT_NAME}_p${CMAKE_BUILD_TYPE} STATIC
-		${SRCS}
+		${GENERATED_SRCS}
 	)
 	set_target_properties(${PROJECT_NAME}_p${CMAKE_BUILD_TYPE} PROPERTIES COMPILE_FLAGS "-fprofile-arcs -ftest-coverage")
 	#set(libs, "${libs} gcov")
