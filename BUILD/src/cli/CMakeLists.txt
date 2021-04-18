@@ -9,7 +9,7 @@ set_source_files_properties(${GENERATED_SRCS} GENERATED)
 # generate sources from literate c++ files
 set(MAKE_CODE_CMD "${CMAKE_CURRENT_SOURCE_DIR}/../../../ext/gitalk/utils/make_all_code.sh")
 
-set(LITERATE_SRC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/cpp")
+set(LITERATE_SRC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/cpp/cli")
 
 ## executable LXRbackup
 

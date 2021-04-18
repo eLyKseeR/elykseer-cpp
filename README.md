@@ -9,19 +9,15 @@ read [more](https://github.com/eLyKseeR/elykseer-cpp)
 
 # building
 
-1. prepare C++ code 
+1. code extraction and compilation (in directory `BUILD`)
 
 > $ cd BUILD
-
->  $ ./mk_cpp.sh
-
-2. compilation (in directory `BUILD`)
 
 > $ cmake .
 
 > $ make
 
-3. testing (in directory `BUILD`)
+2. testing (in directory `BUILD`)
 
 > $ ./ut.sh
 

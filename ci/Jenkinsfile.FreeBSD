@@ -25,23 +25,16 @@ pipeline {
                 sh 'cd ext/rapidcheck/BUILD; gmake'
             }
         }
-        stage('cleanup') {
-            steps {
-                sh 'cd BUILD; rm -rf CMakeFiles CMakeCache.txt'
-            }
-        }
-        stage('mk cpp') {
-            steps {
-                sh 'cd BUILD; ./mk_cpp.sh'
-            }
-        }
         stage('cmake') {
             steps {
+                sh 'cd BUILD; mkdir -p src/lxr'
+                sh 'cd BUILD; rm -rf CMakeFiles CMakeCache.txt'
                 sh 'cd BUILD; cmake .'
             }
         }
         stage('compile') {
             steps {
+                sh 'cd BUILD; gmake clean'
                 sh 'cd BUILD; gmake'
             }
         }

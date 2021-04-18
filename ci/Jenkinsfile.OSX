@@ -9,7 +9,7 @@ pipeline {
         stage('build dependencies') {
             steps {
                 sh 'cd ext/prngsharp; ./build.OSX.jenkins.sh'
-                sh 'cd ext/gpgme; brew install autoconf automake libgpg-error libassuan'
+                sh 'cd ext/gpgme; brew install autoconf automake libgpg-error libassuan || true'
                 sh 'cd ext/gpgme; ./autogen.sh'
                 sh 'cd ext/gpgme; ./configure --enable-static --disable-shared --enable-languages=cpp --disable-gpgsm-test --disable-g13-test --disable-gpg-test --disable-gpgconf-test'
                 sh 'cd ext/gpgme; make'
@@ -27,25 +27,22 @@ pipeline {
                 sh 'cd ext/rapidcheck/BUILD; make'
             }
         }
-        stage('mk cpp') {
-            steps {
-                sh 'cd BUILD; rm -rf CMakeFiles CMakeCache.txt'
-                sh 'cd BUILD; rm -rf src/*.cpp src/lxr/*.hpp test/*.cpp'
-                sh 'cd BUILD; ./mk_cpp.sh'
-            }
-        }
         stage('cmake') {
             steps {
+                sh 'cd BUILD; mkdir -p src/lxr'
+                sh 'cd BUILD; rm -rf CMakeFiles CMakeCache.txt'
                 sh 'cd BUILD; cmake .'
             }
         }
         stage('compile') {
             steps {
+                sh 'cd BUILD; make clean'
                 sh 'cd BUILD; make'
             }
         }
         stage('unit tests') {
             steps {
+                sh 'test -d $TMPDIR/restored && rm -rf $TMPDIR/restored'
                 sh 'cd BUILD; ./ut.sh'
             }
         }
