@@ -36,7 +36,7 @@ pipeline {
         stage('compile') {
             steps {
                 sh 'cd BUILD; nix-shell -p gcc cmake boost zlib --run "make clean"'
-                sh 'cd BUILD; nix-shell -p gcc cmake boost zlib --run "make"'
+                sh 'cd BUILD; nix-shell -p gcc cmake boost zlib pandoc html2text --run "make"'
             }
         }
         stage('unit tests') {
