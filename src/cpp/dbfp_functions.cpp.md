@@ -12,43 +12,51 @@ DbFpBlock::DbFpBlock(int i,int a,uint64_t f,int bl,int cl,bool c, const std::str
 
 Helper method to create a *DbFpDat*.
 ```c++
-DbFpDat DbFpDat::make(std::string const & fp)
+std::optional<DbFpDat> DbFpDat::make(std::string const & fp) noexcept
 {
-    DbFpDat db;
-    db._id = Md5::hash(fp).toHex();
-    return db;
+    try {
+      DbFpDat db;
+      db._id = Md5::hash(fp).toHex();
+      return db;
+    } catch (...) {
+      return {};
+    }
 }
 ```
 
 Helper method to create a *DbFpDat* from an existing file
 ```c++
-DbFpDat DbFpDat::fromFile(boost::filesystem::path const & fp)
+std::optional<DbFpDat> DbFpDat::fromFile(boost::filesystem::path const & fp) noexcept
 {
-    DbFpDat db = make(fp.native());
     if (! FileCtrl::fileExists(fp)) {
-        return db;
+        return {};
     }
-    db._checksum = Sha256::hash(fp).toHex();
 
-#if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
-    struct stat _fst;
-    if (stat(fp.native().c_str(), &_fst) == 0) {
-        db._len = _fst.st_size;
-        char _buf[65];
-        snprintf(_buf, 65, "%d", _fst.st_uid);
-        db._osusr = _buf;
-        snprintf(_buf, 65, "%d", _fst.st_gid);
-        db._osgrp = _buf;
-#if defined(__APPLE__) || defined(__FreeBSD__)
-        db._osattr = OS::time2string(_fst.st_mtimespec.tv_sec);
-#elif defined(__linux__)
-        db._osattr = OS::time2string(_fst.st_mtim.tv_sec);
-#endif
+    if (auto db = make(fp.native()); ! db) {
+      return {};
+    } else {
+      db->_checksum = Sha256::hash(fp).toHex();
+
+  #if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
+      struct stat _fst;
+      if (stat(fp.native().c_str(), &_fst) == 0) {
+          db->_len = _fst.st_size;
+          char _buf[65];
+          snprintf(_buf, 65, "%d", _fst.st_uid);
+          db->_osusr = _buf;
+          snprintf(_buf, 65, "%d", _fst.st_gid);
+          db->_osgrp = _buf;
+  #if defined(__APPLE__) || defined(__FreeBSD__)
+          db->_osattr = OS::time2string(_fst.st_mtimespec.tv_sec);
+  #elif defined(__linux__)
+          db->_osattr = OS::time2string(_fst.st_mtim.tv_sec);
+  #endif
+      }
+  #else
+      #error Such a platform is not yet a good host for this software
+  #endif
+      return db;
     }
-#else
-    #error Such a platform is not yet a good host for this software
-#endif
-    return db;
 }
 ```
 

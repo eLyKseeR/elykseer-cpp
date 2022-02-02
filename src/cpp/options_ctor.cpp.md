@@ -13,7 +13,7 @@ Options::Options(Options const & o)
   *_pimpl = *o._pimpl;
 }
 
-Options & Options::operator=(Options const & o)
+Options & Options::operator=(Options const & o) noexcept
 {
   *_pimpl = *o._pimpl;
   return *this;

@@ -36,30 +36,30 @@ BOOST_AUTO_TEST_CASE( set_get_record )
   const std::string fp2 = "/Data/photos/2001/motorcycle.jpeg";
 
   lxr::DbFp _db;
-  lxr::DbFpDat _dat1 = lxr::DbFpDat::make(fp1);
-  lxr::DbFpDat _dat2 = lxr::DbFpDat::make(fp2);
-  _dat1._len = 1378; _dat2._len = 1749302;
-  _dat1._osusr = "me"; _dat1._osgrp = "users";
-  _dat2._osusr = "nobody"; _dat2._osgrp = "nobody";
-  lxr::DbFpBlock _block1 {1, 193943, 0UL, (int)_dat1._len, (int)_dat1._len, false, {}, {}};
-  _dat1._blocks->push_back(std::move(_block1));
+  auto _dat1 = lxr::DbFpDat::make(fp1);
+  auto _dat2 = lxr::DbFpDat::make(fp2);
+  _dat1->_len = 1378; _dat2->_len = 1749302;
+  _dat1->_osusr = "me"; _dat1->_osgrp = "users";
+  _dat2->_osusr = "nobody"; _dat2->_osgrp = "nobody";
+  lxr::DbFpBlock _block1 {1, 193943, 0UL, (int)_dat1->_len, (int)_dat1->_len, false, {}, {}};
+  _dat1->_blocks->push_back(std::move(_block1));
   int idx = 1;
   uint64_t len = 0ULL;
   int bs = (1<<16) - 1;
-  while (len < _dat2._len) {
-    lxr::DbFpBlock _block2 {idx++, 7392+(int)len, len, std::min(bs,int(_dat2._len-len)), std::min(bs,int(_dat2._len-len)), false, {}, {}};
-    _dat2._blocks->push_back(std::move(_block2));
+  while (len < _dat2->_len) {
+    lxr::DbFpBlock _block2 {idx++, 7392+(int)len, len, std::min(bs,int(_dat2->_len-len)), std::min(bs,int(_dat2->_len-len)), false, {}, {}};
+    _dat2->_blocks->push_back(std::move(_block2));
     len += bs;
   }
-  _db.set(fp1, _dat1);
-  _db.set(fp2, _dat2);
+  _db.set(fp1, *_dat1);
+  _db.set(fp2, *_dat2);
   auto ob1 = _db.get(fp1);
   auto ob2 = _db.get(fp2);
   BOOST_CHECK(ob1);
   BOOST_CHECK(ob2);
   BOOST_CHECK_EQUAL(2, _db.count());
-  BOOST_CHECK_EQUAL(_dat1._len, ob1->_len);
-  BOOST_CHECK_EQUAL(_dat2._len, ob2->_len);
+  BOOST_CHECK_EQUAL(_dat1->_len, ob1->_len);
+  BOOST_CHECK_EQUAL(_dat2->_len, ob2->_len);
 }
 ```
 
@@ -71,23 +71,23 @@ BOOST_AUTO_TEST_CASE( union_record )
   const std::string fp2 = "/Data/photos/2001/motorcycle.jpeg";
 
   lxr::DbFp _db, _db1;
-  lxr::DbFpDat _dat1 = lxr::DbFpDat::make(fp1);
-  lxr::DbFpDat _dat2 = lxr::DbFpDat::make(fp2);
-  _dat1._len = 1378; _dat2._len = 1749302;
-  _dat1._osusr = "me"; _dat1._osgrp = "users";
-  _dat2._osusr = "nobody"; _dat2._osgrp = "nobody";
-  lxr::DbFpBlock _block1 {1, 193943, 0UL, (int)_dat1._len, (int)_dat1._len, false, {}, {}};
-  _dat1._blocks->push_back(std::move(_block1));
+  auto _dat1 = lxr::DbFpDat::make(fp1);
+  auto _dat2 = lxr::DbFpDat::make(fp2);
+  _dat1->_len = 1378; _dat2->_len = 1749302;
+  _dat1->_osusr = "me"; _dat1->_osgrp = "users";
+  _dat2->_osusr = "nobody"; _dat2->_osgrp = "nobody";
+  lxr::DbFpBlock _block1 {1, 193943, 0UL, (int)_dat1->_len, (int)_dat1->_len, false, {}, {}};
+  _dat1->_blocks->push_back(std::move(_block1));
   int idx = 1;
   uint64_t len = 0ULL;
   int bs = (1<<16) - 1;
-  while (len < _dat2._len) {
-    lxr::DbFpBlock _block2 {idx++, 7392+(int)len, len, std::min(bs,int(_dat2._len-len)), std::min(bs,int(_dat2._len-len)), false, {}, {}};
-    _dat2._blocks->push_back(std::move(_block2));
+  while (len < _dat2->_len) {
+    lxr::DbFpBlock _block2 {idx++, 7392+(int)len, len, std::min(bs,int(_dat2->_len-len)), std::min(bs,int(_dat2->_len-len)), false, {}, {}};
+    _dat2->_blocks->push_back(std::move(_block2));
     len += bs;
   }
-  _db.set(fp1, _dat1);
-  _db1.set(fp2, _dat2);
+  _db.set(fp1, *_dat1);
+  _db1.set(fp2, *_dat2);
   _db.unionWith(_db1);
   auto ob1 = _db.get(fp1);
   auto ob2 = _db.get(fp2);
@@ -97,8 +97,8 @@ BOOST_AUTO_TEST_CASE( union_record )
   BOOST_CHECK(_db.contains(fp2));
   BOOST_CHECK(_db1.contains(fp2));
   BOOST_CHECK_EQUAL(2, _db.count());
-  BOOST_CHECK_EQUAL(_dat1._len, ob1->_len);
-  BOOST_CHECK_EQUAL(_dat2._len, ob2->_len);
+  BOOST_CHECK_EQUAL(_dat1->_len, ob1->_len);
+  BOOST_CHECK_EQUAL(_dat2->_len, ob2->_len);
 }
 ```
 
@@ -149,23 +149,23 @@ BOOST_AUTO_TEST_CASE( input_from_xml )
 
   lxr::Key256 _aid1, _aid2;
   lxr::DbFp _db;
-  lxr::DbFpDat _dat1 = lxr::DbFpDat::make(fp1);
-  lxr::DbFpDat _dat2 = lxr::DbFpDat::make(fp2);
-  _dat1._len = 1378; _dat2._len = 1749302;
-  _dat1._osusr = "me"; _dat1._osgrp = "users";
-  _dat2._osusr = "nobody"; _dat2._osgrp = "nobody";
-  lxr::DbFpBlock _block1 {1, 193943, 0UL, (int)_dat1._len, (int)_dat1._len, false, {}, _aid1.toHex()};
-  _dat1._blocks->push_back(std::move(_block1));
+  auto _dat1 = lxr::DbFpDat::make(fp1);
+  auto _dat2 = lxr::DbFpDat::make(fp2);
+  _dat1->_len = 1378; _dat2->_len = 1749302;
+  _dat1->_osusr = "me"; _dat1->_osgrp = "users";
+  _dat2->_osusr = "nobody"; _dat2->_osgrp = "nobody";
+  lxr::DbFpBlock _block1 {1, 193943, 0UL, (int)_dat1->_len, (int)_dat1->_len, false, {}, _aid1.toHex()};
+  _dat1->_blocks->push_back(std::move(_block1));
   int idx = 1;
   uint64_t len = 0ULL;
   int bs = (1<<16) - 1;
-  while (len < _dat2._len) {
-    lxr::DbFpBlock _block2 {idx++, 7392+(int)len, len, std::min(bs,int(_dat2._len-len)), std::min(bs,int(_dat2._len-len)), false, {}, _aid2.toHex()};
-    _dat2._blocks->push_back(std::move(_block2));
+  while (len < _dat2->_len) {
+    lxr::DbFpBlock _block2 {idx++, 7392+(int)len, len, std::min(bs,int(_dat2->_len-len)), std::min(bs,int(_dat2->_len-len)), false, {}, _aid2.toHex()};
+    _dat2->_blocks->push_back(std::move(_block2));
     len += bs;
   }
-  _db.set(fp1, std::move(_dat1));
-  _db.set(fp2, std::move(_dat2));
+  _db.set(fp1, std::move(*_dat1));
+  _db.set(fp2, std::move(*_dat2));
 
   std::string _buf;
   std::ostringstream _outs;
@@ -209,11 +209,11 @@ BOOST_AUTO_TEST_CASE( instantiate_from_file )
 
   auto _entry = lxr::DbFpDat::fromFile(fp);
 
-  BOOST_CHECK( _entry._len > 0 );
-  BOOST_CHECK_EQUAL( "0", _entry._osusr);
-  BOOST_CHECK_EQUAL( "0", _entry._osgrp);
-  BOOST_CHECK( _entry._osattr.size() > 0 );
-  //std::clog << "mtime: " << _entry._osattr << std::endl;
+  BOOST_CHECK( _entry->_len > 0 );
+  BOOST_CHECK_EQUAL( "0", _entry->_osusr);
+  BOOST_CHECK_EQUAL( "0", _entry->_osgrp);
+  BOOST_CHECK( _entry->_osattr.size() > 0 );
+  //std::clog << "mtime: " << _entry->_osattr << std::endl;
 }
 ```
 
@@ -223,21 +223,21 @@ RC_BOOST_PROP( roundtrip, () )
 {
   const std::string fp = "/home/me/Documents/important.dat";
   lxr::DbFp _db;
-  lxr::DbFpDat _dat = lxr::DbFpDat::make(fp);
+  auto _dat = lxr::DbFpDat::make(fp);
   auto const tgtlen = *rc::gen::inRange(101, 1000002);
-  _dat._len = tgtlen;
-  _dat._osusr = "me"; _dat._osgrp = "users";
+  _dat->_len = tgtlen;
+  _dat->_osusr = "me"; _dat->_osgrp = "users";
   int idx = 1;
   uint64_t len = 0ULL;
   int bs = (1<<16) - 1;
-  while (len < _dat._len) {
-    lxr::DbFpBlock _block {idx++, 7392+(int)len, len, std::min(bs,int(_dat._len-len)), std::min(bs,int(_dat._len-len)), false, {}, {}};
-    _dat._blocks->push_back(std::move(_block));
+  while (len < _dat->_len) {
+    lxr::DbFpBlock _block {idx++, 7392+(int)len, len, std::min(bs,int(_dat->_len-len)), std::min(bs,int(_dat->_len-len)), false, {}, {}};
+    _dat->_blocks->push_back(std::move(_block));
     len += bs;
   }
-  auto const nblocks = _dat._blocks->size();
-  auto const ndatlen = _dat._len;
-  _db.set(fp, std::move(_dat));
+  auto const nblocks = _dat->_blocks->size();
+  auto const ndatlen = _dat->_len;
+  _db.set(fp, std::move(*_dat));
   RC_ASSERT(1 == _db.count());
 
   std::string _buf;

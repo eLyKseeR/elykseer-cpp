@@ -17,7 +17,7 @@ declared in [OS](os.hpp.md)
 
 ```cpp
 
-const std::string OS::hostname()
+const std::string OS::hostname() noexcept
 {
 #if defined( __linux__ ) || defined( __APPLE__ ) || defined(__FreeBSD__)
     char hostname[1024];
@@ -34,7 +34,7 @@ const std::string OS::hostname()
 
 }
 
-const std::string OS::username()
+const std::string OS::username() noexcept
 {
 #if defined( __linux__ ) || defined( __APPLE__ ) || defined(__FreeBSD__)
     char username[1024];
@@ -51,7 +51,7 @@ const std::string OS::username()
 
 }
 
-const std::string OS::timestamp()
+const std::string OS::timestamp() noexcept
 {
 #if defined( __linux__ ) || defined( __APPLE__ ) || defined(__FreeBSD__)
     auto now = std::chrono::system_clock::now();
@@ -65,7 +65,7 @@ const std::string OS::timestamp()
 #endif
 }
 
-const std::string OS::time2string(time_t _t)
+const std::string OS::time2string(time_t _t) noexcept
 {
 #if defined( __linux__ ) || defined( __APPLE__ ) || defined(__FreeBSD__)
     auto ts = std::chrono::system_clock::from_time_t(_t);

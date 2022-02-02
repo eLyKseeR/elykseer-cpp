@@ -43,17 +43,17 @@ module Liz =
 
 >public:
 
->static const bool [verify](liz_functions.cpp.md)();
+>static const bool [verify](liz_functions.cpp.md)() noexcept;
 
->static const int [daysLeft](liz_functions.cpp.md)();
+>static const int [daysLeft](liz_functions.cpp.md)() noexcept;
 
->static const std::string [license](liz_functions.cpp.md)();
+>static const std::string [license](liz_functions.cpp.md)() noexcept;
 
->static const std::string [copyright](liz_functions.cpp.md)();
+>static const std::string [copyright](liz_functions.cpp.md)() noexcept;
 
->static const std::string [version](liz_functions.cpp.md)();
+>static const std::string [version](liz_functions.cpp.md)() noexcept;
 
->static const std::string [name](liz_functions.cpp.md)();
+>static const std::string [name](liz_functions.cpp.md)() noexcept;
 
 >protected:
 

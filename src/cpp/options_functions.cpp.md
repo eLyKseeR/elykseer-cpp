@@ -4,72 +4,72 @@ declared in [Options](options.hpp.md)
 
 static Options _options;
 
-Options const & Options::current()
+Options const & Options::current() noexcept
 {
   return _options;
 }
 
-Options & Options::set()
+Options & Options::set() noexcept
 {
   return _options;
 }
 
-int Options::nChunks() const
+int Options::nChunks() const noexcept
 {
   return _pimpl->_nchunks;
 }
 
-void Options::nChunks(int v)
+void Options::nChunks(int v) noexcept
 {
   _pimpl->_nchunks = std::min(256, std::max(16, v));
 }
 
-int Options::nRedundancy() const
+int Options::nRedundancy() const noexcept
 {
   return _pimpl->_nredundancy;
 }
 
-void Options::nRedundancy(int v)
+void Options::nRedundancy(int v) noexcept
 {
   _pimpl->_nredundancy = v;
 }
 
-bool Options::isCompressed() const
+bool Options::isCompressed() const noexcept
 {
   return _pimpl->_iscompressed;
 }
 
-void Options::isCompressed(bool v)
+void Options::isCompressed(bool v) noexcept
 {
   _pimpl->_iscompressed = v;
 }
 
-int Options::isDeduplicated() const
+int Options::isDeduplicated() const noexcept
 {
   return _pimpl->_isdeduplicated;
 }
 
-void Options::isDeduplicated(int v)
+void Options::isDeduplicated(int v) noexcept
 {
   _pimpl->_isdeduplicated = v;
 }
 
-boost::filesystem::path const & Options::fpathChunks() const
+boost::filesystem::path const & Options::fpathChunks() const noexcept
 {
   return _pimpl->_fpathchunks;
 }
 
-boost::filesystem::path & Options::fpathChunks()
+boost::filesystem::path & Options::fpathChunks() noexcept
 {
   return _pimpl->_fpathchunks;
 }
 
-boost::filesystem::path const & Options::fpathMeta() const
+boost::filesystem::path const & Options::fpathMeta() const noexcept
 {
   return _pimpl->_fpathmeta;
 }
 
-boost::filesystem::path & Options::fpathMeta()
+boost::filesystem::path & Options::fpathMeta() noexcept
 {
   return _pimpl->_fpathmeta;
 }

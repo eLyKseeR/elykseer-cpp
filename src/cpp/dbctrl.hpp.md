@@ -44,46 +44,42 @@ type IDb<'k, 'e> =
 
 >public:
 
->virtual int count() const {
+>virtual int count() const noexcept {
       return _map.size(); }
 
->virtual bool contains(K const & k) const {
+>virtual bool contains(K const & k) const noexcept {
 ```cpp
       try { return (_map.at(k),true); } catch (...) { return false; }; }
 ```
 
->virtual std::optional&lt;T&gt; get(K const & k) {
+>virtual std::optional&lt;T&gt; get(K const & k) noexcept {
 ```cpp
       try { T & r = _map.at(k); return r; } catch (...) { return {}; }; }
 ```
 
->virtual void set(K const & k, T const & v) {
+>virtual void set(K const & k, T const & v) noexcept {
       _map[k]=std::move(v);
     }
 
->virtual void unionWith(DbCtrl&lt;T,K&gt; const & other) {
+>virtual void unionWith(DbCtrl&lt;T,K&gt; const & other) noexcept {
 ```cpp
       _map.insert(other._map.begin(), other._map.end());
     }
 ```
 
->virtual void appKeys(std::function&lt;void(K const &)&gt; f) const {
+>virtual void appKeys(std::function&lt;void(K const &)&gt; f) const noexcept {
 ```cpp
       for (const auto & p : _map) {
         f(p.first); }
     }
 ```
 
->virtual void appValues(std::function&lt;void(K const &, T const &)&gt; f) const {
+>virtual void appValues(std::function&lt;void(K const &, T const &)&gt; f) const noexcept {
 ```cpp
       for (const auto & p : _map) {
         f(p.first, p.second); }
     }
 ```
-
->virtual void inStream(std::istream &) {};
-
->virtual void outStream(std::ostream &) {};
 
 >protected:
 

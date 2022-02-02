@@ -20,13 +20,13 @@ namespace [lxr](namespace.list) {
 
 >public:
 
->static const std::string [hostname](os_functions.cpp.md)();
+>static const std::string [hostname](os_functions.cpp.md)() noexcept;
 
->static const std::string [username](os_functions.cpp.md)();
+>static const std::string [username](os_functions.cpp.md)() noexcept;
 
->static const std::string [timestamp](os_functions.cpp.md)();
+>static const std::string [timestamp](os_functions.cpp.md)() noexcept;
 
->static const std::string [time2string](os_functions.cpp.md)(time_t);
+>static const std::string [time2string](os_functions.cpp.md)(time_t) noexcept;
 
 >protected:
 

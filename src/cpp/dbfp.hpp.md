@@ -54,12 +54,12 @@ type DbFpDat = {
        _fpos = b._fpos; _blen = b._blen;
        _clen = b._clen; _compressed = b._compressed;
        _checksum = b._checksum; _aid = b._aid; }
-    DbFpBlock& operator=(const DbFpBlock && b) { _idx = b._idx; _apos = b._apos;
+    DbFpBlock& operator=(const DbFpBlock && b) noexcept { _idx = b._idx; _apos = b._apos;
        _fpos = b._fpos; _blen = b._blen;
        _clen = b._clen; _compressed = b._compressed;
        _checksum = b._checksum; _aid = b._aid;
        return *this; }
-    bool operator==(const DbFpBlock & b) const {
+    bool operator==(const DbFpBlock & b) const noexcept {
       return(_idx == b._idx && _apos == b._apos
       && _fpos == b._fpos && _blen == b._blen
       && _clen == b._clen && _compressed == b._compressed
@@ -79,8 +79,8 @@ type DbFpDat = {
 ## struct DbFpDat
 ```c++
 {
-    static DbFpDat make(std::string const &);
-    static DbFpDat fromFile(boost::filesystem::path const &);
+    static std::optional<DbFpDat> make(std::string const &) noexcept;
+    static std::optional<DbFpDat> fromFile(boost::filesystem::path const &) noexcept;
     DbFpDat() : _blocks(new std::vector<DbFpBlock>()) {}
     ~DbFpDat() { _blocks.reset(); }
     DbFpDat(DbFpDat const & d) { _id = d._id; _len = d._len;
@@ -89,11 +89,11 @@ type DbFpDat = {
     DbFpDat(DbFpDat && d) { _id = d._id; _len = d._len;
         _osusr = d._osusr; _osgrp = d._osgrp; _osattr = d._osattr;
         _checksum = d._checksum; _blocks = d._blocks; }
-    DbFpDat& operator=(DbFpDat const && d) { _id = d._id; _len = d._len;
+    DbFpDat& operator=(DbFpDat const && d) noexcept { _id = d._id; _len = d._len;
         _osusr = d._osusr; _osgrp = d._osgrp; _osattr = d._osattr;
         _checksum = d._checksum; _blocks = d._blocks;
         return *this; }
-    bool operator==(DbFpDat const & d) const {
+    bool operator==(DbFpDat const & d) const noexcept {
         return(
         _id == d._id && _len == d._len
         && _osusr == d._osusr && _osgrp == d._osgrp

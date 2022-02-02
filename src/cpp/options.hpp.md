@@ -62,15 +62,15 @@ type Options =
 
 >public:
 
->static Options const & [current](options_functions.cpp.md)();
+>static Options const & [current](options_functions.cpp.md)() noexcept;
 
->static Options & [set](options_functions.cpp.md)();
+>static Options & [set](options_functions.cpp.md)() noexcept;
 
 >[Options](options_ctor.cpp.md)();
 
 >[Options](options_ctor.cpp.md)(Options const &);
 
->Options & operator=(Options const &);
+>Options & operator=(Options const &) noexcept;
 
 >[~Options](options_ctor.cpp.md)();
 
@@ -80,29 +80,29 @@ type Options =
 
 >virtual void outStream(std::ostream&) const override;
 
->int [nChunks](options_functions.cpp.md)() const;
+>int [nChunks](options_functions.cpp.md)() const noexcept;
 
->void [nChunks](options_functions.cpp.md)(int v);
+>void [nChunks](options_functions.cpp.md)(int v) noexcept;
 
->int [nRedundancy](options_functions.cpp.md)() const;
+>int [nRedundancy](options_functions.cpp.md)() const noexcept;
 
->void [nRedundancy](options_functions.cpp.md)(int v);
+>void [nRedundancy](options_functions.cpp.md)(int v) noexcept;
 
->bool [isCompressed](options_functions.cpp.md)() const;
+>bool [isCompressed](options_functions.cpp.md)() const noexcept;
 
->void [isCompressed](options_functions.cpp.md)(bool v);
+>void [isCompressed](options_functions.cpp.md)(bool v) noexcept;
 
->int [isDeduplicated](options_functions.cpp.md)() const;
+>int [isDeduplicated](options_functions.cpp.md)() const noexcept;
 
->void [isDeduplicated](options_functions.cpp.md)(int v);
+>void [isDeduplicated](options_functions.cpp.md)(int v) noexcept;
 
->boost::filesystem::path const & [fpathChunks](options_functions.cpp.md)() const;
+>boost::filesystem::path const & [fpathChunks](options_functions.cpp.md)() const noexcept;
 
->boost::filesystem::path & [fpathChunks](options_functions.cpp.md)();
+>boost::filesystem::path & [fpathChunks](options_functions.cpp.md)() noexcept;
 
->boost::filesystem::path const & [fpathMeta](options_functions.cpp.md)() const;
+>boost::filesystem::path const & [fpathMeta](options_functions.cpp.md)() const noexcept;
 
->boost::filesystem::path & [fpathMeta](options_functions.cpp.md)();
+>boost::filesystem::path & [fpathMeta](options_functions.cpp.md)() noexcept;
 
 >protected:
 

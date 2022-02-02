@@ -2,12 +2,12 @@ declared in [Liz](liz.hpp.md)
 
 ```cpp
 
-const bool Liz::verify()
+const bool Liz::verify() noexcept
 {
     return false; // TODO
 }
 
-const int Liz::daysLeft()
+const int Liz::daysLeft() noexcept
 {
     return 0; // TODO
 }
@@ -91,25 +91,25 @@ std::string decodeb64(std::string const & _enc)
     return res;
 }
 
-const std::string Liz::copyright()
+const std::string Liz::copyright() noexcept
 {
     static std::string _enc = "Q29weXJpZ2h0IChjKSAyMDIwIEFsZXhhbmRlciBEaWVtYW5kCg==";
     return decodeb64(_enc);
 }
 
-const std::string Liz::version()
+const std::string Liz::version() noexcept
 {
     static std::string _enc = "VmVyc2lvbiAxLjUuMS4xIFRSNSAtIGRvIG5vdCB1c2UgZm9yIHByb2R1Y3Rpb24=";
     return decodeb64(_enc);
 }
 
-const std::string Liz::name()
+const std::string Liz::name() noexcept
 {
     static std::string _enc = "TFhS";
     return decodeb64(_enc);
 }
 
-const std::string Liz::license()
+const std::string Liz::license() noexcept
 {
     static std::string _enc = "ICAgICAgICAgICAgICAgICAgICBHTlUgR0VORVJBTCBQVUJMSUMgTElDRU5TRQogICAgICAgICAg"
     "ICAgICAgICAgICAgIFZlcnNpb24gMywgMjkgSnVuZSAyMDA3CgogQ29weXJpZ2h0IChDKSAyMDA3"

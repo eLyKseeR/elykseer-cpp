@@ -6,29 +6,29 @@ DbJobDat::DbJobDat()
     //_regexincl.push_back(std::regex(".*"));
 }
 
-void DbJobDat::include(std::string const & pat)
+void DbJobDat::include(std::string const & pat) noexcept
 {
     _regexincl.push_back(std::regex(pat));
     _strincl.push_back(pat);
 }
 
-void DbJobDat::exclude(std::string const & pat)
+void DbJobDat::exclude(std::string const & pat) noexcept
 {
     _regexexcl.push_back(std::regex(pat));
     _strexcl.push_back(pat);
 }
 
-void DbJobDat::addFile(std::string const & fp)
+void DbJobDat::addFile(std::string const & fp) noexcept
 {
     _paths.push_back(std::make_pair("file", fp));
 }
 
-void DbJobDat::addDirectory(std::string const & fp)
+void DbJobDat::addDirectory(std::string const & fp) noexcept
 {
     _paths.push_back(std::make_pair("directory", fp));
 }
 
-void DbJobDat::addRecursive(std::string const & fp)
+void DbJobDat::addRecursive(std::string const & fp) noexcept
 {
     _paths.push_back(std::make_pair("recursive", fp));
 }

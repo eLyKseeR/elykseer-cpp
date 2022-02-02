@@ -33,11 +33,11 @@ type DbJobDat = {
 ```c++
 {
     DbJobDat();
-    void include(std::string const &);
-    void exclude(std::string const &);
-    void addFile(std::string const &);
-    void addDirectory(std::string const &);
-    void addRecursive(std::string const &);
+    void include(std::string const &) noexcept;
+    void exclude(std::string const &) noexcept;
+    void addFile(std::string const &) noexcept;
+    void addDirectory(std::string const &) noexcept;
+    void addRecursive(std::string const &) noexcept;
 
     std::vector<std::string> _strincl;
     std::vector<std::string> _strexcl;

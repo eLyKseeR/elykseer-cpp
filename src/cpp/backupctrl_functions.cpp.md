@@ -195,10 +195,11 @@ bool BackupCtrl::backup(boost::filesystem::path const & fp)
 
     // make DbFp entry; calculates file checksum (SHA256)
     auto t_dbentry = DbFpDat::fromFile(fp);
+    if (! t_dbentry) { return false; }
 
     if (Options::current().isDeduplicated() > 0) {
       auto fpref = _pimpl->_dbfpref.get(fp.native());
-      if (fpref && fpref->_checksum == t_dbentry._checksum) {
+      if (fpref && fpref->_checksum == t_dbentry->_checksum) {
         std::clog << "deduplication: skipping redundant file " << fp << std::endl;
         auto time_end = clk::now();
         _pimpl->time_backup += std::chrono::duration_cast<std::chrono::microseconds>(time_end - time_begin);
@@ -217,7 +218,7 @@ bool BackupCtrl::backup(boost::filesystem::path const & fp)
     // setup pipeline
     bool compressed = Options::current().isCompressed();
     configuration config(_pimpl->_nChunks, compressed);
-    state st(&config, &t_dbentry);
+    state st(&config, &(t_dbentry.value()));
     st.dbkeys(&_pimpl->_dbkey);
     st.assembly(_pimpl->_ass);
     constexpr int dwidth = 1; // bytes read at once
@@ -260,7 +261,7 @@ bool BackupCtrl::backup(boost::filesystem::path const & fp)
     }
 #endif
 
-    _pimpl->_dbfp.set(fp.native(), std::move(t_dbentry));
+    _pimpl->_dbfp.set(fp.native(), std::move(t_dbentry.value()));
     auto time_end = clk::now();
     _pimpl->time_backup += std::chrono::duration_cast<std::chrono::microseconds>(time_end - time_begin);
 

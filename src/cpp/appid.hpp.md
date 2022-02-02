@@ -33,9 +33,9 @@ module internal AppId =
 
 >public:
 
->static const Key256 [salt](appid_functions.cpp.md)();
+>static const Key256 [salt](appid_functions.cpp.md)() noexcept;
 
->static const std::string [appid](appid_functions.cpp.md)();
+>static const std::string [appid](appid_functions.cpp.md)() noexcept;
 
 >protected:
 
