@@ -9,6 +9,7 @@
 #include "boost/filesystem.hpp"
 #include <string>
 #include <utility>
+#include <optional>
 
 ````
 
@@ -39,13 +40,13 @@ module FsUtils =
 
 >public:
 
->static std::string [sep](fsutils_functions.cpp.md)();
+>static std::string [sep](fsutils_functions.cpp.md)() noexcept;
 
->static const boost::filesystem::path [cleanfp](fsutils_functions.cpp.md)(boost::filesystem::path const &);
+>static const boost::filesystem::path [cleanfp](fsutils_functions.cpp.md)(boost::filesystem::path const &) noexcept;
 
 >static std::pair&lt;const std::string, const std::string&gt; [osusrgrp](fsutils_functions.cpp.md)(boost::filesystem::path const &);
 
->static const std::string [fstem](fsutils_functions.cpp.md)();
+>static const std::string [fstem](fsutils_functions.cpp.md)() noexcept;
 
 >protected:
 
@@ -60,11 +61,11 @@ module FsUtils =
 };
 
 
->const boost::filesystem::path [operator/](fsutils_functions.cpp.md)(std::string const &a, std::string const &b);
+>const boost::filesystem::path [operator/](fsutils_functions.cpp.md)(std::string const &a, std::string const &b) noexcept;
 
->const boost::filesystem::path [operator/](fsutils_functions.cpp.md)(boost::filesystem::path const &a, std::string const &b);
+>const boost::filesystem::path [operator/](fsutils_functions.cpp.md)(boost::filesystem::path const &a, std::string const &b) noexcept;
 
->const boost::filesystem::path [operator/](fsutils_functions.cpp.md)(boost::filesystem::path const &a, boost::filesystem::path const &b);
+>const boost::filesystem::path [operator/](fsutils_functions.cpp.md)(boost::filesystem::path const &a, boost::filesystem::path const &b) noexcept;
 
 
 ```cpp

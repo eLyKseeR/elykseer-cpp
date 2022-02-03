@@ -2,27 +2,33 @@ declared in [FileCtrl](filectrl.hpp.md)
 
 ```cpp
 
-std::string FileCtrl::fileDate(boost::filesystem::path const & fp)
+std::optional<std::string> FileCtrl::fileDate(boost::filesystem::path const & fp) noexcept
 {
-    return "";
+    return {};
 }
 
-std::time_t FileCtrl::fileLastWriteTime(boost::filesystem::path const & fp)
+std::optional<std::time_t> FileCtrl::fileLastWriteTime(boost::filesystem::path const & fp) noexcept
 {
-    return boost::filesystem::last_write_time(fp);
+    try {
+        return boost::filesystem::last_write_time(fp);
+    } catch (...) { return {}; }
 }
 
-uint64_t FileCtrl::fileSize(boost::filesystem::path const & fp)
+std::optional<uint64_t> FileCtrl::fileSize(boost::filesystem::path const & fp) noexcept
 {
-    return boost::filesystem::file_size(fp);
+    try {
+        return boost::filesystem::file_size(fp);
+    } catch (...) { return {}; }
 }
 
-bool FileCtrl::fileExists(boost::filesystem::path const & fp)
+bool FileCtrl::fileExists(boost::filesystem::path const & fp) noexcept
 {
-    return boost::filesystem::exists(fp);
+    try {
+        return boost::filesystem::exists(fp);
+    } catch (...) { return {}; }
 }
 
-bool FileCtrl::isFileReadable(boost::filesystem::path const & fp)
+bool FileCtrl::isFileReadable(boost::filesystem::path const & fp) noexcept
 {
     try {
         auto s = boost::filesystem::status(fp);
@@ -31,7 +37,7 @@ bool FileCtrl::isFileReadable(boost::filesystem::path const & fp)
     return false;
 }
 
-bool FileCtrl::dirExists(boost::filesystem::path const & fp)
+bool FileCtrl::dirExists(boost::filesystem::path const & fp) noexcept
 {
     try {
         auto s = boost::filesystem::status(fp);

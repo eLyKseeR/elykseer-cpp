@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include <ctime>
+#include <optional>
 ````
 
 namespace [lxr](namespace.list) {
@@ -43,17 +44,17 @@ module FileCtrl =
 
 >public:
 
->static std::string [fileDate](filectrl_functions.cpp.md)(boost::filesystem::path const &);
+>static std::optional&lt;std::string&gt; [fileDate](filectrl_functions.cpp.md)(boost::filesystem::path const &) noexcept;
 
->static std::time_t [fileLastWriteTime](filectrl_functions.cpp.md)(boost::filesystem::path const &);
+>static std::optional&lt;std::time_t&gt; [fileLastWriteTime](filectrl_functions.cpp.md)(boost::filesystem::path const &) noexcept;
 
->static uint64_t [fileSize](filectrl_functions.cpp.md)(boost::filesystem::path const &);
+>static std::optional&lt;uint64_t&gt; [fileSize](filectrl_functions.cpp.md)(boost::filesystem::path const &) noexcept;
 
->static bool [fileExists](filectrl_functions.cpp.md)(boost::filesystem::path const &);
+>static bool [fileExists](filectrl_functions.cpp.md)(boost::filesystem::path const &) noexcept;
 
->static bool [isFileReadable](filectrl_functions.cpp.md)(boost::filesystem::path const &);
+>static bool [isFileReadable](filectrl_functions.cpp.md)(boost::filesystem::path const &) noexcept;
 
->static bool [dirExists](filectrl_functions.cpp.md)(boost::filesystem::path const &);
+>static bool [dirExists](filectrl_functions.cpp.md)(boost::filesystem::path const &) noexcept;
 
 >static std::vector&lt;boost::filesystem::path&gt; [fileListRecursive](filectrl_functions.cpp.md)(boost::filesystem::path const &);
 
