@@ -67,10 +67,10 @@ type DbFpDat = {
     DbFpBlock(DbFpBlock const & b) = delete;
     DbFpBlock& operator=(DbFpBlock const & b) = delete;
     DbFpBlock(int,int,uint64_t,int,int,bool,const std::string&, const std::string&);
-    int _idx, _apos;
-    uint64_t _fpos;
-    int _blen, _clen;
-    bool _compressed;
+    int _idx{-1}, _apos{0};
+    uint64_t _fpos{0};
+    int _blen{0}, _clen{0};
+    bool _compressed{false};
     std::string _checksum;
     std::string _aid;
 };
@@ -101,7 +101,7 @@ type DbFpDat = {
         && _blocks->size() == d._blocks->size()); }
     DbFpDat& operator=(DbFpDat const & d) = delete;
     std::string _id;
-    uint64_t _len;
+    uint64_t _len{0};
     std::string _osusr, _osgrp, _osattr;
     std::string _checksum;
     std::shared_ptr<std::vector<DbFpBlock>> _blocks;

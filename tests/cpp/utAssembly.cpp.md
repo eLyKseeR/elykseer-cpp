@@ -192,10 +192,10 @@ BOOST_AUTO_TEST_CASE( assembly_encrypt_then_extract_chunks )
   #ifdef DEBUG
   { std::ofstream fass; fass.open((tmpd / "test_assembly.filled").native());
     const int bufsz = 4096;
-    sizebounded<unsigned char, bufsz> buf;
+    sizebounded<unsigned char, bufsz> buf2;
     for (int i=0; i<nChunks()*lxr::Chunk::size; i+=bufsz) {
-        BOOST_CHECK_EQUAL(_a1.getData(i, i+bufsz-1, buf), bufsz);
-        fass.write((const char*)buf.ptr(),bufsz); }
+        BOOST_CHECK_EQUAL(_a1.getData(i, i+bufsz-1, buf2), bufsz);
+        fass.write((const char*)buf2.ptr(),bufsz); }
     fass.close();
   }
   #endif
@@ -216,10 +216,10 @@ BOOST_AUTO_TEST_CASE( assembly_encrypt_then_extract_chunks )
   #ifdef DEBUG
   { std::ofstream fass; fass.open((tmpd / "test_assembly.decrypted").native());
     const int bufsz = 4096;
-    sizebounded<unsigned char, bufsz> buf;
+    sizebounded<unsigned char, bufsz> buf2;
     for (int i=0; i<nChunks()*lxr::Chunk::size; i+=bufsz) {
-        BOOST_CHECK_EQUAL(_a2.getData(i, i+bufsz-1, buf), bufsz);
-        fass.write((const char*)buf.ptr(),bufsz); }
+        BOOST_CHECK_EQUAL(_a2.getData(i, i+bufsz-1, buf2), bufsz);
+        fass.write((const char*)buf2.ptr(),bufsz); }
     fass.close();
   }
   #endif

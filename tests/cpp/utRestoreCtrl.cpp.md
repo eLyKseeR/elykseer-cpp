@@ -190,10 +190,9 @@ BOOST_AUTO_TEST_CASE( backup_restore_file_compressed )
         _fi.open("/bin/sh");
 #endif
       char buffer[1025];
-      int nread;
       for (int i=0; i<11; i++) {
         _fi.read(buffer, 1024);
-        if ((nread = _fi.gcount()) > 0) {
+        if (int nread = _fi.gcount(); nread > 0) {
           _fe.write(buffer, nread);
         }
       }

@@ -58,10 +58,9 @@ class state {
     DbFpDat* dbentry() const {return _dbentry;}
     void dbkeys(DbKey *db) {_dbkeys=db;}
     DbKey* dbkeys() const {return _dbkeys;}
-    void assembly(std::shared_ptr<Assembly> &a) {_assembly=a;}
+    void assembly(std::shared_ptr<Assembly> const &a) {_assembly=a;}
     std::shared_ptr<Assembly>& assembly() {return _assembly;}
     bool renew_assembly() {
-        auto t0 = clk::now();
         if (_assembly && _assembly->pos() > 0) {
             lxr::Key256 _k;
             lxr::Key128 _iv;
@@ -86,10 +85,10 @@ class state {
     std::chrono::microseconds time_compress {0};
 
   private:
-    configuration const *_config;
+    configuration const *_config{nullptr};
     std::shared_ptr<Assembly> _assembly;
-    DbKey *_dbkeys;
-    DbFpDat *_dbentry;
+    DbKey *_dbkeys{nullptr};
+    DbFpDat *_dbentry{nullptr};
     bool _iscompressed{false};
     size_t _fpos{0}; // pos in file
     std::string _md5;

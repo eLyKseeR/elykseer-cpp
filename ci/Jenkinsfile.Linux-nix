@@ -3,7 +3,7 @@ pipeline {
     stages {
         stage('init dependencies') {
             steps {
-                sh 'git submodule update --init --remote'
+                sh 'git submodule update --init'
             }
         }
         stage('build dependencies') {
@@ -12,7 +12,7 @@ pipeline {
                 sh 'cd ext/gpgme; nix-shell -p autoconf automake libtool m4 --run "./autogen.sh"'
                 sh 'cd ext/gpgme; nix-shell -p gcc libgpgerror libassuan --run "./configure --enable-static --disable-shared --enable-languages=cpp --disable-gpgsm-test --disable-g13-test --disable-gpg-test --disable-gpgconf-test"'
                 sh 'cd ext/gpgme; nix-shell -p gcc libgpgerror libassuan --run "make"'
-                sh 'cd ext/elykseer-crypto; git submodule update --init --remote'
+                sh 'cd ext/elykseer-crypto; git submodule update --init'
                 sh 'cd ext/elykseer-crypto/ext/prngsharp; ./build.Linux.jenkins.nix'
                 sh 'cd ext/elykseer-crypto/ext/cryptopp; nix-shell -p gcc --run "make -f GNUmakefile"'
                 sh 'cd ext/elykseer-crypto/BUILD; rm -rf CMakeFiles CMakeCache.txt'
@@ -35,8 +35,7 @@ pipeline {
         }
         stage('compile') {
             steps {
-                sh 'cd BUILD; nix-shell -p gcc cmake boost zlib --run "make clean"'
-                sh 'cd BUILD; nix-shell -p gcc cmake boost zlib pandoc html2text --run "make"'
+                sh 'cd BUILD; nix-shell -p gcc cmake boost zlib pandoc html2text --run "make clean; make"'
             }
         }
         stage('unit tests') {

@@ -60,12 +60,20 @@ if (CMAKE_COMPILER_IS_GNUCC)
   set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O")
 endif (CMAKE_COMPILER_IS_GNUCC)
 
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O1 -fPIC")
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -g -fPIC")
-#set(CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS} -fPIC -g")
-# clang also wants its own stdlib
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -stdlib=libc++ -g -O0")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -g -O0 -fPIC")
+find_program(CPPCHECK NAMES cppcheck)
+if(CPPCHECK)
+    message(STATUS "Found: cppcheck")
+    add_custom_target(cppcheck
+        ${CPPCHECK}
+        -Uassert --std=c++17 --enable=all
+        ${CMAKE_SOURCE_DIR}/src/lxr/*.hpp
+        ${CMAKE_SOURCE_DIR}/src/*.cpp
+        ${CMAKE_SOURCE_DIR}/test/*.cpp
+    )
+else()
+    message(STATUS "Cppcheck - not found")
+    message(STATUS "  Build target 'cppcheck' not available.")
+endif()
 
 # OS dependent
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -78,4 +86,3 @@ include_directories(../ext)
 
 add_subdirectory( src )
 add_subdirectory( test )
-

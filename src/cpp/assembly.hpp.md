@@ -89,6 +89,10 @@ module Assembly =
 
 ## // construct an _Assembly_ with a defined size
 
+>static constexpr int min_n { 16 };
+
+>static constexpr int max_n { 256 };
+
 >explicit [Assembly](assembly_ctor.cpp.md)(int n);
 
 ## // construct an _Assembly_ with its identifier set; for reconstruction

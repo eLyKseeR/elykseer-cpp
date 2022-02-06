@@ -43,7 +43,6 @@ set(GENERATED_SRCS
 set_source_files_properties(${GENERATED_SRCS} GENERATED)
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-
         add_executable ( ut${PROJECT_NAME}
           ${GENERATED_SRCS}
         )

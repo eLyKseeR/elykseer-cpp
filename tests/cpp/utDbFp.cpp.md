@@ -181,8 +181,7 @@ BOOST_AUTO_TEST_CASE( input_from_xml )
 
   std::ostringstream _outs2;
   _db2.outStream(_outs2); _outs2.flush();
-  std::string _buf2 = _outs2.str();
-
+  // std::string _buf2 = _outs2.str();
   //std::cout << _buf2 << std::endl;
 
   auto const _fpdat11 = _db.get(fp1);

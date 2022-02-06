@@ -45,9 +45,8 @@ int _decodeb64(const char *inp, const int ilen, char *outp, const int olen, int 
 {
   int readin = 0;
   int writeout = 0;
-  uint32_t buf = 0;
   while (readin <= ilen - 4 && writeout <= olen - 3) {
-    buf = 0;
+    uint32_t buf = 0;
     buf |= translate_ch2idx(inp[readin]);
     buf <<= 6;
     buf |= translate_ch2idx(inp[readin+1]);
@@ -74,7 +73,6 @@ std::string decodeb64(std::string const & _enc)
     const int BUFFSIZE = 1200;
     std::string res;
     char buf[BUFFSIZE];
-    int written = 0;
     int slen = _enc.size();
     int sread = 0;
     const char *sptr = _enc.c_str();

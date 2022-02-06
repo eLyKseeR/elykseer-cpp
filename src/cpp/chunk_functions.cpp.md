@@ -22,27 +22,28 @@ void Chunk::clear()
 bool Chunk::fromFile(boost::filesystem::path const & fpath)
 {
   if (! FileCtrl::fileExists(fpath)) { return false; }
-  int fsz = boost::filesystem::file_size(fpath);
-  if (fsz < Chunk::size) { return false; }
+  if (auto fsz = FileCtrl::fileSize(fpath); fsz && *fsz < Chunk::size) { return false; }
 
-  FILE * fstr = fopen(fpath.c_str(), "rb");
-  if (! fstr) { return false; }
-  size_t nread = fread((void*)_pimpl->_buffer->ptr(), 64, Chunk::size / 64, fstr);
-  fclose(fstr);
-
-  return (nread == Chunk::size / 64);
+  if (FILE * fstr = fopen(fpath.c_str(), "rb"); ! fstr) {
+    return false;
+  } else {
+    size_t nread = fread((void*)_pimpl->_buffer->ptr(), 64, Chunk::size / 64, fstr);
+    fclose(fstr);
+    return (nread == Chunk::size / 64);
+  }
 }
 
 bool Chunk::toFile(boost::filesystem::path const & fpath) const
 {
   if (FileCtrl::fileExists(fpath)) { return false; }
 
-  FILE * fstr = fopen(fpath.c_str(), "wb");
-  if (! fstr) { return false; }
-  size_t nwritten = fwrite(_pimpl->_buffer->ptr(), 64, Chunk::size / 64, fstr);
-  fclose(fstr);
-
-  return (nwritten == Chunk::size / 64);
+  if (FILE * fstr = fopen(fpath.c_str(), "wb"); ! fstr) {
+    return false;
+  } else {
+    size_t nwritten = fwrite(_pimpl->_buffer->ptr(), 64, Chunk::size / 64, fstr);
+    fclose(fstr);
+    return (nwritten == Chunk::size / 64);
+  }
 }
 
 ```

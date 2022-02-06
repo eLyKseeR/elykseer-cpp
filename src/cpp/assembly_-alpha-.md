@@ -4,7 +4,9 @@
 <fpaste ../../src/copyright.md>
 ```cpp
 */
+```
 
+```cpp
 #include "lxr/assembly.hpp"
 #include "lxr/chunk.hpp"
 #include "lxr/appid.hpp"
@@ -17,7 +19,6 @@
 #include "sizebounded/sizebounded.hpp"
 #include "sizebounded/sizebounded.ipp"
 
-#include "boost/optional.hpp"
 #include "boost/contract_macro.hpp"
 
 #include <string>
@@ -32,14 +33,14 @@ struct Assembly::pimpl :
 {
   pimpl(Key256 const & aid, int n) :
       BOOST_CONTRACT_CONSTRUCTOR_PRECONDITION(pimpl)([&] {
-            BOOST_CONTRACT_ASSERT(n >= 16 && n <= 256);
+            BOOST_CONTRACT_ASSERT(n >= Assembly::min_n && n <= Assembly::max_n);
         })
     , _chunks(new Chunk[n])
     , _n(n)
     , _aid(aid)
   { }
 
-  pimpl(int n)
+  explicit pimpl(int n)
     : pimpl(mk_aid(), n)
   { }
 
@@ -56,8 +57,8 @@ struct Assembly::pimpl :
     return Sha256::hash(b.append(k.toHex()));
   }
 
-  Chunk *_chunks;
-  int _n;
+  Chunk *_chunks{nullptr};
+  int _n{0};
   Key256  _aid;
   int _pos {0};
 #ifdef DEBUG

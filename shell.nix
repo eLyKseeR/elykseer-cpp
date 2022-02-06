@@ -13,6 +13,7 @@ stdenv.mkDerivation rec {
         gdb
         git
         pandoc
+        cppcheck
         html2text
     ];
 

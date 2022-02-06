@@ -29,7 +29,7 @@ bool Assembly::encrypt(Key256 const & k, Key128 & ivout)
     int rlen = get_data(pos, Aes::datasz, buf);
     assert(rlen == Aes::datasz);
     pos += Aes::datasz;
-    int lenc = aesenc.process(rlen, buf);
+    lenc = aesenc.process(rlen, buf);
     set_data(lastpos, lenc, buf);
     lastpos += lenc;
   }
@@ -62,7 +62,7 @@ bool Assembly::decrypt(Key256 const & k, Key128 const & iv)
     rlen = get_data(pos, Aes::datasz, buf);
     assert(rlen == Aes::datasz);
     pos += Aes::datasz;
-    int ldec = aesdec.process(rlen, buf);
+    ldec = aesdec.process(rlen, buf);
     set_data(lastpos, ldec, buf);
     lastpos += ldec;
   }

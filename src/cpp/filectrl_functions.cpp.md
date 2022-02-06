@@ -51,8 +51,7 @@ std::vector<boost::filesystem::path> FileCtrl::fileListRecursive(boost::filesyst
     std::vector<boost::filesystem::path> res;
     boost::filesystem::directory_iterator _pit{fp};
     while (_pit != boost::filesystem::directory_iterator{}) {
-        auto fp2 = *_pit++;
-        if (dirExists(fp2)) {
+        if (auto fp2 = *_pit++; dirExists(fp2)) {
             auto dsub = fileListRecursive(fp2);
             res.reserve( res.size() + dsub.size() );
             res.insert( res.end(), dsub.begin(), dsub.end() );
