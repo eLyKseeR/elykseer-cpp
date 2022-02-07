@@ -3,7 +3,7 @@ pipeline {
     stages {
         stage('init dependencies') {
             steps {
-                sh 'git submodule update --init --remote'
+                sh 'git submodule update --init'
             }
         }
         stage('build dependencies') {
@@ -13,7 +13,7 @@ pipeline {
                 sh 'cd ext/gpgme; ./autogen.sh'
                 sh 'cd ext/gpgme; ./configure --enable-static --disable-shared --enable-languages=cpp --disable-gpgsm-test --disable-g13-test --disable-gpg-test --disable-gpgconf-test'
                 sh 'cd ext/gpgme; make'
-                sh 'cd ext/elykseer-crypto; git submodule update --init --remote'
+                sh 'cd ext/elykseer-crypto; git submodule update --init'
                 sh 'cd ext/elykseer-crypto/ext/prngsharp; ./build.OSX.jenkins.sh'
                 sh 'cd ext/elykseer-crypto/ext/cryptopp; make -f GNUmakefile'
                 sh 'cd ext/elykseer-crypto/BUILD; rm -rf CMakeFiles CMakeCache.txt'
@@ -36,8 +36,7 @@ pipeline {
         }
         stage('compile') {
             steps {
-                sh 'cd BUILD; make clean'
-                sh 'cd BUILD; make'
+                sh 'cd BUILD; make clean; make'
             }
         }
         stage('unit tests') {
