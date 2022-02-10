@@ -4,9 +4,6 @@
 [submodule "ext/date"]
 	path = ext/date
 	url = https://github.com/HowardHinnant/date.git
-[submodule "ext/prngsharp"]
-	path = ext/prngsharp
-	url = https://github.com/CodiePP/prngsharp.git
 [submodule "ext/sizebounded"]
 	path = ext/sizebounded
 	url = https://github.com/CodiePP/sizebounded.git

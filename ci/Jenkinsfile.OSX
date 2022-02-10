@@ -8,13 +8,11 @@ pipeline {
         }
         stage('build dependencies') {
             steps {
-                sh 'cd ext/prngsharp; ./build.OSX.jenkins.sh'
                 sh 'cd ext/gpgme; brew install autoconf automake libgpg-error libassuan || true'
                 sh 'cd ext/gpgme; ./autogen.sh'
                 sh 'cd ext/gpgme; ./configure --enable-static --disable-shared --enable-languages=cpp --disable-gpgsm-test --disable-g13-test --disable-gpg-test --disable-gpgconf-test'
                 sh 'cd ext/gpgme; make'
                 sh 'cd ext/elykseer-crypto; git submodule update --init'
-                sh 'cd ext/elykseer-crypto/ext/prngsharp; ./build.OSX.jenkins.sh'
                 sh 'cd ext/elykseer-crypto/ext/cryptopp; make -f GNUmakefile'
                 sh 'cd ext/elykseer-crypto/BUILD; rm -rf CMakeFiles CMakeCache.txt'
                 sh 'cd ext/elykseer-crypto/BUILD; rm -rf src/*.cpp src/lxr/*.hpp test/*.cpp'

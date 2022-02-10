@@ -6,7 +6,6 @@ the content of the 'ext/' directory:
   elykseer-crypto/
   date/
   gitalk/
-  prngsharp/
   os-metrics/
   rapidcheck/
   sizebounded/
@@ -51,14 +50,6 @@ date
 license: MIT
 
 https://github.com/HowardHinnant/date.git
-
-
-prngsharp
-=========
-
-license: MIT
-
-https://github.com/CodiePP/prngsharp.git
 
 
 RapidCheck

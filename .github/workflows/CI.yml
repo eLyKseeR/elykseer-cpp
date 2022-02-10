@@ -24,13 +24,12 @@ jobs:
       run: sudo apt-get -y install cmake pandoc html2text libboost-all-dev libboost-contract-dev libgpg-error-dev libassuan-dev libdigest-sha3-perl
 
     - name: Update submodules
-      run: git submodule update --init --remote
+      run: git submodule update --init
 
     - name: Build dependencies 1
       shell: bash
       working-directory: ${{github.workspace}}/ext
       run: |
-        cd prngsharp; ./build.Linux.jenkins.sh
         cd ../gpgme; ./autogen.sh
         ./configure --enable-static --disable-shared --enable-languages=cpp --disable-gpgsm-test --disable-g13-test --disable-gpg-test --disable-gpgconf-test
         make
@@ -40,8 +39,7 @@ jobs:
       shell: bash
       working-directory: ${{github.workspace}}/ext/elykseer-crypto
       run: |
-        git submodule update --init --remote
-        cd ext/prngsharp; ./build.Linux.jenkins.sh
+        git submodule update --init
         cd ../cryptopp; make -f GNUmakefile
         cd ../../BUILD; ./mk_cpp.sh; cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE .; make
 

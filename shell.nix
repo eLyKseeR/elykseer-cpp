@@ -9,6 +9,8 @@ stdenv.mkDerivation rec {
     nativeBuildInputs = [
         cmake
         ccache
+        clang
+        gnused
         gcc
         gdb
         git
@@ -23,5 +25,9 @@ stdenv.mkDerivation rec {
         boost
     ];
 
+    shellHook = ''
+      echo 'eLyKseeR nixified environment'
+      export SED=sed
+    '';
 }
 
