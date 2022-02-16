@@ -1,4 +1,4 @@
-declared in [BackupCtrl](backupctrl.hpp.md)
+declared in [RestoreCtrl](restorectrl.hpp.md)
 
 ```cpp
 void RestoreCtrl::addDbFp(DbFp const & _db) {

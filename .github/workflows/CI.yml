@@ -30,18 +30,19 @@ jobs:
       shell: bash
       working-directory: ${{github.workspace}}/ext
       run: |
-        cd ../gpgme; ./autogen.sh
-        ./configure --enable-static --disable-shared --enable-languages=cpp --disable-gpgsm-test --disable-g13-test --disable-gpg-test --disable-gpgconf-test
-        make
-        cd ../rapidcheck; mkdir -p BUILD;
+        cd rapidcheck; mkdir -p BUILD;
         cd BUILD; cmake ..; make
     - name: Build elykseer-crypto
       shell: bash
       working-directory: ${{github.workspace}}/ext/elykseer-crypto
       run: |
         git submodule update --init
-        cd ../cryptopp; make -f GNUmakefile
-        cd ../../BUILD; ./mk_cpp.sh; cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE .; make
+        cd ext/cryptopp; make -f GNUmakefile
+        cd ../gpgme; ./autogen.sh
+        ./configure --enable-static --disable-shared --enable-languages=cpp --disable-gpgsm-test --disable-g13-test --disable-gpg-test --disable-gpgconf-test --with-pic
+        make
+        cd ../../BUILD; ./mk_cpp.sh
+        cmake .; make
 
     - name: Configure CMake
       # Use a bash shell so we can use the same syntax for environment variable
@@ -52,7 +53,6 @@ jobs:
       # and build directories, but this is only available with CMake 3.13 and higher.  
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
       run: |
-        mkdir -p src/lxr
         cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE .
 
     - name: Build

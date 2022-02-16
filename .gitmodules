@@ -17,9 +17,6 @@
 	path = ext/rapidcheck
 	url = https://github.com/emil-e/rapidcheck.git
 	branch = master
-[submodule "ext/gpgme"]
-	path = ext/gpgme
-	url = https://dev.gnupg.org/source/gpgme.git
 [submodule "ext/os-metrics"]
 	path = ext/os-metrics
 	url = https://github.com/CodiePP/os-metrics.git
