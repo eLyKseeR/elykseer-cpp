@@ -21,8 +21,8 @@
 
 #include "boost/contract_macro.hpp"
 
-#include <string>
 #include <iostream>
+#include <string>
 
 namespace lxr {
 
