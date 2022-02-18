@@ -6,6 +6,7 @@ cryptographic data archive; written in C++; an elixir to stay forever
 
 read [more](https://github.com/eLyKseeR/elykseer-cpp)
 
+[![Compilation of project with submodules and verification by unit tests](https://github.com/eLyKseeR/elykseer-cpp/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/eLyKseeR/elykseer-cpp/actions/workflows/CI.yml)
 
 # building
 
