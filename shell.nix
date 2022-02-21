@@ -17,6 +17,11 @@ stdenv.mkDerivation rec {
         pandoc
         cppcheck
         html2text
+        pkg-config
+        autoconf automake libtool m4
+        libassuan libgpgerror
+        gnupg
+        perl534Packages.DigestSHA3
     ];
 
     buildInputs = [
