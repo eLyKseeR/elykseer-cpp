@@ -33,7 +33,7 @@ jobs:
       working-directory: ${{github.workspace}}/ext
       run: |
         cd rapidcheck; mkdir -p BUILD;
-        cd BUILD; cmake ..; make
+        cd BUILD; rm -rf CMakeFiles CMakeCache.txt; cmake ..; make
     - name: Build elykseer-crypto
       shell: bash
       working-directory: ${{github.workspace}}/ext/elykseer-crypto
@@ -44,6 +44,7 @@ jobs:
         ./configure --enable-static --disable-shared --enable-languages=cpp --disable-gpgsm-test --disable-g13-test --disable-gpg-test --disable-gpgconf-test --with-pic
         make
         cd ../../BUILD; ./mk_cpp.sh
+        rm -rf CMakeFiles CMakeCache.txt
         cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE .
         cmake --build . --config $BUILD_TYPE
 
@@ -57,6 +58,7 @@ jobs:
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
       run: |
         mkdir -p src/lxr
+        rm -rf CMakeFiles CMakeCache.txt
         cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE .
 
     - name: Build
