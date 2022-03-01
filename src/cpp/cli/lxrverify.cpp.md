@@ -93,7 +93,7 @@ void output_copyright() {
 
 void set_chunk_path(std::string const p) {
   if (lxr::FileCtrl::dirExists(p)) {
-    lxr::Options::set().fpathChunks() = p;
+    lxr::Options::set().fpathChunks(p);
   } else {
     std::clog << "chunk output directory does not exist: " << p << std::endl;
     output_error();
@@ -161,7 +161,7 @@ int main (int argc, char * const argv[]) {
 
   // options
   auto const tmpd = boost::filesystem::temp_directory_path();
-  lxr::Options::set().fpathChunks() = tmpd / "LXR";
+  lxr::Options::set().fpathChunks(tmpd / "LXR");
 
   int ch;
   while ((ch = getopt_long(argc, argv, "hVLCx:o:p:k:f:d:", longopts, NULL)) != -1) {

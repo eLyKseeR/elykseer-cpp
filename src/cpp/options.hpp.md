@@ -82,27 +82,27 @@ type Options =
 
 >int [nChunks](options_functions.cpp.md)() const noexcept;
 
->void [nChunks](options_functions.cpp.md)(int v) noexcept;
+>auto [nChunks](options_functions.cpp.md)(int v) noexcept -> Options&;
 
 >int [nRedundancy](options_functions.cpp.md)() const noexcept;
 
->void [nRedundancy](options_functions.cpp.md)(int v) noexcept;
+>auto [nRedundancy](options_functions.cpp.md)(int v) noexcept -> Options&;
 
 >bool [isCompressed](options_functions.cpp.md)() const noexcept;
 
->void [isCompressed](options_functions.cpp.md)(bool v) noexcept;
+>auto [isCompressed](options_functions.cpp.md)(bool v) noexcept -> Options&;
 
 >int [isDeduplicated](options_functions.cpp.md)() const noexcept;
 
->void [isDeduplicated](options_functions.cpp.md)(int v) noexcept;
+>auto [isDeduplicated](options_functions.cpp.md)(int v) noexcept -> Options&;
 
 >boost::filesystem::path const & [fpathChunks](options_functions.cpp.md)() const noexcept;
 
->boost::filesystem::path & [fpathChunks](options_functions.cpp.md)() noexcept;
+>auto [fpathChunks](options_functions.cpp.md)(boost::filesystem::path const &) noexcept -> Options&;
 
 >boost::filesystem::path const & [fpathMeta](options_functions.cpp.md)() const noexcept;
 
->boost::filesystem::path & [fpathMeta](options_functions.cpp.md)() noexcept;
+>auto [fpathMeta](options_functions.cpp.md)(boost::filesystem::path const &) noexcept -> Options&;
 
 >protected:
 

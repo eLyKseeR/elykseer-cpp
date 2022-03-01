@@ -102,7 +102,7 @@ void output_copyright() {
 
 void set_chunk_path(std::string const p) {
   if (lxr::FileCtrl::dirExists(p)) {
-    lxr::Options::set().fpathChunks() = p;
+    lxr::Options::set().fpathChunks(p);
   } else {
     std::clog << "chunk output directory does not exist: " << p << std::endl;
     output_error();
@@ -111,7 +111,7 @@ void set_chunk_path(std::string const p) {
 
 void set_meta_path(std::string const p) {
   if (lxr::FileCtrl::dirExists(p)) {
-    lxr::Options::set().fpathMeta() = p;
+    lxr::Options::set().fpathMeta(p);
   } else {
     std::clog << "meta data output directory does not exist: " << p << std::endl;
     output_error();
@@ -211,8 +211,8 @@ int main (int argc, char * const argv[]) {
 
   // options
   auto const tmpd = boost::filesystem::temp_directory_path();
-  lxr::Options::set().fpathChunks() = tmpd / "LXR";
-  lxr::Options::set().fpathMeta() = tmpd / "meta";
+  lxr::Options::set().fpathChunks(tmpd / "LXR");
+  lxr::Options::set().fpathMeta(tmpd / "meta");
   lxr::Options::set().nChunks(16);
   lxr::Options::set().isCompressed(true);
 
