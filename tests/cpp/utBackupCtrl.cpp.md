@@ -39,10 +39,10 @@ BOOST_AUTO_TEST_CASE( check_startup )
 BOOST_AUTO_TEST_CASE( encrypt_file_compressed )
 {
     auto const tmpd = boost::filesystem::temp_directory_path();
-    lxr::Options::set().nChunks(32);
-    lxr::Options::set().isCompressed(true);
-    lxr::Options::set().fpathChunks() = tmpd / "LXR";
-    lxr::Options::set().fpathMeta() = tmpd /"meta";
+    lxr::Options::set().nChunks(32)
+                       .isCompressed(true)
+                       .fpathChunks(tmpd / "LXR")
+                       .fpathMeta(tmpd /"meta");
     lxr::BackupCtrl _ctrl;
 
     BOOST_CHECK_EQUAL(0UL, _ctrl.free());
@@ -81,10 +81,10 @@ BOOST_AUTO_TEST_CASE( encrypt_file_compressed )
 BOOST_AUTO_TEST_CASE( encrypt_file_raw )
 {
     auto const tmpd = boost::filesystem::temp_directory_path();
-    lxr::Options::set().nChunks(17);
-    lxr::Options::set().isCompressed(false);
-    lxr::Options::set().fpathChunks() = tmpd / "LXR";
-    lxr::Options::set().fpathMeta() = tmpd /"meta";
+    lxr::Options::set().nChunks(17)
+                       .isCompressed(false)
+                       .fpathChunks(tmpd / "LXR")
+                       .fpathMeta(tmpd /"meta");
     lxr::BackupCtrl _ctrl;
 
     BOOST_CHECK_EQUAL(0UL, _ctrl.free());
@@ -124,11 +124,11 @@ BOOST_AUTO_TEST_CASE( reencrypt_duplicate_file )
 {
     auto const tmpd = boost::filesystem::temp_directory_path();
     auto const fp_dbfp = lxr::Options::current().fpathMeta() / "test_dbfp_backup2.xml";
-    lxr::Options::set().nChunks(16);
-    lxr::Options::set().isCompressed(false);
-    lxr::Options::set().isDeduplicated(1);
-    lxr::Options::set().fpathChunks() = tmpd / "LXR";
-    lxr::Options::set().fpathMeta() = tmpd /"meta";
+    lxr::Options::set().nChunks(16)
+                       .isCompressed(false)
+                       .isDeduplicated(1)
+                       .fpathChunks(tmpd / "LXR")
+                       .fpathMeta(tmpd /"meta");
     lxr::BackupCtrl _ctrl;
 
     lxr::DbFp _db0;
@@ -159,10 +159,10 @@ BOOST_AUTO_TEST_CASE( reencrypt_duplicate_file )
 BOOST_AUTO_TEST_CASE( encrypt_empty_file )
 {
     auto const tmpd = boost::filesystem::temp_directory_path();
-    lxr::Options::set().nChunks(16);
-    lxr::Options::set().isCompressed(true);
-    lxr::Options::set().fpathChunks() = tmpd / "LXR";
-    lxr::Options::set().fpathMeta() = tmpd /"meta";
+    lxr::Options::set().nChunks(16)
+                       .isCompressed(true)
+                       .fpathChunks(tmpd / "LXR")
+                       .fpathMeta(tmpd /"meta");
     lxr::BackupCtrl _ctrl;
 
     BOOST_CHECK_EQUAL(0UL, _ctrl.free());

@@ -178,9 +178,9 @@ BOOST_AUTO_TEST_CASE( assembly_encrypt_then_extract_chunks )
     boost::filesystem::create_directory(outputpath);
   }
   int nChunks = 17;
-  lxr::Options::set().nChunks(nChunks);
-  lxr::Options::set().isCompressed(false);
-  lxr::Options::set().fpathChunks() = outputpath;
+  lxr::Options::set().nChunks(nChunks)
+                     .isCompressed(false)
+                     .fpathChunks(outputpath);
   lxr::Assembly _a1(nChunks);
   sizebounded<unsigned char, lxr::Assembly::datasz> buf;
   const int msz = msg.size();

@@ -44,8 +44,8 @@ BOOST_AUTO_TEST_CASE( check_startup )
 BOOST_AUTO_TEST_CASE( backup_restore_file_raw )
 {
   auto const tmpd = boost::filesystem::temp_directory_path();
-  lxr::Options::set().fpathChunks() = tmpd / "LXR";
-  lxr::Options::set().fpathMeta() = tmpd / "meta";
+  lxr::Options::set().fpathChunks(tmpd / "LXR")
+                     .fpathMeta(tmpd / "meta");
   if(! lxr::FileCtrl::dirExists(lxr::Options::current().fpathMeta())) {
     boost::filesystem::create_directory(lxr::Options::current().fpathMeta());
   }
@@ -72,8 +72,8 @@ BOOST_AUTO_TEST_CASE( backup_restore_file_raw )
 
   // encrypt file
   {
-    lxr::Options::set().isCompressed(false);
-    lxr::Options::set().nChunks(16);
+    lxr::Options::set().isCompressed(false)
+                       .nChunks(16);
     lxr::BackupCtrl _backup;
 
     { std::ofstream _fe; _fe.open(datafile.native());
@@ -102,8 +102,8 @@ BOOST_AUTO_TEST_CASE( backup_restore_file_raw )
 
   // decrypt file
   {
-    lxr::Options::set().isCompressed(false); // overwritten from meta data
-    lxr::Options::set().nChunks(17);
+    lxr::Options::set().isCompressed(false) // overwritten from meta data
+                       .nChunks(17);
     lxr::RestoreCtrl _restore;
 
     BOOST_CHECK_EQUAL(0UL, _restore.bytes_in());
@@ -138,8 +138,8 @@ BOOST_AUTO_TEST_CASE( backup_restore_file_raw )
 BOOST_AUTO_TEST_CASE( backup_restore_file_compressed )
 {
   auto const tmpd = boost::filesystem::temp_directory_path();
-  lxr::Options::set().fpathChunks() = tmpd / "LXR";
-  lxr::Options::set().fpathMeta() = tmpd / "meta";
+  lxr::Options::set().fpathChunks(tmpd / "LXR")
+                     .fpathMeta(tmpd / "meta");
   if(! lxr::FileCtrl::dirExists(lxr::Options::current().fpathMeta())) {
     boost::filesystem::create_directory(lxr::Options::current().fpathMeta());
   }
@@ -170,8 +170,8 @@ BOOST_AUTO_TEST_CASE( backup_restore_file_compressed )
 
   // encrypt file
   {
-    lxr::Options::set().isCompressed(true);
-    lxr::Options::set().nChunks(16);
+    lxr::Options::set().isCompressed(true)
+                       .nChunks(16);
     lxr::BackupCtrl _backup;
 
     { std::ofstream _fe; _fe.open(datafile.native());
@@ -190,7 +190,7 @@ BOOST_AUTO_TEST_CASE( backup_restore_file_compressed )
         _fi.open("/bin/sh");
 #endif
       char buffer[1025];
-      for (int i=0; i<11; i++) {
+      for (int i=0; i<61; i++) {
         _fi.read(buffer, 1024);
         if (int nread = _fi.gcount(); nread > 0) {
           _fe.write(buffer, nread);
@@ -228,8 +228,8 @@ BOOST_AUTO_TEST_CASE( backup_restore_file_compressed )
 
   // decrypt file
   {
-    lxr::Options::set().isCompressed(false); // overwritten from meta data
-    lxr::Options::set().nChunks(17);
+    lxr::Options::set().isCompressed(false) // overwritten from meta data
+                       .nChunks(17);
     lxr::RestoreCtrl _restore;
 
     BOOST_CHECK_EQUAL(0UL, _restore.bytes_in());

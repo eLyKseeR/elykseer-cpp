@@ -19,9 +19,10 @@ int Options::nChunks() const noexcept
   return _pimpl->_nchunks;
 }
 
-void Options::nChunks(int v) noexcept
+auto Options::nChunks(int v) noexcept -> Options&
 {
   _pimpl->_nchunks = std::min(256, std::max(16, v));
+  return *this;
 }
 
 int Options::nRedundancy() const noexcept
@@ -29,9 +30,10 @@ int Options::nRedundancy() const noexcept
   return _pimpl->_nredundancy;
 }
 
-void Options::nRedundancy(int v) noexcept
+auto Options::nRedundancy(int v) noexcept -> Options&
 {
   _pimpl->_nredundancy = v;
+  return *this;
 }
 
 bool Options::isCompressed() const noexcept
@@ -39,9 +41,10 @@ bool Options::isCompressed() const noexcept
   return _pimpl->_iscompressed;
 }
 
-void Options::isCompressed(bool v) noexcept
+auto Options::isCompressed(bool v) noexcept -> Options&
 {
   _pimpl->_iscompressed = v;
+  return *this;
 }
 
 int Options::isDeduplicated() const noexcept
@@ -49,9 +52,10 @@ int Options::isDeduplicated() const noexcept
   return _pimpl->_isdeduplicated;
 }
 
-void Options::isDeduplicated(int v) noexcept
+auto Options::isDeduplicated(int v) noexcept -> Options&
 {
   _pimpl->_isdeduplicated = v;
+  return *this;
 }
 
 boost::filesystem::path const & Options::fpathChunks() const noexcept
@@ -59,9 +63,10 @@ boost::filesystem::path const & Options::fpathChunks() const noexcept
   return _pimpl->_fpathchunks;
 }
 
-boost::filesystem::path & Options::fpathChunks() noexcept
+auto Options::fpathChunks(boost::filesystem::path const &p) noexcept -> Options&
 {
-  return _pimpl->_fpathchunks;
+  _pimpl->_fpathchunks = p;
+  return *this;
 }
 
 boost::filesystem::path const & Options::fpathMeta() const noexcept
@@ -69,9 +74,10 @@ boost::filesystem::path const & Options::fpathMeta() const noexcept
   return _pimpl->_fpathmeta;
 }
 
-boost::filesystem::path & Options::fpathMeta() noexcept
+auto Options::fpathMeta(boost::filesystem::path const &p) noexcept -> Options&
 {
-  return _pimpl->_fpathmeta;
+  _pimpl->_fpathmeta = p;
+  return *this;
 }
 
 void Options::inStream(std::istream & ins)
@@ -95,7 +101,7 @@ void Options::fromXML(boost::property_tree::ptree::iterator &root)
       if (ops->first == "memory") {
         for (auto mem = ops->second.begin(); mem != ops->second.end(); mem++) {
           if (mem->first == "<xmlattr>") {
-            nChunks(mem->second.get<int>("nchunks"));
+            nChunks(mem->second.get<int>("nchunks")).
             nRedundancy(mem->second.get<int>("redundancy"));
           }
         }
@@ -109,8 +115,8 @@ void Options::fromXML(boost::property_tree::ptree::iterator &root)
           }
         }
       } else if (ops->first == "fpaths") {
-        fpathChunks() = std::move(ops->second.get<std::string>("chunks"));
-        fpathMeta() = std::move(ops->second.get<std::string>("meta"));
+        fpathChunks(ops->second.get<std::string>("chunks")).
+        fpathMeta(ops->second.get<std::string>("meta"));
       }
     }
   }
