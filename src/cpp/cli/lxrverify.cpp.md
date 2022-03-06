@@ -8,6 +8,7 @@
 #include "lxr/dbkey.hpp"
 #include "lxr/filectrl.hpp"
 #include "lxr/fsutils.hpp"
+#include "lxr/gpg.hpp"
 #include "lxr/liz.hpp"
 #include "lxr/options.hpp"
 #include "lxr/os.hpp"
@@ -39,6 +40,7 @@
              { "pKeys",     required_argument,  NULL,           'k' },
              { "file",      required_argument,  NULL,           'f' },
              { "dir",       required_argument,  NULL,           'd' },
+             { "gpg",       no_argument,        NULL,           'g' },
              { NULL,         0,                 NULL,           0 }
     };
 
@@ -54,6 +56,8 @@ static int counter_dirs = 0;
 
 static std::string list_files[MAX_RESTORE_FILES];
 static std::string list_dirs[MAX_RESTORE_DIRS];
+
+static bool use_gpg{false};
 ```
 
 ## parsing cli arguments
@@ -71,6 +75,7 @@ void output_help() {
   std::cout << "-C --copyright shows copyright" << std::endl;
   std::cout << "--verbose      verbose output" << std::endl;
   std::cout << "--dry-run      just validate arguments" << std::endl;
+  std::cout << "--gpg          decrypt the meta data using GnuPG" << std::endl;
   std::cout << "-x --pChunks   sets path for encrypted chunks" << std::endl;
   std::cout << "-p --pDbFp     adds backup meta data dbfp (*)" << std::endl;
   std::cout << "-k --pKeys     adds backup encryption keys dbks (*)" << std::endl;
@@ -105,8 +110,14 @@ void add_dbfp_path(lxr::RestoreCtrl & ctrl, std::string const p) {
     //std::cout << "add_dbfp_path 0" << std::endl;
     lxr::DbFp _dbfp;
     //std::cout << "add_dbfp_path 1" << std::endl;
-    { std::ifstream _if; _if.open(p);
-      _dbfp.inStream(_if); _if.close(); }
+    if (use_gpg) {
+      lxr::Gpg gpg;
+      gpg.decrypt_from_file(p);
+      _dbfp.inStream(gpg.istream());
+    } else {
+      std::ifstream _if; _if.open(p);
+      _dbfp.inStream(_if); _if.close();
+    }
     //std::cout << "add_dbfp_path 2" << std::endl;
     ctrl.addDbFp(_dbfp);
     //std::cout << "add_dbfp_path 3" << std::endl;
@@ -121,8 +132,14 @@ void add_dbfp_path(lxr::RestoreCtrl & ctrl, std::string const p) {
 void add_dbkey_path(lxr::RestoreCtrl & ctrl, std::string const p) {
   if (lxr::FileCtrl::fileExists(p)) {
     lxr::DbKey _dbks;
-    { std::ifstream _if; _if.open(p);
-      _dbks.inStream(_if); _if.close(); }
+    if (use_gpg) {
+      lxr::Gpg gpg;
+      gpg.decrypt_from_file(p);
+      _dbks.inStream(gpg.istream());
+    } else {
+      std::ifstream _if; _if.open(p);
+      _dbks.inStream(_if); _if.close();
+    }
     ctrl.addDbKey(_dbks);
   } else {
     std::clog << "encryption keys dbks file does not exist: " << p << std::endl;
@@ -164,7 +181,7 @@ int main (int argc, char * const argv[]) {
   lxr::Options::set().fpathChunks(tmpd / "LXR");
 
   int ch;
-  while ((ch = getopt_long(argc, argv, "hVLCx:o:p:k:f:d:", longopts, NULL)) != -1) {
+  while ((ch = getopt_long(argc, argv, "hVLCgx:o:p:k:f:d:", longopts, NULL)) != -1) {
     //std::cout << "argument '" << ch << "'" << std::endl;
     switch (ch) {
       case 'h': output_help(); break;
@@ -176,6 +193,7 @@ int main (int argc, char * const argv[]) {
       case 'k': add_dbkey_path(ctrl, optarg); break;
       case 'f': restore_file(optarg); break;
       case 'd': restore_dir(optarg); break;
+      case 'g': use_gpg = true; break;
       default : break; //output_error(); return 1;
     }
   }
