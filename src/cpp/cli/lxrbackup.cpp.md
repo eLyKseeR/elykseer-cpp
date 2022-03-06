@@ -9,6 +9,7 @@
 #include "lxr/dbkey.hpp"
 #include "lxr/filectrl.hpp"
 #include "lxr/fsutils.hpp"
+#include "lxr/gpg.hpp"
 #include "lxr/liz.hpp"
 #include "lxr/options.hpp"
 #include "lxr/os.hpp"
@@ -41,6 +42,7 @@
              { "d1",        required_argument,  NULL,           'd' },
              { "dr",        required_argument,  NULL,           'D' },
              { "nchunks",   required_argument,  NULL,           'n' },
+             { "owner-key", required_argument,  NULL,           'k' },
              { "compression", required_argument, NULL,          'c' },
              { "deduplication", required_argument, NULL,        'u' },
              { NULL,         0,                 NULL,           0 }
@@ -85,6 +87,7 @@ void output_help() {
   std::cout << "-f             backups a file (*)" << std::endl;
   std::cout << "-d --d1        backups files in a directory (*)" << std::endl;
   std::cout << "-D --dr        recursively backups a directory and all its content (*)" << std::endl;
+  std::cout << "-k --owner-key looks up the PGP key and encrypts meta data with it" << std::endl;
   std::cout << "options labelled with (*) can be provided multiple times on the command line." << std::endl;
 }
 
@@ -202,22 +205,32 @@ void set_deduplication(std::string const p) {
   }
 }
 
+void set_ownerkey(std::optional<std::string> &okey, std::string const p) {
+  lxr::Gpg gpg;
+  if (gpg.has_public_key(p)) {
+    okey = p;
+  } else {
+    std::clog << "owner key does not exist: " << p << std::endl;
+    output_error();
+  }
+}
 ```
 
 ## main
 ```cpp
 int main (int argc, char * const argv[]) {
   lxr::BackupCtrl ctrl;
+  std::optional<std::string> okey{};
 
   // options
   auto const tmpd = boost::filesystem::temp_directory_path();
-  lxr::Options::set().fpathChunks(tmpd / "LXR");
-  lxr::Options::set().fpathMeta(tmpd / "meta");
-  lxr::Options::set().nChunks(16);
-  lxr::Options::set().isCompressed(true);
+  lxr::Options::set().fpathChunks(tmpd / "LXR")
+                     .fpathMeta(tmpd / "meta")
+                     .nChunks(16)
+                     .isCompressed(true);
 
   int ch;
-  while ((ch = getopt_long(argc, argv, "hVLCx:o:r:f:d:D:n:c:u:", longopts, NULL)) != -1) {
+  while ((ch = getopt_long(argc, argv, "hVLCx:o:r:f:d:D:n:c:u:k:", longopts, NULL)) != -1) {
     switch (ch) {
       case 'h': output_help(); break;
       case 'V': output_version(); break;
@@ -232,6 +245,7 @@ int main (int argc, char * const argv[]) {
       case 'n': set_n_chunks(optarg); break;
       case 'c': set_compression(optarg); break;
       case 'u': set_deduplication(optarg); break;
+      case 'k': set_ownerkey(okey, optarg); break;
       default : break; //output_error(); return 1;
     }
   }
@@ -290,13 +304,41 @@ int main (int argc, char * const argv[]) {
   std::string timestamp = lxr::OS::timestamp();
   auto const fp_dbfp = lxr::Options::current().fpathMeta() / ("LXRbackup-" + timestamp + "-dbfp.xml");
   auto const fp_dbk = lxr::Options::current().fpathMeta() / ("LXRbackup-" + timestamp + "-dbks.xml");
-  { std::ofstream _out1; _out1.open(fp_dbfp.native());
-    ctrl.getDbFp().outStream(_out1);
-    _out1.close();
-  }
-  { std::ofstream _out1; _out1.open(fp_dbk.native());
-    ctrl.getDbKey().outStream(_out1);
-    _out1.close();
+  if (okey) {
+    std::string _frp = okey.value();
+    {
+      lxr::Gpg gpg;
+      ctrl.getDbFp().outStream(gpg.ostream());
+      auto _enc = gpg.encrypt_to_key(_frp);
+      if (_enc) {
+        std::ofstream _outf; _outf.open(fp_dbfp.native());
+        _outf << _enc.value();
+        _outf.close();
+      } else {
+        std::clog << "Error: cannot encrypt dbfp" << std::endl;
+      }
+    }
+    {
+      lxr::Gpg gpg;
+      ctrl.getDbKey().outStream(gpg.ostream());
+      auto _enc = gpg.encrypt_to_key(_frp);
+      if (_enc) {
+        std::ofstream _outf; _outf.open(fp_dbk.native());
+        _outf << _enc.value();
+        _outf.close();
+      } else {
+        std::clog << "Error: cannot encrypt dbk" << std::endl;
+      }
+    }
+  } else {
+    { std::ofstream _out1; _out1.open(fp_dbfp.native());
+      ctrl.getDbFp().outStream(_out1);
+      _out1.close();
+    }
+    { std::ofstream _out1; _out1.open(fp_dbk.native());
+      ctrl.getDbKey().outStream(_out1);
+      _out1.close();
+    }
   }
 
   // show statistics
@@ -310,7 +352,6 @@ int main (int argc, char * const argv[]) {
     std::clog << "time elapsed: " << ctrl.time() << std::endl;
     std::clog << "bps: " << ctrl.bytes_in() * 1e6 / ctrl.time().count() << std::endl;
   }
-
 
   return 0;
 }
