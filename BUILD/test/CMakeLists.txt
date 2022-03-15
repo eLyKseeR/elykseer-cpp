@@ -45,11 +45,20 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
           ${GENERATED_SRCS}
         )
 
-        target_link_libraries ( ut${PROJECT_NAME}
+        if(OpenMP_CXX_FOUND)
+        target_link_libraries(ut${PROJECT_NAME}
+          elykseer-cpp_${CMAKE_BUILD_TYPE}
+          OpenMP::OpenMP_CXX
+          ${libs}
+          ${Boost_LIBRARIES}
+        )
+        else()
+        target_link_libraries(ut${PROJECT_NAME}
           elykseer-cpp_${CMAKE_BUILD_TYPE}
           ${libs}
           ${Boost_LIBRARIES}
         )
+        endif()    
 endif()
 
 if (CMAKE_BUILD_TYPE STREQUAL "DebugProfile")

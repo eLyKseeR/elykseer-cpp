@@ -68,13 +68,13 @@ class state {
             auto t0 = clk::now();
             if (! _assembly->encrypt(_k, _iv)) { return false; }
             auto t1 = clk::now();
+            time_encr += std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0);
             keyblock._n = _config->nchunks();
             keyblock._key = _k;
             keyblock._iv = _iv;
             _dbkeys->set(_assembly->said(), std::move(keyblock));
             if (! _assembly->extractChunks()) { return false; }
             auto t2 = clk::now();
-            time_encr += std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0);
             time_extract += std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
         }
         _assembly.reset(new Assembly(_config->nchunks()));
@@ -244,9 +244,9 @@ bool BackupCtrl::backup(boost::filesystem::path const & fp)
     _pimpl->trx_in += st.nread();
     _pimpl->trx_out += st.nwritten();
     _pimpl->_ass = st.assembly();
-    _pimpl->time_encr = st.time_encr;
-    _pimpl->time_extract = st.time_extract;
-    _pimpl->time_compress = st.time_compress;
+    _pimpl->time_encr += st.time_encr;
+    _pimpl->time_extract += st.time_extract;
+    _pimpl->time_compress += st.time_compress;
 
 #ifdef DEBUG
     { auto const tmpd = boost::filesystem::temp_directory_path();

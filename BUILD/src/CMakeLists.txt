@@ -106,14 +106,26 @@ if (CMAKE_BUILD_TYPE STREQUAL "DebugProfile")
 endif()
 
 
-target_link_libraries (${PROJECT_NAME}_${CMAKE_BUILD_TYPE} PUBLIC
-	${libs}
-	${Boost_LIBRARIES}
-)
-
-target_link_libraries (${PROJECT_NAME}_${CMAKE_BUILD_TYPE}_s
-	${libs}
-	${Boost_LIBRARIES}
-)
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(${PROJECT_NAME}_${CMAKE_BUILD_TYPE} PUBLIC
+		OpenMP::OpenMP_CXX
+		${libs}
+		${Boost_LIBRARIES}
+	)
+    target_link_libraries(${PROJECT_NAME}_${CMAKE_BUILD_TYPE}_s PUBLIC
+		OpenMP::OpenMP_CXX
+		${libs}
+		${Boost_LIBRARIES}
+	)
+else()
+	target_link_libraries(${PROJECT_NAME}_${CMAKE_BUILD_TYPE} PUBLIC
+		${libs}
+		${Boost_LIBRARIES}
+	)
+	target_link_libraries(${PROJECT_NAME}_${CMAKE_BUILD_TYPE}_s PUBLIC
+		${libs}
+		${Boost_LIBRARIES}
+	)
+endif()
 
 add_subdirectory( cli )
