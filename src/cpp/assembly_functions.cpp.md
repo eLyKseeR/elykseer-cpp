@@ -121,12 +121,14 @@ bool Assembly::extractChunks() const
 {
   if (! isEncrypted()) { return false; }
 
-  for (int n = 0; n < _pimpl->_n; n++) {
-    if (extractChunk(n) == false) {
-      return false;
-    }
+  bool res = true;
+  int n;
+  omp_set_num_threads(2); // fixed
+  #pragma omp parallel for private(n) schedule(static)
+  for (n = 0; n < _pimpl->_n; n++) {
+    res &= extractChunk(n);
   }
-  return true;
+  return res;
 }
 
 bool Assembly::extractChunk(int cnum) const
@@ -146,14 +148,18 @@ bool Assembly::insertChunks()
   _pimpl->_state &= ~writable;
   _pimpl->_state &= ~readable;
 
-  for (int n = 0; n < _pimpl->_n; n++) {
-    if (insertChunk(n) == false) {
-      return false;
-    }
+  bool res = true;
+  int n;
+  omp_set_num_threads(2); // fixed
+  #pragma omp parallel for private(n) schedule(static)
+  for (n = 0; n < _pimpl->_n; n++) {
+    res &= insertChunk(n);
   }
 
-  _pimpl->_state |= encrypted;
-  return true;
+  if (res) {
+    _pimpl->_state |= encrypted;
+  }
+  return res;
 }
 
 bool Assembly::insertChunk(int cnum)
@@ -221,14 +227,17 @@ int Assembly::set_data(const int pos, const int dlen, sizebounded<unsigned char,
   if (pos < 0) { return 0; }
   if (pos + dlen > size()) { return 0; }
 
-  int wlen = 0;
-  while (wlen < dlen) {
-    int cnum = (wlen+pos) % _pimpl->_n;   // 0 .. n-1  ; chunk number
-    int bidx = (wlen+pos) / _pimpl->_n;   // 0 .. dlen/n ; pos in chunk
-    _pimpl->_chunks[cnum].set(bidx, d[p0 + wlen]);
-    wlen++;
+  int cnum, bidx;
+  int idx;
+  const int n = _pimpl->_n;
+  omp_set_num_threads(2); // fixed
+  #pragma omp parallel for shared (d,dlen,pos,n) private(idx,bidx,cnum) schedule(static)
+  for(idx = 0; idx < dlen; idx++ ) {
+    cnum = (idx+pos) % n;   // 0 .. n-1  ; chunk number
+    bidx = (idx+pos) / n;   // 0 .. dlen/n ; pos in chunk
+    _pimpl->_chunks[cnum].set(bidx, d.get(p0 + idx));
   }
-  return wlen;
+  return dlen;
 }
 
 int Assembly::getData(int pos0, int pos1, sizebounded<unsigned char, datasz> & d) const
@@ -246,13 +255,17 @@ int Assembly::get_data(const int pos, const int dlen, sizebounded<unsigned char,
   if (pos < 0) { return 0; }
   if (pos + dlen > size()) { return 0; }
 
-  int rlen = 0;
-  while (rlen < dlen) {
-    int cnum = (rlen+pos) % _pimpl->_n;   // 0 .. n-1  ; chunk number
-    int bidx = (rlen+pos) / _pimpl->_n;   // 0 .. dlen/n ; pos in chunk
-    d[rlen++] = _pimpl->_chunks[cnum].get(bidx);
+  int cnum, bidx;
+  int idx;
+  const int n = _pimpl->_n;
+  omp_set_num_threads(2); // fixed
+  #pragma omp parallel for shared (d,dlen,pos,n) private(idx,bidx,cnum) schedule(static)
+  for(idx = 0; idx < dlen; idx++ ) {
+    cnum = (idx+pos) % n;   // 0 .. n-1  ; chunk number
+    bidx = (idx+pos) / n;   // 0 .. dlen/n ; pos in chunk
+    d[idx] = _pimpl->_chunks[cnum].get(bidx);
   }
-  return rlen;
+  return dlen;
 }
 
 ```

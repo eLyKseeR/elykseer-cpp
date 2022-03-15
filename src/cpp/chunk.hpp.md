@@ -87,9 +87,13 @@ module Chunk =
 
 >void [clear](chunk_functions.cpp.md)();
 
->unsigned char [get](chunk_functions.cpp.md)(int) const;
+>inline
 
->void [set](chunk_functions.cpp.md)(int, unsigned char);
+>unsigned char [get](chunk_functions.cpp.md)(int pos) const {return _buffer->get(pos);}
+
+>inline
+
+>void [set](chunk_functions.cpp.md)(int pos, unsigned char val) {(*_buffer)[pos] = val;}
 
 >bool [toFile](chunk_functions.cpp.md)(boost::filesystem::path const &) const;
 
@@ -97,13 +101,9 @@ module Chunk =
 
 >Key128 [md5](chunk_functions.cpp.md)() const;
 
->protected:
-
 >private:
 
->struct pimpl;
-
->std::unique_ptr&lt;pimpl&gt; _pimpl;
+>std::shared_ptr<sizebounded<unsigned char, Chunk::size>> _buffer;
 
 >Chunk(Chunk const &) = delete;
 

@@ -14,8 +14,4 @@
 
 namespace lxr {
 
-struct Chunk::pimpl {
-  std::shared_ptr<sizebounded<unsigned char, Chunk::size>> _buffer;
-};
-
 ````
