@@ -6,8 +6,8 @@
 
 #pragma once
 
+#include "lxr/filectrl.hpp"
 #include "lxr/streamio.hpp"
-#include "boost/filesystem.hpp"
 #include "boost/property_tree/ptree.hpp"
 
 #include <memory>
@@ -96,13 +96,13 @@ type Options =
 
 >auto [isDeduplicated](options_functions.cpp.md)(int v) noexcept -> Options&;
 
->boost::filesystem::path const & [fpathChunks](options_functions.cpp.md)() const noexcept;
+>filepath const & [fpathChunks](options_functions.cpp.md)() const noexcept;
 
->auto [fpathChunks](options_functions.cpp.md)(boost::filesystem::path const &) noexcept -> Options&;
+>auto [fpathChunks](options_functions.cpp.md)(filepath const &) noexcept -> Options&;
 
->boost::filesystem::path const & [fpathMeta](options_functions.cpp.md)() const noexcept;
+>filepath const & [fpathMeta](options_functions.cpp.md)() const noexcept;
 
->auto [fpathMeta](options_functions.cpp.md)(boost::filesystem::path const &) noexcept -> Options&;
+>auto [fpathMeta](options_functions.cpp.md)(filepath const &) noexcept -> Options&;
 
 >protected:
 

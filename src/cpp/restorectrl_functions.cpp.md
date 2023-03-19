@@ -42,7 +42,7 @@ bool RestoreCtrl::pimpl::load_assembly(std::string const & said)
     time_decr += std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
 
 #ifdef DEBUG
-    { auto const tmpd = boost::filesystem::temp_directory_path();
+    { auto const tmpd = std::filesystem::temp_directory_path();
       std::ofstream _fe; _fe.open((tmpd / std::string("test_assembly.restored")).native());
       const int bufsz = 4096;
       sizebounded<unsigned char, bufsz> buf;
@@ -140,7 +140,7 @@ int lxr::RestoreCtrl::pimpl::restore_block( DbFpBlock const &block
 The _restore_ function that decrypts a single file from the archive and outputs
 it in the indicated directory.
 ```cpp
-bool RestoreCtrl::restore(boost::filesystem::path const & root, std::string const & fp)
+bool RestoreCtrl::restore(filepath const & root, std::string const & fp)
 {
     auto time_begin = clk::now();
 
@@ -159,7 +159,7 @@ bool RestoreCtrl::restore(boost::filesystem::path const & root, std::string cons
     auto targetdir = targetfp;
     targetdir.remove_filename();
     if (! FileCtrl::dirExists(targetdir)) {
-        boost::filesystem::create_directories(targetdir);
+        std::filesystem::create_directories(targetdir);
     }
     if (! FileCtrl::dirExists(targetdir)) {
         std::cerr << "output directory does not exist: " << targetdir << std::endl;

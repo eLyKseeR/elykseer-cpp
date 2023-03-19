@@ -7,12 +7,12 @@ cpp/tests/*.cpp
 ._*
 .DS_Store
 
-BUILD/CMakeCache.txt
-BUILD/CMakeFiles/
-BUILD/Makefile
-BUILD/cmake_install.cmake
-BUILD/src
-BUILD/test
+build/CMakeCache.txt
+build/CMakeFiles/
+build/Makefile
+build/cmake_install.cmake
+build/src
+build/test
 
 .vscode/settings.json
 .ionide/symbolCache.db

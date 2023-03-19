@@ -1,0 +1,7 @@
+*.cpp
+lxr/*.hpp
+CMakeFiles/
+Makefile
+cli/*
+cmake_install.cmake
+libelykseer-cpp_*

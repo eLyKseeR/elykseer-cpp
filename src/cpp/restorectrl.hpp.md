@@ -6,9 +6,9 @@
 
 #pragma once
 
+#include "lxr/filectrl.hpp"
 #include "lxr/dbfp.hpp"
 #include "lxr/dbkey.hpp"
-#include "boost/filesystem.hpp"
 
 #include <chrono>
 #include <ctime>
@@ -68,7 +68,7 @@ module RestoreCtrl =
 
 ## // restore a file (defined by _fp_) and place in directory _root_
 
->bool [restore](restorectrl_functions.cpp.md)(boost::filesystem::path const & root, std::string const & fp);
+>bool [restore](restorectrl_functions.cpp.md)(filepath const & root, std::string const & fp);
 
 ## // restore a file (defined by _fp_) to a stream
 

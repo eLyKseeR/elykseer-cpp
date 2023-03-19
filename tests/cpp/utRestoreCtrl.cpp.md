@@ -14,8 +14,6 @@
 #include "lxr/restorectrl.hpp"
 #include "lxr/options.hpp"
 
-#include "boost/filesystem.hpp"
-
 #include <iostream>
 #include <fstream>
 ````
@@ -43,16 +41,16 @@ BOOST_AUTO_TEST_CASE( check_startup )
 ```cpp
 BOOST_AUTO_TEST_CASE( backup_restore_file_raw )
 {
-  auto const tmpd = boost::filesystem::temp_directory_path();
+  auto const tmpd = std::filesystem::temp_directory_path();
   lxr::Options::set().fpathChunks(tmpd / "LXR")
                      .fpathMeta(tmpd / "meta");
   if(! lxr::FileCtrl::dirExists(lxr::Options::current().fpathMeta())) {
-    boost::filesystem::create_directory(lxr::Options::current().fpathMeta());
+    std::filesystem::create_directory(lxr::Options::current().fpathMeta());
   }
 
   auto const outputdir = tmpd / "restored";
   if(! lxr::FileCtrl::dirExists(outputdir)) {
-    boost::filesystem::create_directory(outputdir);
+    std::filesystem::create_directory(outputdir);
   }
   const std::string datafname = "test_data_file";
   auto const datafile = (tmpd / datafname);
@@ -65,8 +63,8 @@ BOOST_AUTO_TEST_CASE( backup_restore_file_raw )
   // cleanup
   {
     auto restoredfp = outputdir / datafile;
-    if (boost::filesystem::exists(restoredfp)) {
-      boost::filesystem::remove(restoredfp);
+    if (std::filesystem::exists(restoredfp)) {
+      std::filesystem::remove(restoredfp);
     }
   }
 
@@ -120,6 +118,9 @@ BOOST_AUTO_TEST_CASE( backup_restore_file_raw )
     BOOST_CHECK_EQUAL(2, _dbks.count());
     _restore.addDbKey(_dbks);
 
+    if (std::filesystem::exists(datafile)) {
+      std::filesystem::remove(datafile);
+    }
     BOOST_REQUIRE( _restore.restore(outputdir, datafile.native()) );
     hash_1 = lxr::Sha256::hash(outputdir / datafile);
 
@@ -137,22 +138,22 @@ BOOST_AUTO_TEST_CASE( backup_restore_file_raw )
 ```cpp
 BOOST_AUTO_TEST_CASE( backup_restore_file_compressed )
 {
-  auto const tmpd = boost::filesystem::temp_directory_path();
+  auto const tmpd = std::filesystem::temp_directory_path();
   lxr::Options::set().fpathChunks(tmpd / "LXR")
                      .fpathMeta(tmpd / "meta");
   if(! lxr::FileCtrl::dirExists(lxr::Options::current().fpathMeta())) {
-    boost::filesystem::create_directory(lxr::Options::current().fpathMeta());
+    std::filesystem::create_directory(lxr::Options::current().fpathMeta());
   }
 
   auto const outputdir = tmpd / "restored";
   if (! lxr::FileCtrl::dirExists(outputdir)) {
-    boost::filesystem::create_directory(outputdir);
+    std::filesystem::create_directory(outputdir);
   }
   const std::string datafname = "test_data_file2";
   auto const datafile = (tmpd / datafname);
-    if (boost::filesystem::exists(datafile)) {
-      boost::filesystem::remove(datafile);
-    }
+  if (std::filesystem::exists(datafile)) {
+    std::filesystem::remove(datafile);
+  }
   auto const fp_dbfp = lxr::Options::current().fpathMeta() / "test_dbfp_restore2.xml";
   auto const fp_dbky = lxr::Options::current().fpathMeta() / "test_dbkey_restore2.xml";
 
@@ -163,8 +164,8 @@ BOOST_AUTO_TEST_CASE( backup_restore_file_compressed )
   // cleanup
   {
     auto restoredfp = outputdir / datafile;
-    if (boost::filesystem::exists(restoredfp)) {
-      boost::filesystem::remove(restoredfp);
+    if (std::filesystem::exists(restoredfp)) {
+      std::filesystem::remove(restoredfp);
     }
   }
 
@@ -246,6 +247,9 @@ BOOST_AUTO_TEST_CASE( backup_restore_file_compressed )
     BOOST_CHECK_EQUAL(expected_blocks, _dbks.count());
     _restore.addDbKey(_dbks);
 
+    if (std::filesystem::exists(datafile)) {
+      std::filesystem::remove(datafile);
+    }
     BOOST_REQUIRE( _restore.restore(outputdir, datafile.native()) );
     hash_1 = lxr::Sha256::hash(outputdir / datafile);
 

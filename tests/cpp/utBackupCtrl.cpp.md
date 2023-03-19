@@ -38,7 +38,7 @@ BOOST_AUTO_TEST_CASE( check_startup )
 ```cpp
 BOOST_AUTO_TEST_CASE( encrypt_file_compressed )
 {
-    auto const tmpd = boost::filesystem::temp_directory_path();
+    auto const tmpd = std::filesystem::temp_directory_path();
     lxr::Options::set().nChunks(32)
                        .isCompressed(true)
                        .fpathChunks(tmpd / "LXR")
@@ -80,7 +80,7 @@ BOOST_AUTO_TEST_CASE( encrypt_file_compressed )
 ```cpp
 BOOST_AUTO_TEST_CASE( encrypt_file_raw )
 {
-    auto const tmpd = boost::filesystem::temp_directory_path();
+    auto const tmpd = std::filesystem::temp_directory_path();
     lxr::Options::set().nChunks(17)
                        .isCompressed(false)
                        .fpathChunks(tmpd / "LXR")
@@ -122,7 +122,7 @@ BOOST_AUTO_TEST_CASE( encrypt_file_raw )
 ```cpp
 BOOST_AUTO_TEST_CASE( reencrypt_duplicate_file )
 {
-    auto const tmpd = boost::filesystem::temp_directory_path();
+    auto const tmpd = std::filesystem::temp_directory_path();
     auto const fp_dbfp = lxr::Options::current().fpathMeta() / "test_dbfp_backup2.xml";
     lxr::Options::set().nChunks(16)
                        .isCompressed(false)
@@ -158,7 +158,7 @@ BOOST_AUTO_TEST_CASE( reencrypt_duplicate_file )
 ```cpp
 BOOST_AUTO_TEST_CASE( encrypt_empty_file )
 {
-    auto const tmpd = boost::filesystem::temp_directory_path();
+    auto const tmpd = std::filesystem::temp_directory_path();
     lxr::Options::set().nChunks(16)
                        .isCompressed(true)
                        .fpathChunks(tmpd / "LXR")

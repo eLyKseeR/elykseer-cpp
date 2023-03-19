@@ -8,7 +8,6 @@
 #include "lxr/restorectrl.hpp"
 #include "lxr/assembly.hpp"
 #include "lxr/chunk.hpp"
-#include "lxr/filectrl.hpp"
 #include "lxr/fsutils.hpp"
 #include "lxr/key.hpp"
 #include "lxr/key128.hpp"
@@ -21,7 +20,6 @@
 #include "stream-cpp/zblocks.hpp"
 #include "stream-cpp/zblocks.ipp"
 
-#include "boost/filesystem.hpp"
 
 #include <chrono>
 #include <iostream>

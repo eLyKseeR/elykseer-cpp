@@ -186,7 +186,7 @@ class assemblystream : public stream<Ct,St,Vt,sz>
 
 The backup procedure:
 ```cpp
-bool BackupCtrl::backup(boost::filesystem::path const & fp)
+bool BackupCtrl::backup(std::filesystem::path const & fp)
 {
     if (! FileCtrl::fileExists(fp)) { return false; }
 
@@ -249,7 +249,7 @@ bool BackupCtrl::backup(boost::filesystem::path const & fp)
     _pimpl->time_compress += st.time_compress;
 
 #ifdef DEBUG
-    { auto const tmpd = boost::filesystem::temp_directory_path();
+    { auto const tmpd = std::filesystem::temp_directory_path();
       std::ofstream _fe; _fe.open((tmpd / std::string("test_assembly.backuped")).native());
       const int bufsz = 4096;
       sizebounded<unsigned char, bufsz> buf;

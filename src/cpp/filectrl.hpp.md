@@ -6,8 +6,16 @@
 
 #pragma once
 
-#include "boost/filesystem.hpp"
 #include <string>
+
+#ifdef USE_BOOST_FILESYSTEM
+#include "boost/filesystem.hpp"
+typedef boost::filesystem::path filepath;
+#else
+#include <filesystem>
+typedef std::filesystem::path filepath;
+#endif
+
 #include <vector>
 #include <ctime>
 #include <optional>
@@ -44,19 +52,19 @@ module FileCtrl =
 
 >public:
 
->static std::optional&lt;std::string&gt; [fileDate](filectrl_functions.cpp.md)(boost::filesystem::path const &) noexcept;
+>static std::optional&lt;std::string&gt; [fileDate](filectrl_functions.cpp.md)(filepath const &) noexcept;
 
->static std::optional&lt;std::time_t&gt; [fileLastWriteTime](filectrl_functions.cpp.md)(boost::filesystem::path const &) noexcept;
+>static std::optional&lt;std::filesystem::file_time_type&gt; [fileLastWriteTime](filectrl_functions.cpp.md)(filepath const &) noexcept;
 
->static std::optional&lt;uint64_t&gt; [fileSize](filectrl_functions.cpp.md)(boost::filesystem::path const &) noexcept;
+>static std::optional&lt;uint64_t&gt; [fileSize](filectrl_functions.cpp.md)(filepath const &) noexcept;
 
->static bool [fileExists](filectrl_functions.cpp.md)(boost::filesystem::path const &) noexcept;
+>static bool [fileExists](filectrl_functions.cpp.md)(filepath const &) noexcept;
 
->static bool [isFileReadable](filectrl_functions.cpp.md)(boost::filesystem::path const &) noexcept;
+>static bool [isFileReadable](filectrl_functions.cpp.md)(filepath const &) noexcept;
 
->static bool [dirExists](filectrl_functions.cpp.md)(boost::filesystem::path const &) noexcept;
+>static bool [dirExists](filectrl_functions.cpp.md)(filepath const &) noexcept;
 
->static std::vector&lt;boost::filesystem::path&gt; [fileListRecursive](filectrl_functions.cpp.md)(boost::filesystem::path const &);
+>static std::vector&lt;filepath&gt; [fileListRecursive](filectrl_functions.cpp.md)(filepath const &);
 
 >protected:
 
@@ -73,6 +81,8 @@ module FileCtrl =
 ```cpp
 } // namespace
 
+#ifdef USE_BOOST_FILESYSTEM
 inline boost::filesystem::path operator+(boost::filesystem::path leftp, boost::filesystem::path rightp) { return boost::filesystem::path(leftp) += rightp; }
+#endif
 
 ```

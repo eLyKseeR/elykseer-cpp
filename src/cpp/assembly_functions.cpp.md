@@ -10,26 +10,19 @@ bool Assembly::encrypt(Key256 const & k, Key128 & ivout)
   Key128 iv;
   AesEncrypt aesenc(k, iv);
 
-  #ifdef DEBUG
-  std::clog << "encrypt assembly: " << said() << std::endl;
-  std::clog << "iv = " << iv << std::endl;
-  std::clog << "key = " << k << std::endl;
-  for (int n = 0; n < _pimpl->_n; n++) {
-    auto const md5 = _pimpl->_chunks[n].md5();
-    std::clog << "   chunk " << n << " " << md5 << std::endl;
-  }
-  #endif
-
   //
   sizebounded<unsigned char, Aes::datasz> buf;
   int pos = 0, sz = size();
+  #ifdef DEBUG
   assert(sz % Aes::datasz == 0); // size is a multiple of Aes::datasz
+  #endif
   int lenc = 0, lastpos = 0;
   while (pos < sz) {
     int rlen = get_data(pos, Aes::datasz, buf);
-    assert(rlen == Aes::datasz);
+    if (rlen != Aes::datasz) { return false; }
     pos += Aes::datasz;
     lenc = aesenc.process(rlen, buf);
+    if (lenc != rlen) { return false; }
     set_data(lastpos, lenc, buf);
     lastpos += lenc;
   }
@@ -55,14 +48,17 @@ bool Assembly::decrypt(Key256 const & k, Key128 const & iv)
 
   sizebounded<unsigned char, Aes::datasz> buf;
   int pos = 0, sz = size();
+  #ifdef DEBUG
   assert(sz % Aes::datasz == 0); // size is a multiple of Aes::datasz
+  #endif
   int ldec = 0, lastpos = 0;
   int rlen;
   while (pos < sz) {
     rlen = get_data(pos, Aes::datasz, buf);
-    assert(rlen == Aes::datasz);
-    pos += Aes::datasz;
+    if (rlen != Aes::datasz) { return false; }
+    pos += rlen;
     ldec = aesdec.process(rlen, buf);
+    if (ldec != rlen) { return false; }
     set_data(lastpos, ldec, buf);
     lastpos += ldec;
   }
@@ -103,14 +99,14 @@ Key256 Assembly::mkChunkId(int idx) const
   return Sha256::hash(buf, bsz);
 }
 
-boost::optional<const boost::filesystem::path> mk_chunk_path(Key256 const & cid0)
+boost::optional<const std::filesystem::path> mk_chunk_path(Key256 const & cid0)
 {
   auto const cid = cid0.toHex();
   auto fp = Options::current().fpathChunks();
   if (! FileCtrl::dirExists(fp)) { return {}; }
   fp /= cid.substr(62,2);
   if (! FileCtrl::dirExists(fp)) {
-    if (! boost::filesystem::create_directory(fp)) { return {}; }
+    if (! std::filesystem::create_directory(fp)) { return {}; }
   }
   fp /= cid;
   fp.replace_extension(".lxr");

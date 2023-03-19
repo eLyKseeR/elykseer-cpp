@@ -1,0 +1,10 @@
+lxr/
+meta/
+out/
+_ccache
+
+CMakeCache.txt
+CMakeFiles/
+Makefile
+cmake_install.cmake
+

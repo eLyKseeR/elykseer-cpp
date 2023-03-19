@@ -58,23 +58,23 @@ auto Options::isDeduplicated(int v) noexcept -> Options&
   return *this;
 }
 
-boost::filesystem::path const & Options::fpathChunks() const noexcept
+filepath const & Options::fpathChunks() const noexcept
 {
   return _pimpl->_fpathchunks;
 }
 
-auto Options::fpathChunks(boost::filesystem::path const &p) noexcept -> Options&
+auto Options::fpathChunks(filepath const &p) noexcept -> Options&
 {
   _pimpl->_fpathchunks = p;
   return *this;
 }
 
-boost::filesystem::path const & Options::fpathMeta() const noexcept
+filepath const & Options::fpathMeta() const noexcept
 {
   return _pimpl->_fpathmeta;
 }
 
-auto Options::fpathMeta(boost::filesystem::path const &p) noexcept -> Options&
+auto Options::fpathMeta(filepath const &p) noexcept -> Options&
 {
   _pimpl->_fpathmeta = p;
   return *this;

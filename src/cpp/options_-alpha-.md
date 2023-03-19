@@ -8,15 +8,15 @@
 #include "lxr/options.hpp"
 
 #include "boost/property_tree/xml_parser.hpp"
-#include "boost/filesystem.hpp"
 
+#include <filesystem>
 #include <iostream>
 
 namespace lxr {
 
 struct Options::pimpl {
   pimpl() {
-    auto tmpd = boost::filesystem::temp_directory_path();
+    auto tmpd = std::filesystem::temp_directory_path();
     _fpathmeta = tmpd;
     _fpathchunks =  tmpd;
   }
@@ -24,8 +24,8 @@ struct Options::pimpl {
   int _nredundancy {0};
   bool _iscompressed {true};
   int _isdeduplicated {2};
-  boost::filesystem::path _fpathchunks;
-  boost::filesystem::path _fpathmeta;
+  filepath _fpathchunks;
+  filepath _fpathmeta;
 };
 
 

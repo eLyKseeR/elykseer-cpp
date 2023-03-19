@@ -26,7 +26,7 @@ std::optional<DbFpDat> DbFpDat::make(std::string const & fp) noexcept
 
 Helper method to create a *DbFpDat* from an existing file
 ```c++
-std::optional<DbFpDat> DbFpDat::fromFile(boost::filesystem::path const & fp) noexcept
+std::optional<DbFpDat> DbFpDat::fromFile(std::filesystem::path const & fp) noexcept
 {
     if (! FileCtrl::fileExists(fp)) {
         return {};

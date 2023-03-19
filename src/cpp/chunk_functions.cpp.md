@@ -9,7 +9,7 @@ void Chunk::clear()
   });
 }
 
-bool Chunk::fromFile(boost::filesystem::path const & fpath)
+bool Chunk::fromFile(std::filesystem::path const & fpath)
 {
   if (! FileCtrl::fileExists(fpath)) { return false; }
   if (auto fsz = FileCtrl::fileSize(fpath); fsz && *fsz < Chunk::size) { return false; }
@@ -23,7 +23,7 @@ bool Chunk::fromFile(boost::filesystem::path const & fpath)
   }
 }
 
-bool Chunk::toFile(boost::filesystem::path const & fpath) const
+bool Chunk::toFile(std::filesystem::path const & fpath) const
 {
   if (FileCtrl::fileExists(fpath)) { return false; }
 

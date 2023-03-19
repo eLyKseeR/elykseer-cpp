@@ -25,13 +25,16 @@ set (${PROJECT_NAME}_VERSION_STRING ${elykseer-cpp_VERSION_MAJOR}.${elykseer-cpp
 # set to '-UDEBUG' to disable debugging output
 add_definitions( -UDEBUG )
 
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 # boost
 add_definitions( -DBOOST_ALL_DYN_LINK )
 set(Boost_DEBUG OFF)
 set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_USE_STATIC_RUNTIME OFF)
 set(Boost_USE_MULTITHREADED ON)
-find_package( Boost 1.67.0 REQUIRED COMPONENTS system filesystem chrono thread date_time iostreams contract )
+find_package( Boost 1.76.0 REQUIRED COMPONENTS system date_time contract )
 LINK_DIRECTORIES ( ${Boost_LIBRARY_DIRS} )
 INCLUDE_DIRECTORIES (${Boost_INCLUDE_DIRS})
 
@@ -49,9 +52,6 @@ if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
   add_definitions(-DBOOST_CONTRACT_NO_EXIT_INVARIANTS)
   add_definitions(-DBOOST_CONTRACT_NO_CHECKS)
 endif()
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 

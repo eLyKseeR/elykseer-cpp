@@ -1,0 +1,5 @@
+*.cpp
+CMakeFiles/
+Makefile
+cmake_install.cmake
+utelykseer-cpp

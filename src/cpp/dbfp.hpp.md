@@ -10,7 +10,6 @@
 #include "lxr/key256.hpp"
 #include "lxr/key128.hpp"
 #include "lxr/md5.hpp"
-#include "boost/filesystem.hpp"
 
 #include <iostream>
 #include <string>
@@ -80,7 +79,7 @@ type DbFpDat = {
 ```c++
 {
     static std::optional<DbFpDat> make(std::string const &) noexcept;
-    static std::optional<DbFpDat> fromFile(boost::filesystem::path const &) noexcept;
+    static std::optional<DbFpDat> fromFile(std::filesystem::path const &) noexcept;
     DbFpDat() : _blocks(new std::vector<DbFpBlock>()) {}
     ~DbFpDat() { _blocks.reset(); }
     DbFpDat(DbFpDat const & d) { _id = d._id; _len = d._len;

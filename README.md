@@ -10,15 +10,15 @@ read [more](https://github.com/eLyKseeR/elykseer-cpp)
 
 # building
 
-1. code extraction and compilation (in directory `BUILD`)
+1. code extraction and compilation (in directory `build`)
 
-> $ cd BUILD
+> $ cd build
 
 > $ cmake .
 
 > $ make
 
-2. testing (in directory `BUILD`)
+2. testing (in directory `build`)
 
 > $ ./ut.sh
 

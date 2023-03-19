@@ -8,7 +8,6 @@
 
 #include "lxr/dbfp.hpp"
 #include "lxr/dbkey.hpp"
-#include "boost/filesystem.hpp"
 
 #include <chrono>
 #include <ctime>
@@ -66,7 +65,7 @@ module BackupCtrl =
 
 >void [finalize](backupctrl_functions.cpp.md)();
 
->bool [backup](backupctrl_functions.cpp.md)(boost::filesystem::path const &);
+>bool [backup](backupctrl_functions.cpp.md)(std::filesystem::path const &);
 
 >bool [backup](backupctrl_functions.cpp.md)(std::istream const & stream, std::string const & name);
 

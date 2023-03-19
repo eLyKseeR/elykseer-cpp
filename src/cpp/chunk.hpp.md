@@ -9,8 +9,8 @@
 #include "sizebounded/sizebounded.hpp"
 
 #include "lxr/md5.hpp"
+#include "lxr/filectrl.hpp"
 
-#include "boost/filesystem.hpp"
 #include <memory>
 
 ````
@@ -95,9 +95,9 @@ module Chunk =
 
 >void [set](chunk_functions.cpp.md)(int pos, unsigned char val) {(*_buffer)[pos] = val;}
 
->bool [toFile](chunk_functions.cpp.md)(boost::filesystem::path const &) const;
+>bool [toFile](chunk_functions.cpp.md)(filepath const &) const;
 
->bool [fromFile](chunk_functions.cpp.md)(boost::filesystem::path const &);
+>bool [fromFile](chunk_functions.cpp.md)(filepath const &);
 
 >Key128 [md5](chunk_functions.cpp.md)() const;
 

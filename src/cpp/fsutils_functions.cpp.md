@@ -33,7 +33,7 @@ std::string FsUtils::sep() noexcept
 #endif
 }
 
-const boost::filesystem::path FsUtils::cleanfp(boost::filesystem::path const & _fp) noexcept
+const filepath FsUtils::cleanfp(filepath const & _fp) noexcept
 {
 #ifdef _WIN32
     return _fp.replace(":", ",drive");
@@ -50,7 +50,7 @@ const std::string FsUtils::fstem() noexcept
     return "lxr_" + _machine + "_" + _user + "_" + _ts;
 }
 
-std::pair<const std::string, const std::string> FsUtils::osusrgrp(boost::filesystem::path const & fp)
+std::pair<const std::string, const std::string> FsUtils::osusrgrp(filepath const & fp)
 {
 #ifdef _WIN32
     #error not yet done
@@ -77,21 +77,21 @@ std::pair<const std::string, const std::string> FsUtils::osusrgrp(boost::filesys
 ## operators to concat file paths
 
 ```cpp
-const boost::filesystem::path operator/(std::string const &a, std::string const &b) noexcept
+const filepath operator/(std::string const &a, std::string const &b) noexcept
 {
-    boost::filesystem::path fp{a};
+    filepath fp{a};
     return fp /= b;
 }
 
-const boost::filesystem::path operator/(boost::filesystem::path const &a, std::string const &b) noexcept
+const filepath operator/(filepath const &a, std::string const &b) noexcept
 {
-    boost::filesystem::path fp{a};
+    filepath fp{a};
     return fp /= b;
 }
 
-const boost::filesystem::path operator/(boost::filesystem::path const &a, boost::filesystem::path const &b) noexcept
+const filepath operator/(filepath const &a, filepath const &b) noexcept
 {
-    boost::filesystem::path fp{a};
+    filepath fp{a};
     return fp /= b;
 }
 

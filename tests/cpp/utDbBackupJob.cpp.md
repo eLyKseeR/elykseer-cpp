@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_CASE( output_to_xml )
   const std::string name1 = "all my precious data";
 	const std::string name2 = "the ledger";
 	
-  auto const tmpd = boost::filesystem::temp_directory_path();
+  auto const tmpd = std::filesystem::temp_directory_path();
       
 	lxr::DbBackupJob _db;
     lxr::DbJobDat _job1;
@@ -124,7 +124,7 @@ BOOST_AUTO_TEST_CASE( input_from_xml )
   const std::string name1 = "all my precious data";
   const std::string name2 = "the ledger";
 
-  auto const tmpd = boost::filesystem::temp_directory_path();
+  auto const tmpd = std::filesystem::temp_directory_path();
 
   lxr::DbBackupJob _db;
   auto const fp_db = tmpd / "test_dbbackupjob_1.xml";

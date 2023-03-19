@@ -2,55 +2,55 @@ declared in [FileCtrl](filectrl.hpp.md)
 
 ```cpp
 
-std::optional<std::string> FileCtrl::fileDate(boost::filesystem::path const & fp) noexcept
+std::optional<std::string> FileCtrl::fileDate(std::filesystem::path const & fp) noexcept
 {
     return {};
 }
 
-std::optional<std::time_t> FileCtrl::fileLastWriteTime(boost::filesystem::path const & fp) noexcept
+std::optional<std::filesystem::file_time_type> FileCtrl::fileLastWriteTime(std::filesystem::path const & fp) noexcept
 {
     try {
-        return boost::filesystem::last_write_time(fp);
+        return std::filesystem::last_write_time(fp);
     } catch (...) { return {}; }
 }
 
-std::optional<uint64_t> FileCtrl::fileSize(boost::filesystem::path const & fp) noexcept
+std::optional<uint64_t> FileCtrl::fileSize(std::filesystem::path const & fp) noexcept
 {
     try {
-        return boost::filesystem::file_size(fp);
+        return std::filesystem::file_size(fp);
     } catch (...) { return {}; }
 }
 
-bool FileCtrl::fileExists(boost::filesystem::path const & fp) noexcept
+bool FileCtrl::fileExists(std::filesystem::path const & fp) noexcept
 {
     try {
-        return boost::filesystem::exists(fp);
+        return std::filesystem::exists(fp);
     } catch (...) { return {}; }
 }
 
-bool FileCtrl::isFileReadable(boost::filesystem::path const & fp) noexcept
+bool FileCtrl::isFileReadable(std::filesystem::path const & fp) noexcept
 {
     try {
-        auto s = boost::filesystem::status(fp);
-        return boost::filesystem::is_regular_file(s);
+        auto s = std::filesystem::status(fp);
+        return std::filesystem::is_regular_file(s);
     } catch (...) {}
     return false;
 }
 
-bool FileCtrl::dirExists(boost::filesystem::path const & fp) noexcept
+bool FileCtrl::dirExists(std::filesystem::path const & fp) noexcept
 {
     try {
-        auto s = boost::filesystem::status(fp);
-        return boost::filesystem::is_directory(s);
+        auto s = std::filesystem::status(fp);
+        return std::filesystem::is_directory(s);
     } catch (...) {}
     return false;
 }
 
-std::vector<boost::filesystem::path> FileCtrl::fileListRecursive(boost::filesystem::path const & fp)
+std::vector<std::filesystem::path> FileCtrl::fileListRecursive(std::filesystem::path const & fp)
 {
-    std::vector<boost::filesystem::path> res;
-    boost::filesystem::directory_iterator _pit{fp};
-    while (_pit != boost::filesystem::directory_iterator{}) {
+    std::vector<std::filesystem::path> res;
+    std::filesystem::directory_iterator _pit{fp};
+    while (_pit != std::filesystem::directory_iterator{}) {
         if (auto fp2 = *_pit++; dirExists(fp2)) {
             auto dsub = fileListRecursive(fp2);
             res.reserve( res.size() + dsub.size() );

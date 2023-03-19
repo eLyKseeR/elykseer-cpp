@@ -14,9 +14,8 @@
 #include "lxr/options.hpp"
 #include "lxr/os.hpp"
 
-#include "boost/filesystem.hpp"
-
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <ctime>
 #include <getopt.h>
@@ -223,7 +222,7 @@ int main (int argc, char * const argv[]) {
   std::optional<std::string> okey{};
 
   // options
-  auto const tmpd = boost::filesystem::temp_directory_path();
+  auto const tmpd = std::filesystem::temp_directory_path();
   lxr::Options::set().fpathChunks(tmpd / "LXR")
                      .fpathMeta(tmpd / "meta")
                      .nChunks(16)
@@ -255,7 +254,7 @@ int main (int argc, char * const argv[]) {
   // prepare file list
   for (int i = 0; i < counter_dir1; i++) {
     if (lxr::FileCtrl::dirExists(list_dir1[i])) {
-      for (boost::filesystem::directory_entry& x : boost::filesystem::directory_iterator(list_dir1[i])) {
+      for (const auto & x : std::filesystem::directory_iterator(list_dir1[i])) {
         if (lxr::FileCtrl::isFileReadable(x)) {
           if (counter_files >= MAX_BACKUP_FILES -1 ) {
             std::clog << "maximum number of files reached: " << MAX_BACKUP_FILES << std::endl;

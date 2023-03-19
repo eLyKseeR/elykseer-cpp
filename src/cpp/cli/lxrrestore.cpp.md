@@ -14,9 +14,8 @@
 #include "lxr/os.hpp"
 #include "lxr/restorectrl.hpp"
 
-#include "boost/filesystem.hpp"
-
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <ctime>
 #include <getopt.h>
@@ -188,7 +187,7 @@ int main (int argc, char * const argv[]) {
   lxr::RestoreCtrl ctrl;
 
   // options
-  auto const tmpd = boost::filesystem::temp_directory_path();
+  auto const tmpd = std::filesystem::temp_directory_path();
   lxr::Options::set().fpathChunks(tmpd / "LXR");
 
   int ch;

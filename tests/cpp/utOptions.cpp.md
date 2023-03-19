@@ -28,7 +28,7 @@ BOOST_AUTO_TEST_CASE( export_import_XML )
     _opts.nChunks(17)
          .fpathChunks("/data/storage")
          .fpathMeta("/mnt/secure");
-    auto const tmpd = boost::filesystem::temp_directory_path();
+    auto const tmpd = std::filesystem::temp_directory_path();
 	auto const _fpath = tmpd / "test_options_1.xml";
 	std::ofstream _outs; _outs.open(_fpath.native());
     _opts.outStream(_outs);
