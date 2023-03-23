@@ -32,7 +32,7 @@ BOOST_AUTO_TEST_SUITE( utAssembly )
 ```cpp
 BOOST_AUTO_TEST_CASE( assembly_state_after_init )
 {
-  lxr::Assembly _a1(16);
+  lxr::Assembly _a1(lxr::Nchunks(16));
 
   BOOST_CHECK(_a1.isWritable());
 #ifdef DEBUG
@@ -44,8 +44,13 @@ BOOST_AUTO_TEST_CASE( assembly_state_after_init )
 }
 ```
 
-## Test case: state of assembly
+## outdated: Test case: state of assembly
+
+this test is not working anymore as we now control the number of chunks
+with the class _Nchunks_
+
 ```cpp
+/*
 BOOST_AUTO_TEST_CASE( assembly_creation_failed )
 {
   boost::contract::set_precondition_failure (
@@ -54,15 +59,16 @@ BOOST_AUTO_TEST_CASE( assembly_creation_failed )
         }
     );
 
-  BOOST_CHECK_THROW(lxr::Assembly _a1(1), boost::contract::assertion_failure);
+  BOOST_CHECK_THROW(lxr::Assembly _a1(lxr::Nchunks(1)), boost::contract::assertion_failure);
 }
+*/
 ```
 
 ## Test case: a new assembly contains random  bytes (128/8 = 16 bytes)
 ```cpp
 BOOST_AUTO_TEST_CASE( initialised_assembly_with_random_bytes )
 {
-  lxr::Assembly _a1(17);
+  lxr::Assembly _a1(lxr::Nchunks(17));
   sizebounded<unsigned char, lxr::Assembly::datasz> buf;
   BOOST_CHECK_EQUAL(16, _a1.pos());
 }
@@ -75,7 +81,7 @@ BOOST_AUTO_TEST_CASE( initialised_assembly_with_random_bytes )
 #else
 BOOST_AUTO_TEST_CASE( access_buffer_denied )
 {
-  lxr::Assembly _a1(16);
+  lxr::Assembly _a1(lxr::Nchunks(16));
   sizebounded<unsigned char, lxr::Assembly::datasz> buf;
   // cannot read from unencrypted buffer
   BOOST_CHECK_EQUAL(0, _a1.getData(0, 10, buf));
@@ -87,7 +93,7 @@ BOOST_AUTO_TEST_CASE( access_buffer_denied )
 ```cpp
 BOOST_AUTO_TEST_CASE( access_buffer_allowed )
 {
-  lxr::Assembly _a1(17);
+  lxr::Assembly _a1(lxr::Nchunks(17));
   sizebounded<unsigned char, lxr::Assembly::datasz> buf;
   lxr::Key256 _k;
   lxr::Key128 _iv;
@@ -102,7 +108,7 @@ BOOST_AUTO_TEST_CASE( assembly_encrypt_then_decrypt )
 {
   const std::string msg = "all my precious data are save, so I will sleep fine!";
 
-  lxr::Assembly _a1(23);
+  lxr::Assembly _a1(lxr::Nchunks(23));
   sizebounded<unsigned char, lxr::Assembly::datasz> buf;
   buf.transform([&msg](int i, unsigned char c)->unsigned char {
       if (i < msg.size()) {
@@ -144,7 +150,7 @@ BOOST_AUTO_TEST_CASE( assembly_encrypt_then_decrypt )
 BOOST_AUTO_TEST_CASE( assembly_set_get_data )
 {
   const std::string msg = "0123456789abcdefghijklmnopqrstuvwxyz";
-  lxr::Assembly _ass(21);
+  lxr::Assembly _ass(lxr::Nchunks(21));
   sizebounded<unsigned char, lxr::Assembly::datasz> buf;
   const int msz = msg.size();
   buf.transform([&msg,msz](int i, unsigned char c)->unsigned char {
@@ -181,7 +187,7 @@ BOOST_AUTO_TEST_CASE( assembly_encrypt_then_extract_chunks )
   lxr::Options::set().nChunks(nChunks)
                      .isCompressed(false)
                      .fpathChunks(outputpath);
-  lxr::Assembly _a1(nChunks);
+  lxr::Assembly _a1{lxr::Nchunks(nChunks)};
   sizebounded<unsigned char, lxr::Assembly::datasz> buf;
   const int msz = msg.size();
   buf.transform([&msg,msz](int i, unsigned char c)->unsigned char {
@@ -207,7 +213,7 @@ BOOST_AUTO_TEST_CASE( assembly_encrypt_then_extract_chunks )
   BOOST_CHECK( _a1.extractChunks() );
 
   auto const aid = _a1.aid();
-  lxr::Assembly _a2(aid, nChunks);
+  lxr::Assembly _a2(aid, lxr::Nchunks(nChunks));
   BOOST_CHECK( _a2.insertChunks() );
   BOOST_CHECK( _a2.isEncrypted() );
   BOOST_CHECK( _a2.decrypt(_k, _iv) );
