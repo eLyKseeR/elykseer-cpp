@@ -79,10 +79,6 @@ module Assembly =
     (** make chunk identifier *)
 
 ```
->static constexpr int min_n { 16 };
-
->static constexpr int max_n { 256 };
-
 
 */
 
