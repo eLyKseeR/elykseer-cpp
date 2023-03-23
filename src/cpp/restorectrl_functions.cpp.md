@@ -26,7 +26,7 @@ bool RestoreCtrl::pimpl::load_assembly(std::string const & said)
     }
     Key256 aid{true};
     aid.fromHex(said);
-    _ass.reset(new Assembly(aid, dbkey->_n));
+    _ass.reset(new Assembly(aid, Nchunks(dbkey->_n)));
     auto t0 = clk::now();
     if (! _ass->insertChunks()) {
         std::cerr << "cannot insert chunks into aid=" << said << std::endl;

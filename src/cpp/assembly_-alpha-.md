@@ -32,16 +32,16 @@ enum tAstate { readable=1, writable=2, encrypted=4 };
 struct Assembly::pimpl :
   private boost::contract::constructor_precondition<pimpl>
 {
-  pimpl(Key256 const & aid, int n) :
-      BOOST_CONTRACT_CONSTRUCTOR_PRECONDITION(pimpl)([&] {
-            BOOST_CONTRACT_ASSERT(n >= Assembly::min_n && n <= Assembly::max_n);
-        })
-    , _chunks(new Chunk[n])
+  pimpl(Key256 const & aid, Nchunks const & n) :
+      // BOOST_CONTRACT_CONSTRUCTOR_PRECONDITION(pimpl)([&] {
+      //       BOOST_CONTRACT_ASSERT(n >= Assembly::min_n && n <= Assembly::max_n);
+      //   })
+      _chunks(new Chunk[n.nchunks()])
     , _n(n)
     , _aid(aid)
   { }
 
-  explicit pimpl(int n)
+  explicit pimpl(Nchunks const & n)
     : pimpl(mk_aid(), n)
   { }
 
@@ -59,7 +59,7 @@ struct Assembly::pimpl :
   }
 
   Chunk *_chunks{nullptr};
-  int _n{0};
+  Nchunks _n;
   Key256  _aid;
   int _pos {0};
 #ifdef DEBUG
@@ -70,7 +70,7 @@ struct Assembly::pimpl :
 #endif
 
 private: 
-pimpl() {}
+pimpl()=delete;
 };
 
 ````

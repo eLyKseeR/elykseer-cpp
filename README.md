@@ -25,7 +25,7 @@ read [more](https://github.com/eLyKseeR/elykseer-cpp)
 
 # copyright
 
-Copyright 2018-2021 by Alexander Diemand
+Copyright 2018-2023 by Alexander Diemand
 
 # license
 

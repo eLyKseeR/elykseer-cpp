@@ -34,6 +34,7 @@ set(GENERATED_SRCS
 	filectrl.cpp
 	fsutils.cpp
 	liz.cpp
+	nchunks.cpp
 	options.cpp
 	os.cpp
 	restorectrl.cpp)
@@ -51,6 +52,7 @@ set(GENERATED_HDRS
 	lxr/fsutils.hpp
 	lxr/liz.hpp
 	lxr/lxr.hpp
+	lxr/nchunks.hpp
 	lxr/options.hpp
 	lxr/os.hpp
 	lxr/restorectrl.hpp

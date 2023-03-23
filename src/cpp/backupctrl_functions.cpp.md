@@ -77,7 +77,7 @@ class state {
             auto t2 = clk::now();
             time_extract += std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
         }
-        _assembly.reset(new Assembly(_config->nchunks()));
+        _assembly.reset(new Assembly(Nchunks(_config->nchunks())));
         return true;
     }
     std::chrono::microseconds time_encr {0};
@@ -207,7 +207,7 @@ bool BackupCtrl::backup(std::filesystem::path const & fp)
     }
 
     _pimpl->_nChunks = Options::current().nChunks();
-    if (! _pimpl->_ass) { _pimpl->_ass.reset(new Assembly(_pimpl->_nChunks)); }
+    if (! _pimpl->_ass) { _pimpl->_ass.reset(new Assembly(Nchunks(_pimpl->_nChunks))); }
 
     constexpr int bsz = Assembly::datasz;
     sizebounded<unsigned char, bsz> buffer;

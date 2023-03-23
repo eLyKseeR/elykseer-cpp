@@ -11,6 +11,13 @@ A C++ reimplementation of eLyKseeR base (https://github.com/CodiePP/elykseer-bas
 
 [lxr.hpp](lxr.hpp.md)
 
+## Nchunks
+
+The number of chunks in assemblies is restricted to be within [16 .. 256].
+The class _Nchunks_ helps to create correct values.
+
+[Nchunks](nchunks.hpp.md)
+
 ## Assembly
 
 The primary data structure.

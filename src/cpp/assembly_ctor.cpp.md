@@ -2,7 +2,7 @@ declared in [Assembly](assembly.hpp.md)
 
 ```cpp
 
-Assembly::Assembly(int n)
+Assembly::Assembly(Nchunks const & n)
   :_pimpl(new pimpl(n))
 {
   // initialise first bytes with random data
@@ -19,7 +19,7 @@ Assembly::Assembly(int n)
   addData(len, buf);
 }
 
-Assembly::Assembly(Key256 const & aid, int n)
+Assembly::Assembly(Key256 const & aid, Nchunks const & n)
   :_pimpl(new pimpl(aid, n))
 { }
 

@@ -8,6 +8,7 @@
 
 #include "lxr/key128.hpp"
 #include "lxr/key256.hpp"
+#include "lxr/nchunks.hpp"
 #include "sizebounded/sizebounded.hpp"
 
 #include <memory>
@@ -78,6 +79,10 @@ module Assembly =
     (** make chunk identifier *)
 
 ```
+>static constexpr int min_n { 16 };
+
+>static constexpr int max_n { 256 };
+
 
 */
 
@@ -89,15 +94,11 @@ module Assembly =
 
 ## // construct an _Assembly_ with a defined size
 
->static constexpr int min_n { 16 };
-
->static constexpr int max_n { 256 };
-
->explicit [Assembly](assembly_ctor.cpp.md)(int n);
+>explicit [Assembly](assembly_ctor.cpp.md)(Nchunks const & n);
 
 ## // construct an _Assembly_ with its identifier set; for reconstruction
 
->explicit [Assembly](assembly_ctor.cpp.md)(Key256 const & aid, int n);
+>explicit [Assembly](assembly_ctor.cpp.md)(Key256 const & aid, Nchunks const & n);
 
 >[~Assembly](assembly_ctor.cpp.md)();
 

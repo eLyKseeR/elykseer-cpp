@@ -70,7 +70,7 @@ bool Assembly::decrypt(Key256 const & k, Key128 const & iv)
   std::clog << "decrypt assembly: " << said() << std::endl;
   std::clog << "iv = " << iv << std::endl;
   std::clog << "key = " << k << std::endl;
-  for (int n = 0; n < _pimpl->_n; n++) {
+  for (int n = 0; n < _pimpl->_n.nchunks(); n++) {
     auto const md5 = _pimpl->_chunks[n].md5();
     std::clog << "   chunk " << n << " " << md5 << std::endl;
   }
@@ -92,19 +92,28 @@ bool Assembly::decrypt(Key256 const & k, Key128 const & iv)
 ```c++
 Key256 Assembly::mkChunkId(int idx) const
 {
-  BOOST_CONTRACT_ASSERT(idx >= 0 && idx < _pimpl->_n);
+  BOOST_CONTRACT_ASSERT(idx >= 0 && idx < _pimpl->_n.nchunks());
   constexpr int bsz = 256/8*2 + 3 + 2 + 3;
   char buf[bsz+1];
   snprintf(buf, bsz+1, "%s%03dch%03d__", _pimpl->said().c_str(), idx, idx);
   return Sha256::hash(buf, bsz);
 }
+```
+The target location to store a chunk is two directory levels deep.
 
+example: chunk id is "..2ed57ae76c3c218076"
+  the resulting path is: "&lt;dbpath&gt;/76/80/..2ed57ae76c3c218076.lxr"
+```c++
 boost::optional<const std::filesystem::path> mk_chunk_path(Key256 const & cid0)
 {
   auto const cid = cid0.toHex();
   auto fp = Options::current().fpathChunks();
   if (! FileCtrl::dirExists(fp)) { return {}; }
   fp /= cid.substr(62,2);
+  if (! FileCtrl::dirExists(fp)) {
+    if (! std::filesystem::create_directory(fp)) { return {}; }
+  }
+  fp /= cid.substr(60,2);
   if (! FileCtrl::dirExists(fp)) {
     if (! std::filesystem::create_directory(fp)) { return {}; }
   }
@@ -119,9 +128,10 @@ bool Assembly::extractChunks() const
 
   bool res = true;
   int n;
+  const int nlim = _pimpl->_n.nchunks();
   omp_set_num_threads(2); // fixed
   #pragma omp parallel for private(n) schedule(static)
-  for (n = 0; n < _pimpl->_n; n++) {
+  for (n = 0; n < nlim; n++) {
     res &= extractChunk(n);
   }
   return res;
@@ -129,7 +139,7 @@ bool Assembly::extractChunks() const
 
 bool Assembly::extractChunk(int cnum) const
 {
-  BOOST_CONTRACT_ASSERT(cnum >= 0 && cnum < _pimpl->_n);
+  BOOST_CONTRACT_ASSERT(cnum >= 0 && cnum < _pimpl->_n.nchunks());
   auto fp = mk_chunk_path(mkChunkId(cnum));
   if (! fp) { return false; }
 #ifdef DEBUG
@@ -146,9 +156,10 @@ bool Assembly::insertChunks()
 
   bool res = true;
   int n;
+  const int nlim = _pimpl->_n.nchunks();
   omp_set_num_threads(2); // fixed
   #pragma omp parallel for private(n) schedule(static)
-  for (n = 0; n < _pimpl->_n; n++) {
+  for (n = 0; n < nlim; n++) {
     res &= insertChunk(n);
   }
 
@@ -160,7 +171,7 @@ bool Assembly::insertChunks()
 
 bool Assembly::insertChunk(int cnum)
 {
-  BOOST_CONTRACT_ASSERT(cnum >= 0 && cnum < _pimpl->_n);
+  BOOST_CONTRACT_ASSERT(cnum >= 0 && cnum < _pimpl->_n.nchunks());
   auto fp = mk_chunk_path(mkChunkId(cnum));
   if (! fp) { return false; }
 #ifdef DEBUG
@@ -181,7 +192,7 @@ std::string const Assembly::said() const
 
 int Assembly::size() const
 {
-  return _pimpl->_n * Chunk::size;
+  return _pimpl->_n.nchunks() * Chunk::size;
 }
 
 uint32_t Assembly::pos() const
@@ -225,7 +236,7 @@ int Assembly::set_data(const int pos, const int dlen, sizebounded<unsigned char,
 
   int cnum, bidx;
   int idx;
-  const int n = _pimpl->_n;
+  const int n = _pimpl->_n.nchunks();
   omp_set_num_threads(2); // fixed
   #pragma omp parallel for shared (d,dlen,pos,n) private(idx,bidx,cnum) schedule(static)
   for(idx = 0; idx < dlen; idx++ ) {
@@ -253,7 +264,7 @@ int Assembly::get_data(const int pos, const int dlen, sizebounded<unsigned char,
 
   int cnum, bidx;
   int idx;
-  const int n = _pimpl->_n;
+  const int n = _pimpl->_n.nchunks();
   omp_set_num_threads(2); // fixed
   #pragma omp parallel for shared (d,dlen,pos,n) private(idx,bidx,cnum) schedule(static)
   for(idx = 0; idx < dlen; idx++ ) {
