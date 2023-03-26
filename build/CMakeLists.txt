@@ -1,11 +1,15 @@
 cmake_minimum_required(VERSION 3.5)
 
-#set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
-
 IF(DEFINED CMAKE_BUILD_TYPE)
-	SET(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release DebugProfile RelWithDebInfo MinSizeRel.")
+   SET(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING 
+        "Choose the type of build, options are: 
+        None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) 
+        Debug Release RelWithDebInfo MinSizeRel." )
 ELSE()
-	SET(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release DebugProfile RelWithDebInfo MinSizeRel.")
+   SET(CMAKE_BUILD_TYPE Debug CACHE STRING 
+        "Choose the type of build, options are: 
+        None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) 
+        Debug Release RelWithDebInfo MinSizeRel." )
 ENDIF()
 
 find_program(CCACHE_PROGRAM ccache)
@@ -67,7 +71,7 @@ if(CPPCHECK)
     message(STATUS "Found: cppcheck")
     add_custom_target(cppcheck
         ${CPPCHECK}
-        -Uassert --std=c++17 --enable=all
+        -Uassert --std=c++20 --enable=all
         ${CMAKE_SOURCE_DIR}/src/lxr/*.hpp
         ${CMAKE_SOURCE_DIR}/src/*.cpp
         ${CMAKE_SOURCE_DIR}/test/*.cpp

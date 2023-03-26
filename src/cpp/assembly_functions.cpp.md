@@ -104,10 +104,9 @@ The target location to store a chunk is two directory levels deep.
 example: chunk id is "..2ed57ae76c3c218076"
   the resulting path is: "&lt;dbpath&gt;/76/80/..2ed57ae76c3c218076.lxr"
 ```c++
-boost::optional<const std::filesystem::path> mk_chunk_path(Key256 const & cid0)
+std::optional<const std::filesystem::path> Assembly::mk_chunk_path(filepath fp, std::string const & cid)
 {
-  auto const cid = cid0.toHex();
-  auto fp = Options::current().fpathChunks();
+  if (cid.length() != 64) { return {}; }
   if (! FileCtrl::dirExists(fp)) { return {}; }
   fp /= cid.substr(62,2);
   if (! FileCtrl::dirExists(fp)) {
@@ -140,7 +139,7 @@ bool Assembly::extractChunks() const
 bool Assembly::extractChunk(int cnum) const
 {
   BOOST_CONTRACT_ASSERT(cnum >= 0 && cnum < _pimpl->_n.nchunks());
-  auto fp = mk_chunk_path(mkChunkId(cnum));
+  auto fp = mk_chunk_path(Options::current().fpathChunks(), mkChunkId(cnum).toHex());
   if (! fp) { return false; }
 #ifdef DEBUG
   std::cout << cnum << ":" << *fp << std::endl;
@@ -172,7 +171,7 @@ bool Assembly::insertChunks()
 bool Assembly::insertChunk(int cnum)
 {
   BOOST_CONTRACT_ASSERT(cnum >= 0 && cnum < _pimpl->_n.nchunks());
-  auto fp = mk_chunk_path(mkChunkId(cnum));
+  auto fp = mk_chunk_path(Options::current().fpathChunks(), mkChunkId(cnum).toHex());
   if (! fp) { return false; }
 #ifdef DEBUG
   std::cout << cnum << ":" << *fp << std::endl;

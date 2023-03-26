@@ -26,19 +26,18 @@ pipeline {
         }
         stage('cmake') {
             steps {
-                sh 'cd BUILD; mkdir -p src/lxr'
-                sh 'cd BUILD; rm -rf CMakeFiles CMakeCache.txt'
-                sh 'cd BUILD; nix-shell -p libgpgerror libassuan clang cmake boost zlib --run "cmake ."'
+                sh 'cd build; rm -rf CMakeFiles CMakeCache.txt'
+                sh 'cd build; nix-shell -p libgpgerror libassuan clang cmake boost zlib --run "cmake ."'
             }
         }
         stage('compile') {
             steps {
-                sh 'cd BUILD; nix-shell -p libgpgerror libassuan clang cmake boost zlib pandoc html2text --run "make clean; make"'
+                sh 'cd build; nix-shell -p libgpgerror libassuan clang cmake boost zlib pandoc html2text --run "make clean; make"'
             }
         }
         stage('unit tests') {
             steps {
-                sh 'cd BUILD; nix-shell -p libgpgerror libassuan clang cmake boost zlib --run "./ut.sh"'
+                sh 'cd build; nix-shell -p libgpgerror libassuan clang cmake boost zlib --run "./ut.sh"'
             }
         }
     }

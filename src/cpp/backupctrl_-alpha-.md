@@ -18,6 +18,7 @@
 #include "stream-cpp/zblocks.hpp"
 #include "stream-cpp/zblocks.ipp"
 
+#include <cstddef>
 #include <chrono>
 #include <iostream>
 #include <cstdio>

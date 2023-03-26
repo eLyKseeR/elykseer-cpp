@@ -6,12 +6,15 @@
 
 #pragma once
 
+#include "lxr/filectrl.hpp"
 #include "lxr/key128.hpp"
 #include "lxr/key256.hpp"
 #include "lxr/nchunks.hpp"
 #include "sizebounded/sizebounded.hpp"
 
+#include <filesystem>
 #include <memory>
+#include <optional>
 
 ````
 
@@ -127,6 +130,8 @@ module Assembly =
 >bool [isWritable](assembly_functions.cpp.md)() const;
 
 >bool [isEncrypted](assembly_functions.cpp.md)() const;
+
+>static std::optional&lt;const std::filesystem::path&gt; [mk_chunk_path](assembly_functions.cpp.md)(filepath fp, std::string const & cid0);
 
 >protected:
 
