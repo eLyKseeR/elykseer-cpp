@@ -27,20 +27,19 @@ pipeline {
         }
         stage('cmake') {
             steps {
-                sh 'cd BUILD; mkdir -p src/lxr'
-                sh 'cd BUILD; rm -rf CMakeFiles CMakeCache.txt'
-                sh 'cd BUILD; cmake .'
+                sh 'cd build; rm -rf CMakeFiles CMakeCache.txt'
+                sh 'cd build; cmake .'
             }
         }
         stage('compile') {
             steps {
-                sh 'cd BUILD; make clean; make'
+                sh 'cd build; make clean; make'
             }
         }
         stage('unit tests') {
             steps {
                 sh 'test -d $TMPDIR/restored && rm -rf $TMPDIR/restored'
-                sh 'cd BUILD; ./ut.sh'
+                sh 'cd build; ./ut.sh'
             }
         }
     }

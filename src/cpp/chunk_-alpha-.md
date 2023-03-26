@@ -10,6 +10,7 @@
 
 #include "sizebounded/sizebounded.ipp"
 
+#include <cstddef>
 #include <iostream>
 
 namespace lxr {
