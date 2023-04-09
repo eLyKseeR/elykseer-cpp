@@ -32,6 +32,8 @@ add_definitions( -UDEBUG )
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 # boost
 add_definitions( -DBOOST_ALL_DYN_LINK )
 set(Boost_DEBUG OFF)
@@ -57,8 +59,6 @@ if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
   add_definitions(-DBOOST_CONTRACT_NO_CHECKS)
 endif()
 
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
 find_package(OpenMP)
 
 if (CMAKE_COMPILER_IS_GNUCC)
@@ -75,6 +75,8 @@ if(CPPCHECK)
         ${CMAKE_SOURCE_DIR}/src/lxr/*.hpp
         ${CMAKE_SOURCE_DIR}/src/*.cpp
         ${CMAKE_SOURCE_DIR}/test/*.cpp
+        -I ${CMAKE_SOURCE_DIR}/ext
+        -I /opt/homebrew/include
     )
 else()
     message(STATUS "Cppcheck - not found")
