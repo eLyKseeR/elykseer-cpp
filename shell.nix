@@ -1,38 +1,41 @@
-with import <nixpkgs> {};
+{ pkgs ? import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/9ede5d5b569bb9c5c0e7ed4d89cbc926f9f905d4.tar.gz") {} }:
 
-stdenv.mkDerivation rec {
+pkgs.mkShell {
+
     name = "env";
 
     #src = ./.;
 
     # Customizable development requirements
     nativeBuildInputs = [
-        cmake
-        ccache
-        clang
-        gnused
-        gcc
-        gdb
-        git
-        pandoc
-        cppcheck
-        html2text
-        pkg-config
-        autoconf automake libtool m4
-        libassuan libgpgerror
-        gnupg
-        perl534Packages.DigestSHA3
+        pkgs.cmake
+        pkgs.ccache
+        #pkgs.clang
+        pkgs.gnused
+        pkgs.git
+        pkgs.pandoc
+        pkgs.cppcheck
+        pkgs.html2text
+        pkgs.pkg-config
+        pkgs.autoconf pkgs.automake pkgs.libtool pkgs.m4
+        pkgs.libassuan pkgs.libgpgerror
+        pkgs.gnupg
+        pkgs.perl534Packages.DigestSHA3
     ];
 
     buildInputs = [
-        openssl
-        zlib
-        boost
+        pkgs.openssl
+        pkgs.zlib
+        pkgs.boost
     ];
 
     shellHook = ''
       echo 'eLyKseeR nixified environment'
-      export SED=sed
+      if [ `uname -s` = "Darwin" ]; then
+        export SED=gsed
+      else
+        export SED=sed
+      fi
     '';
 }
 
