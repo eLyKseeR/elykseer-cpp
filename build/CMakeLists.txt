@@ -83,10 +83,36 @@ else()
     message(STATUS "  Build target 'cppcheck' not available.")
 endif()
 
+set(PLATFORM "unk")
+set(SELECTED_AR ${CMAKE_AR})
+set(LIB_PREFIX "")
+
 # OS dependent
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15")
+  set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0")
+  set(SELECTED_AR "/opt/homebrew/opt/binutils/bin/ar")
+  set(LIB_PREFIX "lib")
+  set(libs "dl" "z")
 ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+
+IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+  set(PLATFORM "win64")
+  set(LIB_PREFIX "lib")
+  set(libs "z" "ws2_32")
+ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+
+IF(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+  set(PLATFORM "freebsd")
+  set(SELECTED_AR "/usr/local/bin/ar")
+  set(LIB_PREFIX "lib")
+  set(libs "dl" "z")
+ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+
+IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+  set(PLATFORM "linux")
+  set(LIB_PREFIX "lib")
+  set(libs "dl" "z")
+ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
 # other external tools
 include_directories(../ext)

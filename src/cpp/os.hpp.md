@@ -7,6 +7,7 @@
 #pragma once
 
 #include <string>
+#include <filesystem>
 #include <chrono>
 #include <ctime>
 
@@ -27,6 +28,8 @@ namespace [lxr](namespace.list) {
 >static const std::string [timestamp](os_functions.cpp.md)() noexcept;
 
 >static const std::string [time2string](os_functions.cpp.md)(time_t) noexcept;
+
+>static const std::string [time2string](os_functions.cpp.md)(std::filesystem::file_time_type) noexcept;
 
 >protected:
 

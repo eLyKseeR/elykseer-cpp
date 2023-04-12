@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE( backup_restore_file_raw )
                        .nChunks(16);
     lxr::BackupCtrl _backup;
 
-    { std::ofstream _fe; _fe.open(datafile.native());
+    { std::ofstream _fe; _fe.open(datafile.string());
      for (int i=0; i<799999; i++) { _fe.write("0123456789",7); }
      _fe.close();
     }
@@ -90,10 +90,10 @@ BOOST_AUTO_TEST_CASE( backup_restore_file_raw )
 
     _backup.finalize();
 
-    std::ofstream _out1; _out1.open(fp_dbfp.native());
+    std::ofstream _out1; _out1.open(fp_dbfp.string());
     _backup.getDbFp().outStream(_out1);
     _out1.close();
-    std::ofstream _out2; _out2.open(fp_dbky.native());
+    std::ofstream _out2; _out2.open(fp_dbky.string());
     _backup.getDbKey().outStream(_out2);
     _out2.close();
   }
@@ -108,12 +108,12 @@ BOOST_AUTO_TEST_CASE( backup_restore_file_raw )
     BOOST_CHECK_EQUAL(0UL, _restore.bytes_out());
 
     lxr::DbFp _dbfp;
-    { std::ifstream _if; _if.open(fp_dbfp.native());
+    { std::ifstream _if; _if.open(fp_dbfp.string());
       _dbfp.inStream(_if); _if.close(); }
     BOOST_CHECK_EQUAL(1, _dbfp.count());
     _restore.addDbFp(_dbfp);
     lxr::DbKey _dbks;
-    { std::ifstream _if; _if.open(fp_dbky.native());
+    { std::ifstream _if; _if.open(fp_dbky.string());
       _dbks.inStream(_if); _if.close(); }
     BOOST_CHECK_EQUAL(2, _dbks.count());
     _restore.addDbKey(_dbks);
@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_CASE( backup_restore_file_raw )
     if (std::filesystem::exists(datafile)) {
       std::filesystem::remove(datafile);
     }
-    BOOST_REQUIRE( _restore.restore(outputdir, datafile.native()) );
+    BOOST_REQUIRE( _restore.restore(outputdir, datafile.string()) );
     hash_1 = lxr::Sha256::hash(outputdir / datafile);
 
     BOOST_CHECK( _restore.bytes_in() > 0);
@@ -175,7 +175,7 @@ BOOST_AUTO_TEST_CASE( backup_restore_file_compressed )
                        .nChunks(16);
     lxr::BackupCtrl _backup;
 
-    { std::ofstream _fe; _fe.open(datafile.native());
+    { std::ofstream _fe; _fe.open(datafile.string());
       std::ifstream _fi;
 #if defined(__APPLE__)
          _fi.open("/bin/bash", std::ifstream::in | std::ifstream::binary);
@@ -219,10 +219,10 @@ BOOST_AUTO_TEST_CASE( backup_restore_file_compressed )
 
     _backup.finalize();
 
-    std::ofstream _out1; _out1.open(fp_dbfp.native());
+    std::ofstream _out1; _out1.open(fp_dbfp.string());
     _backup.getDbFp().outStream(_out1);
     _out1.close();
-    std::ofstream _out2; _out2.open(fp_dbky.native());
+    std::ofstream _out2; _out2.open(fp_dbky.string());
     _backup.getDbKey().outStream(_out2);
     _out2.close();
   }
@@ -237,12 +237,12 @@ BOOST_AUTO_TEST_CASE( backup_restore_file_compressed )
     BOOST_CHECK_EQUAL(0UL, _restore.bytes_out());
 
     lxr::DbFp _dbfp;
-    { std::ifstream _if; _if.open(fp_dbfp.native());
+    { std::ifstream _if; _if.open(fp_dbfp.string());
       _dbfp.inStream(_if); _if.close(); }
     BOOST_CHECK_EQUAL(1, _dbfp.count());
     _restore.addDbFp(_dbfp);
     lxr::DbKey _dbks;
-    { std::ifstream _if; _if.open(fp_dbky.native());
+    { std::ifstream _if; _if.open(fp_dbky.string());
       _dbks.inStream(_if); _if.close(); }
     BOOST_CHECK_EQUAL(expected_blocks, _dbks.count());
     _restore.addDbKey(_dbks);
@@ -250,7 +250,7 @@ BOOST_AUTO_TEST_CASE( backup_restore_file_compressed )
     if (std::filesystem::exists(datafile)) {
       std::filesystem::remove(datafile);
     }
-    BOOST_REQUIRE( _restore.restore(outputdir, datafile.native()) );
+    BOOST_REQUIRE( _restore.restore(outputdir, datafile.string()) );
     hash_1 = lxr::Sha256::hash(outputdir / datafile);
 
     BOOST_CHECK( _restore.bytes_in() > 0);

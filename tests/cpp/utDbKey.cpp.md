@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE( output_to_xml )
 	BOOST_CHECK_EQUAL(2, _db.count());
 	auto const tmpd = std::filesystem::temp_directory_path();
 	auto const fp_xml = tmpd / "test_dbkey_1.xml";
-	std::ofstream _outs; _outs.open(fp_xml.native());
+	std::ofstream _outs; _outs.open(fp_xml.string());
 	_db.outStream(_outs);
 	strncpy(_k1, key1.toHex().c_str(), 64);
 	strncpy(_k2, key2.toHex().c_str(), 64);
@@ -84,7 +84,7 @@ BOOST_AUTO_TEST_CASE( input_from_xml )
 	auto const tmpd = std::filesystem::temp_directory_path();
 	lxr::DbKey _db;
 	auto const fp_xml = tmpd / "test_dbkey_1.xml";
-	std::ifstream _ins; _ins.open(fp_xml.native());
+	std::ifstream _ins; _ins.open(fp_xml.string());
 	_db.inStream(_ins);
 	BOOST_CHECK_EQUAL(2, _db.count());
 	auto const keys1 = _db.get(aid1);

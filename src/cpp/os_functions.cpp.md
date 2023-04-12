@@ -6,9 +6,14 @@
 */
 
 #include "lxr/os.hpp"
-#include <unistd.h>
-#include <chrono>
 #include "date/date.h"
+
+#ifndef _WIN32
+#include <unistd.h>
+#else
+#include <windows.h>
+#include <sysinfoapi.h>
+#endif
 
 namespace lxr {
 
@@ -26,12 +31,16 @@ const std::string OS::hostname() noexcept
     return hostname;
 #else
     #ifdef _WIN32
-    #error open some window
+    TCHAR buf[512] = ""; DWORD bufsz = 511;
+    std::string _hostname {"win"};
+    if (GetComputerNameEx(ComputerNameDnsDomain, (LPSTR)&buf, &bufsz)) {
+      _hostname = std::string(buf, bufsz);
+    }
+    return _hostname;
     #else
     #error Do not know how to handle this!
     #endif
 #endif
-
 }
 
 const std::string OS::username() noexcept
@@ -43,40 +52,44 @@ const std::string OS::username() noexcept
     return username;
 #else
     #ifdef _WIN32
-    #error open some window
+    TCHAR buf[512] = ""; DWORD bufsz = 511;
+    std::string _username {"user"};
+    if (GetUserNameA((LPSTR)&buf, &bufsz)) {
+      _username = std::string(buf, bufsz);
+    }
+    return _username;
     #else
     #error Do not know how to handle this!
     #endif
 #endif
 
+}
+
+template <typename Clock>
+std::time_t to_time_t(Clock cl) {
+    using namespace std::chrono;
+    auto casted = time_point_cast<system_clock::duration>(cl - Clock::clock::now() + system_clock::now());
+    return system_clock::to_time_t(casted);
 }
 
 const std::string OS::timestamp() noexcept
 {
-#if defined( __linux__ ) || defined( __APPLE__ ) || defined(__FreeBSD__)
     auto now = std::chrono::system_clock::now();
     return date::format("%Y%m%dT%H%M%S", date::floor<std::chrono::seconds>(now));
-#else
-    #ifdef _WIN32
-    #error open some window
-    #else
-    #error Do not know how to handle this!
-    #endif
-#endif
 }
 
 const std::string OS::time2string(time_t _t) noexcept
 {
-#if defined( __linux__ ) || defined( __APPLE__ ) || defined(__FreeBSD__)
     auto ts = std::chrono::system_clock::from_time_t(_t);
     return date::format("%Y%m%dT%H%M%S", date::floor<std::chrono::seconds>(ts));
-#else
-    #ifdef _WIN32
-    #error open some window
-    #else
-    #error Do not know how to handle this!
-    #endif
-#endif
+}
+
+const std::string OS::time2string(std::filesystem::file_time_type ts) noexcept
+{
+    const auto deltat = ts - std::filesystem::file_time_type::clock::now() + std::chrono::system_clock::now();
+    const auto syst = std::chrono::time_point_cast<std::chrono::system_clock::duration>(deltat);
+    return time2string(std::chrono::system_clock::to_time_t(syst));
+
 }
 ```
 

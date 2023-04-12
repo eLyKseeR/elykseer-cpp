@@ -43,7 +43,7 @@ bool RestoreCtrl::pimpl::load_assembly(std::string const & said)
 
 #ifdef DEBUG
     { auto const tmpd = std::filesystem::temp_directory_path();
-      std::ofstream _fe; _fe.open((tmpd / std::string("test_assembly.restored")).native());
+      std::ofstream _fe; _fe.open((tmpd / std::string("test_assembly.restored")).string());
       const int bufsz = 4096;
       sizebounded<unsigned char, bufsz> buf;
       for (int i=0; i<Options::current().nChunks()*Chunk::size; i+=bufsz) {
@@ -182,9 +182,9 @@ bool RestoreCtrl::restore(filepath const & root, std::string const & fp)
 
     // load blocks
     bool res = true;
-    std::ofstream _fout; _fout.open(targetfp.native());
+    std::ofstream _fout; _fout.open(targetfp.string());
     if (! _fout.good()) {
-        std::cerr << "failed to open output file " << targetfp.native() << std::endl;
+        std::cerr << "failed to open output file " << targetfp.string() << std::endl;
         _fout.close();
         return false;
     }
@@ -203,7 +203,7 @@ bool RestoreCtrl::restore(filepath const & root, std::string const & fp)
     _pimpl->time_restore += std::chrono::duration_cast<std::chrono::microseconds>(time_end - time_begin);
 
 #ifdef DEBUG
-    std::cout << "restored to '" << targetfp.native() << "' in:" << _state.trx_in() << " out:" << _state.trx_out() << std::endl;
+    std::cout << "restored to '" << targetfp.string() << "' in:" << _state.trx_in() << " out:" << _state.trx_out() << std::endl;
 #endif
     return res;
 }

@@ -14,7 +14,7 @@ bool Chunk::fromFile(std::filesystem::path const & fpath)
   if (! FileCtrl::fileExists(fpath)) { return false; }
   if (auto fsz = FileCtrl::fileSize(fpath); fsz && *fsz < Chunk::size) { return false; }
 
-  if (FILE * fstr = fopen(fpath.c_str(), "rb"); ! fstr) {
+  if (FILE * fstr = fopen(fpath.string().c_str(), "rb"); ! fstr) {
     return false;
   } else {
     size_t nread = fread((void*)_buffer->ptr(), 64, Chunk::size / 64, fstr);
@@ -27,7 +27,7 @@ bool Chunk::toFile(std::filesystem::path const & fpath) const
 {
   if (FileCtrl::fileExists(fpath)) { return false; }
 
-  if (FILE * fstr = fopen(fpath.c_str(), "wb"); ! fstr) {
+  if (FILE * fstr = fopen(fpath.string().c_str(), "wb"); ! fstr) {
     return false;
   } else {
     size_t nwritten = fwrite(_buffer->ptr(), 64, Chunk::size / 64, fstr);

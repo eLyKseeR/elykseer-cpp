@@ -32,14 +32,14 @@ std::optional<DbFpDat> DbFpDat::fromFile(std::filesystem::path const & fp) noexc
         return {};
     }
 
-    if (auto db = make(fp.native()); ! db) {
+    if (auto db = make(fp.string()); ! db) {
       return {};
     } else {
       db->_checksum = Sha256::hash(fp).toHex();
 
   #if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
       struct stat _fst;
-      if (stat(fp.native().c_str(), &_fst) == 0) {
+      if (stat(fp.string().c_str(), &_fst) == 0) {
           db->_len = _fst.st_size;
           char _buf[65];
           snprintf(_buf, 65, "%d", _fst.st_uid);
@@ -53,7 +53,8 @@ std::optional<DbFpDat> DbFpDat::fromFile(std::filesystem::path const & fp) noexc
   #endif
       }
   #else
-      #error Such a platform is not yet a good host for this software
+      //#error Such a platform is not yet a good host for this software
+      auto ftm = std::filesystem::last_write_time(fp);
   #endif
       return db;
     }
@@ -117,7 +118,7 @@ void DbFp::inStream(std::istream & ins)
     }
 #ifdef DEBUG
     auto t1 = clk::now();
-    auto tdiff = boost::chrono::round<boost::chrono::microseconds>(t1 - t0).count();
+    auto tdiff = std::chrono::round<std::chrono::microseconds>(t1 - t0).count();
     std::clog << "inStream took " << tdiff << " microseconds" << std::endl;
     std::clog << "iterations: " << counter << std::endl;
 #endif

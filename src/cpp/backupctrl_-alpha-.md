@@ -18,10 +18,11 @@
 #include "stream-cpp/zblocks.hpp"
 #include "stream-cpp/zblocks.ipp"
 
-#include <cstddef>
 #include <chrono>
-#include <iostream>
 #include <cstdio>
+#include <cstddef>
+#include <fstream>
+#include <iostream>
 
 using clk = std::chrono::high_resolution_clock;
 

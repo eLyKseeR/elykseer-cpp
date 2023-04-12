@@ -282,10 +282,6 @@ add_custom_command(
   OUTPUT lxr/dbctrl.hpp)
 
 
-if(OpenMP_CXX_FOUND)
-	set(libs "${libs} ${OpenMP_CXX_LIBRARIES}")
-endif()
-
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 	message("not building dynamic library on ${CMAKE_SYSTEM_NAME}")
 ELSE()
@@ -301,6 +297,11 @@ ELSE()
 	  elykseer-crypto_s
       ${Boost_LIBRARIES}
   )
+  if(OpenMP_CXX_FOUND)
+    target_link_libraries (${PROJECT_NAME}_${CMAKE_BUILD_TYPE} PUBLIC
+	    OpenMP::OpenMP_CXX)
+  endif()
+
 ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
 
@@ -312,6 +313,10 @@ target_link_libraries(${PROJECT_NAME}_${CMAKE_BUILD_TYPE}_s PUBLIC
   ${libs}
   ${Boost_LIBRARIES}
 )
+if(OpenMP_CXX_FOUND)
+  target_link_libraries (${PROJECT_NAME}_${CMAKE_BUILD_TYPE}_s PUBLIC
+	    OpenMP::OpenMP_CXX)
+endif()
 
 # combine all static libs into one
 IF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
