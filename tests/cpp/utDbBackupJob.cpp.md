@@ -112,7 +112,7 @@ BOOST_AUTO_TEST_CASE( output_to_xml )
 	_db.set(name2, _job2);
 	BOOST_CHECK_EQUAL(2, _db.count());
   auto const fp_db = tmpd / "test_dbbackupjob_1.xml";
-	std::ofstream _outs; _outs.open(fp_db.native());
+	std::ofstream _outs; _outs.open(fp_db.string());
 	_db.outStream(_outs);
 }
 ```
@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_CASE( input_from_xml )
 
   lxr::DbBackupJob _db;
   auto const fp_db = tmpd / "test_dbbackupjob_1.xml";
-  std::ifstream _ins; _ins.open(fp_db.native());
+  std::ifstream _ins; _ins.open(fp_db.string());
   _db.inStream(_ins);
   BOOST_CHECK_EQUAL(2, _db.count());
   BOOST_CHECK(_db.get(name1));

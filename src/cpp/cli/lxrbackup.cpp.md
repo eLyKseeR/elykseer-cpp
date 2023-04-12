@@ -260,7 +260,7 @@ int main (int argc, char * const argv[]) {
             std::clog << "maximum number of files reached: " << MAX_BACKUP_FILES << std::endl;
             output_error();
           }
-          list_files[counter_files++]=x.path().native();
+          list_files[counter_files++]=x.path().string();
         }
       }
     }
@@ -274,7 +274,7 @@ int main (int argc, char * const argv[]) {
             std::clog << "maximum number of files reached: " << MAX_BACKUP_FILES << std::endl;
             output_error();
           }
-          list_files[counter_files++]=x.native();
+          list_files[counter_files++]=x.string();
         }
       }
     }
@@ -310,7 +310,7 @@ int main (int argc, char * const argv[]) {
       ctrl.getDbFp().outStream(gpg.ostream());
       auto _enc = gpg.encrypt_to_key(_frp);
       if (_enc) {
-        std::ofstream _outf; _outf.open(fp_dbfp.native());
+        std::ofstream _outf; _outf.open(fp_dbfp.string());
         _outf << _enc.value();
         _outf.close();
       } else {
@@ -322,7 +322,7 @@ int main (int argc, char * const argv[]) {
       ctrl.getDbKey().outStream(gpg.ostream());
       auto _enc = gpg.encrypt_to_key(_frp);
       if (_enc) {
-        std::ofstream _outf; _outf.open(fp_dbk.native());
+        std::ofstream _outf; _outf.open(fp_dbk.string());
         _outf << _enc.value();
         _outf.close();
       } else {
@@ -330,11 +330,11 @@ int main (int argc, char * const argv[]) {
       }
     }
   } else {
-    { std::ofstream _out1; _out1.open(fp_dbfp.native());
+    { std::ofstream _out1; _out1.open(fp_dbfp.string());
       ctrl.getDbFp().outStream(_out1);
       _out1.close();
     }
-    { std::ofstream _out1; _out1.open(fp_dbk.native());
+    { std::ofstream _out1; _out1.open(fp_dbk.string());
       ctrl.getDbKey().outStream(_out1);
       _out1.close();
     }

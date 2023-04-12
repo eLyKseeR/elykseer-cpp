@@ -135,7 +135,7 @@ BOOST_AUTO_TEST_CASE( output_to_xml )
   BOOST_CHECK_EQUAL(2, _db.count());
   auto const tmpd = std::filesystem::temp_directory_path();
   auto const fp_xml = tmpd / "test_dbfp_1.xml";
-  std::ofstream _outs; _outs.open(fp_xml.native());
+  std::ofstream _outs; _outs.open(fp_xml.string());
   _db.outStream(_outs);
 } */
 ```

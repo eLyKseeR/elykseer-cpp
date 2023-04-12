@@ -197,7 +197,7 @@ bool BackupCtrl::backup(std::filesystem::path const & fp)
     if (! t_dbentry) { return false; }
 
     if (Options::current().isDeduplicated() > 0) {
-      auto fpref = _pimpl->_dbfpref.get(fp.native());
+      auto fpref = _pimpl->_dbfpref.get(fp.string());
       if (fpref && fpref->_checksum == t_dbentry->_checksum) {
         std::clog << "deduplication: skipping redundant file " << fp << std::endl;
         auto time_end = clk::now();
@@ -211,7 +211,7 @@ bool BackupCtrl::backup(std::filesystem::path const & fp)
 
     constexpr int bsz = Assembly::datasz;
     sizebounded<unsigned char, bsz> buffer;
-    FILE *fptr = fopen(fp.native().c_str(), "r");
+    FILE *fptr = fopen(fp.string().c_str(), "r");
     if (! fptr) { return false; }
 
     // setup pipeline
@@ -250,7 +250,7 @@ bool BackupCtrl::backup(std::filesystem::path const & fp)
 
 #ifdef DEBUG
     { auto const tmpd = std::filesystem::temp_directory_path();
-      std::ofstream _fe; _fe.open((tmpd / std::string("test_assembly.backuped")).native());
+      std::ofstream _fe; _fe.open((tmpd / std::string("test_assembly.backuped")).string());
       const int bufsz = 4096;
       sizebounded<unsigned char, bufsz> buf;
       for (int i=0; i<Options::current().nChunks()*Chunk::size; i+=bufsz) {
@@ -260,7 +260,7 @@ bool BackupCtrl::backup(std::filesystem::path const & fp)
     }
 #endif
 
-    _pimpl->_dbfp.set(fp.native(), std::move(t_dbentry.value()));
+    _pimpl->_dbfp.set(fp.string(), std::move(t_dbentry.value()));
     auto time_end = clk::now();
     _pimpl->time_backup += std::chrono::duration_cast<std::chrono::microseconds>(time_end - time_begin);
 

@@ -129,8 +129,8 @@ void Options::outStream(std::ostream & os) const
   os << "  <compression>" << (_pimpl->_iscompressed?"on":"off") << "</compression>" << std::endl;
   os << "  <deduplication level=\\"" << _pimpl->_isdeduplicated << "\\" />" << std::endl;
   os << "  <fpaths>" << std::endl;
-  os << "    <meta>" << _pimpl->_fpathmeta.native() << "</meta>" << std::endl;
-  os << "    <chunks>" << _pimpl->_fpathchunks.native() << "</chunks>" << std::endl;
+  os << "    <meta>" << _pimpl->_fpathmeta.string() << "</meta>" << std::endl;
+  os << "    <chunks>" << _pimpl->_fpathchunks.string() << "</chunks>" << std::endl;
   os << "  </fpaths>" << std::endl;
   os << "</Options>" << std::endl;
 }

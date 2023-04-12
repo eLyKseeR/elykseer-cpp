@@ -6,12 +6,16 @@ set(GENERATED_SRCS
   lxrverify.hpp lxrverify.cpp)
 set_source_files_properties(${GENERATED_SRCS} GENERATED)
 
+add_library(elykseer-cpp_s STATIC IMPORTED)
+SET_TARGET_PROPERTIES(elykseer-cpp_s PROPERTIES IMPORTED_LOCATION "${CMAKE_HOME_DIRECTORY}/src/libelykseer-cpp.a")
+
 # generate sources from literate c++ files
 set(MAKE_CODE_CMD "${CMAKE_CURRENT_SOURCE_DIR}/../../../ext/gitalk/utils/make_all_code.sh")
 
 set(LITERATE_SRC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/cpp/cli")
 
 ## executable LXRbackup
+message("libs: ${libs}")
 
 add_custom_command(
   COMMAND rm -f lxrbackup.cpp lxrbackup.hpp
@@ -25,10 +29,14 @@ add_executable ( LXRbackup
 )
 
 target_link_libraries (LXRbackup PUBLIC
-  elykseer-cpp_${CMAKE_BUILD_TYPE}
+  elykseer-cpp_s
   ${libs}
   ${Boost_LIBRARIES}
 )
+if(OpenMP_CXX_FOUND)
+  target_link_libraries (LXRbackup PUBLIC OpenMP::OpenMP_CXX)
+endif()
+
 
 ## executable LXRrestore
 
@@ -44,10 +52,13 @@ add_executable ( LXRrestore
 )
 
 target_link_libraries (LXRrestore PUBLIC
-  elykseer-cpp_${CMAKE_BUILD_TYPE}
+  elykseer-cpp_s
   ${libs}
   ${Boost_LIBRARIES}
 )
+if(OpenMP_CXX_FOUND)
+  target_link_libraries (LXRrestore PUBLIC OpenMP::OpenMP_CXX)
+endif()
 
 ## executable LXRverify
 
@@ -63,7 +74,10 @@ add_executable ( LXRverify
 )
 
 target_link_libraries (LXRverify PUBLIC
-  elykseer-cpp_${CMAKE_BUILD_TYPE}
+  elykseer-cpp_s
   ${libs}
   ${Boost_LIBRARIES}
 )
+if(OpenMP_CXX_FOUND)
+  target_link_libraries (LXRverify PUBLIC OpenMP::OpenMP_CXX)
+endif()

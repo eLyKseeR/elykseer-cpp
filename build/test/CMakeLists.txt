@@ -11,7 +11,7 @@ set(Boost_DEBUG OFF)
 set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_USE_STATIC_RUNTIME OFF)
 set(Boost_USE_MULTITHREADED ON)
-find_package( Boost 1.67.0 REQUIRED COMPONENTS system thread date_time chrono unit_test_framework contract)
+find_package( Boost 1.74.0 REQUIRED COMPONENTS system thread date_time chrono unit_test_framework contract)
 include_directories(${Boost_INCLUDE_DIRS})
 
 # mine

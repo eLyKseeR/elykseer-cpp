@@ -30,11 +30,11 @@ BOOST_AUTO_TEST_CASE( export_import_XML )
          .fpathMeta("/mnt/secure");
     auto const tmpd = std::filesystem::temp_directory_path();
 	auto const _fpath = tmpd / "test_options_1.xml";
-	std::ofstream _outs; _outs.open(_fpath.native());
+	std::ofstream _outs; _outs.open(_fpath.string());
     _opts.outStream(_outs);
     _outs.close();
     lxr::Options & _opts1 = lxr::Options::set();
-	std::ifstream _ins; _ins.open(_fpath.native());
+	std::ifstream _ins; _ins.open(_fpath.string());
     _opts1.inStream(_ins);
     auto const _opts2 = lxr::Options::current();
     BOOST_CHECK_EQUAL(17, _opts2.nChunks());

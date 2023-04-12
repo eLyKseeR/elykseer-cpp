@@ -1,26 +1,5 @@
 declared in [FsUtils](fsutils.hpp.md)
 
-## helper method to call an external UNIX command and capture its output
-
-```cpp
-#ifndef _WIN32
-/*
-std::string sh(std::string const & script) {
-    constexpr int lenline = 256;
-    std::array<char, lenline> _buffer;
-    std::string _result;
-    std::shared_ptr<FILE> _pipe(popen(script.c_str(), "r"), pclose);
-    if (! _pipe) {
-      throw std::runtime_error("popen() failed!"); }
-    while (! feof(_pipe.get())) {
-        if (fgets(_buffer.data(), lenline, _pipe.get()) != nullptr)
-            _result += _buffer.data();
-    }
-    return _result;
-} */
-#endif
-```
-
 ## implementations
 
 ```cpp
@@ -36,7 +15,9 @@ std::string FsUtils::sep() noexcept
 const filepath FsUtils::cleanfp(filepath const & _fp) noexcept
 {
 #ifdef _WIN32
-    return _fp.replace(":", ",drive");
+    std::string fp = _fp.string();
+    fp.replace(fp.find(":"), 0, ",drive");
+    return fp;
 #else
     return _fp;
 #endif
@@ -53,12 +34,40 @@ const std::string FsUtils::fstem() noexcept
 std::pair<const std::string, const std::string> FsUtils::osusrgrp(filepath const & fp)
 {
 #ifdef _WIN32
-    #error not yet done
+    std::string accname = "error";
+    std::string domname = "error";
+    HANDLE hFile;
+    hFile = CreateFile(fp.string().c_str(),
+                       GENERIC_READ, FILE_SHARE_READ,
+                       NULL, OPEN_EXISTING,
+                       FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hFile != INVALID_HANDLE_VALUE) {
+      PSID sidowner = nullptr;
+      PSECURITY_DESCRIPTOR sd = nullptr;
+      if (GetSecurityInfo(hFile, SE_FILE_OBJECT, OWNER_SECURITY_INFORMATION,
+                          &sidowner, NULL, NULL, NULL, &sd) != ERROR_SUCCESS) {
+        DWORD dwaccnm = 1; DWORD dwdomnm = 1;
+        SID_NAME_USE siduse = SidTypeUnknown;
+        LPTSTR _accountname = nullptr;
+        LPTSTR _domainname = nullptr;
+        if (LookupAccountSid(NULL, sidowner, _accountname, &dwaccnm,
+                             _domainname, &dwdomnm, &siduse)) {
+          _accountname = (LPTSTR)GlobalAlloc(GMEM_FIXED, dwaccnm * sizeof(wchar_t));
+          _domainname = (LPTSTR)GlobalAlloc(GMEM_FIXED, dwdomnm * sizeof(wchar_t));
+          if (LookupAccountSid(NULL, sidowner, _accountname, &dwaccnm,
+                               _domainname, &dwdomnm, &siduse)) {
+            if (_accountname) { accname = std::string(_accountname,dwaccnm); }
+            if (_domainname) { domname = std::string(_domainname,dwdomnm); }
+          }
+        }
+      }
+    }
+    return std::make_pair(accname, domname);
 #else
     std::string _osusr = "error";
     std::string _osgrp = "error";
     struct stat _fi;
-    stat(fp.c_str(), &_fi);  // Error check omitted
+    stat(fp.string().c_str(), &_fi);  // Error check omitted
     constexpr int _blen = 512;
     char _buf[_blen];
     struct passwd _pw, *_retpw = NULL;
