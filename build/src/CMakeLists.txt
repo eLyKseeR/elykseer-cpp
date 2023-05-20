@@ -70,6 +70,13 @@ set(MAKE_HPP_CMD "${CMAKE_CURRENT_SOURCE_DIR}/../../ext/gitalk/utils/make_hpp.sh
 set(LITERATE_SRC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../src/cpp")
 
 add_custom_command(
+  WORKING_DIRECTORY "lxr"
+  COMMAND rm -f appid.hpp
+  COMMAND ${MAKE_HPP_CMD} "${LITERATE_SRC_PATH}/lxr.hpp.md"
+  MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/lxr.hpp.md"
+  OUTPUT lxr/lxr.hpp)
+
+add_custom_command(
   COMMAND rm -f appid.cpp
   COMMAND ${MAKE_CPP_CMD} "${LITERATE_SRC_PATH}/appid.hpp.md"
   MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/appid.hpp.md"
@@ -364,3 +371,14 @@ if (CMAKE_BUILD_TYPE STREQUAL "DebugProfile")
 endif()
 
 add_subdirectory( cli )
+
+set(CPACK_BINARY_STGZ "OFF")
+set(CPACK_BINARY_TGZ "ON")
+
+set(CPACK_PACKAGE_VERSION ${${PROJECT_NAME}_VERSION_STRING})
+set(CPACK_PACKAGE_VERSION_MAJOR ${${PROJECT_NAME}_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${${PROJECT_NAME}_VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH ${${PROJECT_NAME}_VERSION_PATCH})
+install(FILES ${LIBRARY_NAME} DESTINATION lib)
+install(FILES ${GENERATED_HDRS} DESTINATION include/lxr)
+include(CPack)

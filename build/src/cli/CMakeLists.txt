@@ -81,3 +81,7 @@ target_link_libraries (LXRverify PUBLIC
 if(OpenMP_CXX_FOUND)
   target_link_libraries (LXRverify PUBLIC OpenMP::OpenMP_CXX)
 endif()
+
+install(TARGETS LXRbackup RUNTIME DESTINATION bin)
+install(TARGETS LXRrestore RUNTIME DESTINATION bin)
+install(TARGETS LXRverify RUNTIME DESTINATION bin)
