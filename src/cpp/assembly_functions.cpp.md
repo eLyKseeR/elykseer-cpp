@@ -123,23 +123,27 @@ std::optional<const std::filesystem::path> Assembly::mk_chunk_path(filepath fp, 
 
 bool Assembly::extractChunks() const
 {
-  if (! isEncrypted()) { return false; }
+  return extractChunks(Options::current().fpathChunks());
+}
 
+bool Assembly::extractChunks(std::string const &_bd) const
+{
+  if (! isEncrypted()) { return false; }
   bool res = true;
   int n;
   const int nlim = _pimpl->_n.nchunks();
   omp_set_num_threads(2); // fixed
   #pragma omp parallel for private(n) schedule(static)
   for (n = 0; n < nlim; n++) {
-    res &= extractChunk(n);
+    res &= extractChunk(_bd, n);
   }
   return res;
 }
 
-bool Assembly::extractChunk(int cnum) const
+bool Assembly::extractChunk(std::string const &_bd, int cnum) const
 {
   BOOST_CONTRACT_ASSERT(cnum >= 0 && cnum < _pimpl->_n.nchunks());
-  auto fp = mk_chunk_path(Options::current().fpathChunks(), mkChunkId(cnum).toHex());
+  auto fp = mk_chunk_path(_bd, mkChunkId(cnum).toHex());
   if (! fp) { return false; }
 #ifdef DEBUG
   std::cout << cnum << ":" << *fp << std::endl;
@@ -149,6 +153,11 @@ bool Assembly::extractChunk(int cnum) const
 
 bool Assembly::insertChunks()
 {
+  return insertChunks(Options::current().fpathChunks());
+}
+
+bool Assembly::insertChunks(std::string const &_bd)
+{
   if (! isWritable()) { return false; }
   _pimpl->_state &= ~writable;
   _pimpl->_state &= ~readable;
@@ -156,10 +165,10 @@ bool Assembly::insertChunks()
   bool res = true;
   int n;
   const int nlim = _pimpl->_n.nchunks();
-  omp_set_num_threads(2); // fixed
-  #pragma omp parallel for private(n) schedule(static)
+  //omp_set_num_threads(2); // fixed
+  //#pragma omp parallel for private(n) schedule(static)
   for (n = 0; n < nlim; n++) {
-    res &= insertChunk(n);
+    res &= insertChunk(_bd,n);
   }
 
   if (res) {
@@ -168,10 +177,10 @@ bool Assembly::insertChunks()
   return res;
 }
 
-bool Assembly::insertChunk(int cnum)
+bool Assembly::insertChunk(std::string const &_bd, int cnum)
 {
   BOOST_CONTRACT_ASSERT(cnum >= 0 && cnum < _pimpl->_n.nchunks());
-  auto fp = mk_chunk_path(Options::current().fpathChunks(), mkChunkId(cnum).toHex());
+  auto fp = mk_chunk_path(_bd, mkChunkId(cnum).toHex());
   if (! fp) { return false; }
 #ifdef DEBUG
   std::cout << cnum << ":" << *fp << std::endl;

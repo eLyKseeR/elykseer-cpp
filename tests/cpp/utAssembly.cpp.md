@@ -210,7 +210,7 @@ BOOST_AUTO_TEST_CASE( assembly_encrypt_then_extract_chunks )
   lxr::Key128 _iv;
   BOOST_CHECK( _a1.encrypt(_k, _iv) );
   BOOST_CHECK( _a1.isEncrypted() );
-  BOOST_CHECK( _a1.extractChunks() );
+  BOOST_CHECK( _a1.extractChunks(outputpath) );
 
   auto const aid = _a1.aid();
   lxr::Assembly _a2(aid, lxr::Nchunks(nChunks));

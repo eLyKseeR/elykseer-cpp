@@ -121,7 +121,11 @@ module Assembly =
 
 >bool [extractChunks](assembly_functions.cpp.md)() const;
 
+>bool [extractChunks](assembly_functions.cpp.md)(std::string const &) const;
+
 >bool [insertChunks](assembly_functions.cpp.md)();
+
+>bool [insertChunks](assembly_functions.cpp.md)(std::string const &);
 
 >uint32_t [free](assembly_functions.cpp.md)() const;
 
@@ -139,9 +143,9 @@ module Assembly =
 
 >Key256 [mkChunkId](assembly_functions.cpp.md)(int idx) const;
 
->bool [extractChunk](assembly_functions.cpp.md)(int idx) const;
+>bool [extractChunk](assembly_functions.cpp.md)(std::string const &, int idx) const;
 
->bool [insertChunk](assembly_functions.cpp.md)(int idx);
+>bool [insertChunk](assembly_functions.cpp.md)(std::string const &, int idx);
 
 >int [get_data](assembly_functions.cpp.md)(const int pos, const int len, sizebounded&lt;unsigned char, datasz&gt; &) const;
 
