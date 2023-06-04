@@ -121,11 +121,15 @@ module Assembly =
 
 >bool [extractChunks](assembly_functions.cpp.md)() const;
 
->bool [extractChunks](assembly_functions.cpp.md)(std::string const &) const;
+>bool [extractChunks](assembly_functions.cpp.md)(filepath const &) const;
+
+>bool [extractChunk](assembly_functions.cpp.md)(filepath const &, int) const;
 
 >bool [insertChunks](assembly_functions.cpp.md)();
 
->bool [insertChunks](assembly_functions.cpp.md)(std::string const &);
+>bool [insertChunks](assembly_functions.cpp.md)(filepath const &);
+
+>bool [insertChunk](assembly_functions.cpp.md)(filepath const &, int);
 
 >uint32_t [free](assembly_functions.cpp.md)() const;
 
