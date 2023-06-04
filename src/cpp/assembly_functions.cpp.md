@@ -126,7 +126,7 @@ bool Assembly::extractChunks() const
   return extractChunks(Options::current().fpathChunks());
 }
 
-bool Assembly::extractChunks(std::string const &_bd) const
+bool Assembly::extractChunks(filepath const &_bd) const
 {
   if (! isEncrypted()) { return false; }
   bool res = true;
@@ -140,7 +140,7 @@ bool Assembly::extractChunks(std::string const &_bd) const
   return res;
 }
 
-bool Assembly::extractChunk(std::string const &_bd, int cnum) const
+bool Assembly::extractChunk(filepath const &_bd, int cnum) const
 {
   BOOST_CONTRACT_ASSERT(cnum >= 0 && cnum < _pimpl->_n.nchunks());
   auto fp = mk_chunk_path(_bd, mkChunkId(cnum).toHex());
@@ -156,7 +156,7 @@ bool Assembly::insertChunks()
   return insertChunks(Options::current().fpathChunks());
 }
 
-bool Assembly::insertChunks(std::string const &_bd)
+bool Assembly::insertChunks(filepath const &_bd)
 {
   if (! isWritable()) { return false; }
   _pimpl->_state &= ~writable;
@@ -177,7 +177,7 @@ bool Assembly::insertChunks(std::string const &_bd)
   return res;
 }
 
-bool Assembly::insertChunk(std::string const &_bd, int cnum)
+bool Assembly::insertChunk(filepath const &_bd, int cnum)
 {
   BOOST_CONTRACT_ASSERT(cnum >= 0 && cnum < _pimpl->_n.nchunks());
   auto fp = mk_chunk_path(_bd, mkChunkId(cnum).toHex());
