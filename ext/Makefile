@@ -49,7 +49,7 @@ $(fset_os_metrics):
 	if [ -e build ]; then rm -rf build; fi; \
 	mkdir -vp build; \
 	cd build; \
-	cmake -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} --install-prefix "${TARGETDIR}" -G "${CMAKE_GENERATOR}" ..; \
+	cmake -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} --install-prefix "${TARGETDIR}" -G "${CMAKE_GENERATOR}" .. ; \
 	$(MAKE); \
 	$(MAKE) install
 
@@ -61,7 +61,7 @@ $(fset_rapidcheck):
 	if [ -e build ]; then rm -rf build; fi; \
 	mkdir -vp build; \
 	cd build; \
-	cmake -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} --install-prefix "${TARGETDIR}" -G "${CMAKE_GENERATOR}" ..; \
+	cmake -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} --install-prefix "${TARGETDIR}" -G "${CMAKE_GENERATOR}" .. ; \
 	$(MAKE)
 
 fset_elykseer_crypto := $(TARGETDIR)/include/yaml-cpp/yaml.h $(TARGETDIR)/lib/libyaml-cpp.a
@@ -73,7 +73,7 @@ $(fset_elykseer_crypto):
 	$(MAKE) -C ext; \
 	cd build; \
 	./mk_cpp.sh; \
-	cmake --fresh -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -G "${CMAKE_GENERATOR}" .; \
+	cmake --fresh -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -G "${CMAKE_GENERATOR}" . ; \
 	$(MAKE)
 
 
