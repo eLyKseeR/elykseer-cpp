@@ -70,9 +70,10 @@ $(fset_elykseer_crypto):
 	echo "making elykseer_crypto"
 	cd ./elykseer-crypto; \
 	git submodule update --init; \
-	make -C ext; \
+	$(MAKE) -C ext; \
 	cd build; \
-	cmake --fresh -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} --install-prefix "${TARGETDIR}" -G "${CMAKE_GENERATOR}" .; \
+	./mk_cpp.sh; \
+	cmake --fresh -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -G "${CMAKE_GENERATOR}" .; \
 	$(MAKE)
 
 
