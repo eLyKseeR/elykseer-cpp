@@ -16,13 +16,13 @@ include_directories(${Boost_INCLUDE_DIRS})
 
 # mine
 include_directories(../src)
-include_directories("${CMAKE_HOME_DIRECTORY}/../ext/elykseer-crypto/BUILD/src")
+include_directories("${CMAKE_HOME_DIRECTORY}/../ext/elykseer-crypto/build/src")
 include_directories("${CMAKE_HOME_DIRECTORY}/../ext/rapidcheck/include")
 include_directories("${CMAKE_HOME_DIRECTORY}/../ext/rapidcheck/extras/boost_test/include")
 
 # link external libraries
-link_directories("${CMAKE_HOME_DIRECTORY}/../ext/elykseer-crypto/BUILD/src")
-link_directories("${CMAKE_HOME_DIRECTORY}/../ext/rapidcheck/BUILD/")
+link_directories("${CMAKE_HOME_DIRECTORY}/../ext/elykseer-crypto/build/src")
+link_directories("${CMAKE_HOME_DIRECTORY}/../ext/rapidcheck/build/")
 set(libs "dl" "z" "rapidcheck")
 
 set(GENERATED_SRCS

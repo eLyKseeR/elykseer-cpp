@@ -3,28 +3,12 @@ cmake_minimum_required(VERSION 3.5)
 # search path for headers
 include_directories(".")
 include_directories("${CMAKE_HOME_DIRECTORY}/../ext/date/include")
-include_directories("${CMAKE_HOME_DIRECTORY}/../ext/elykseer-crypto/BUILD/src")
+include_directories("${CMAKE_HOME_DIRECTORY}/../ext/elykseer-crypto/build/src")
 
 # link external libraries
-link_directories("${CMAKE_HOME_DIRECTORY}/../ext/elykseer-crypto/BUILD/src/")
+link_directories("${CMAKE_HOME_DIRECTORY}/../ext/elykseer-crypto/build/src/")
 add_library(elykseer-crypto_s STATIC IMPORTED)
-SET_TARGET_PROPERTIES(elykseer-crypto_s PROPERTIES IMPORTED_LOCATION "${CMAKE_HOME_DIRECTORY}/../ext/elykseer-crypto/BUILD/src/libelykseer-crypto.a")
-
-IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-   set(libs "dl" "z")
-   set(LIB_PREFIX "lib")
-   ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-IF(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
-  set(libs "dl" "z")
-  set(LIB_PREFIX "lib")
-ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
-IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  set(libs "dl" "z")
-  set(LIB_PREFIX "lib")
-ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-  set(LIB_PREFIX "lib")
-ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+SET_TARGET_PROPERTIES(elykseer-crypto_s PROPERTIES IMPORTED_LOCATION "${CMAKE_HOME_DIRECTORY}/../ext/elykseer-crypto/build/src/libelykseer-crypto.a")
 
 # list of source files to be compiled
 set(GENERATED_SRCS
@@ -334,7 +318,7 @@ ENDIF()
 
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   add_custom_command(OUTPUT ${LIBRARY_NAME}
-        COMMAND libtool -static -o ${LIBRARY_NAME} ${LIB_PREFIX}${PROJECT_NAME}_${CMAKE_BUILD_TYPE}_s.a ../../ext/elykseer-crypto/BUILD/src/libelykseer-crypto.a
+        COMMAND libtool -static -o ${LIBRARY_NAME} ${LIB_PREFIX}${PROJECT_NAME}_${CMAKE_BUILD_TYPE}_s.a ../../ext/elykseer-crypto/build/src/libelykseer-crypto.a
         DEPENDS ${PROJECT_NAME}_${CMAKE_BUILD_TYPE}_s 
         COMMENT "combining static libraries into ${LIBRARY_NAME}"
   )

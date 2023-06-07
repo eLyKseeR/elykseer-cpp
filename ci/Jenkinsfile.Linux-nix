@@ -8,36 +8,23 @@ pipeline {
         }
         stage('build dependencies') {
             steps {
-                sh 'cd ext/elykseer-crypto; git submodule update --init'
-                sh 'cd ext/elykseer-crypto/ext/cryptopp; nix-shell -p gcc --run "make -f GNUmakefile"'
-                sh 'cd ext/elykseer-crypto/ext/gpgme; nix-shell -p autoconf automake libtool m4 --run "./autogen.sh"'
-                sh 'cd ext/elykseer-crypto/ext/gpgme; nix-shell -p gcc libgpgerror libassuan --run "./configure --enable-static --disable-shared --enable-languages=cpp --disable-gpgsm-test --disable-g13-test --disable-gpg-test --disable-gpgconf-test"'
-                sh 'cd ext/elykseer-crypto/ext/gpgme; nix-shell -p gcc libgpgerror libassuan --run "make"'
-                sh 'cd ext/elykseer-crypto/BUILD; rm -rf CMakeFiles CMakeCache.txt'
-                sh 'cd ext/elykseer-crypto/BUILD; rm -rf src/*.cpp src/lxr/*.hpp test/*.cpp'
-                sh 'cd ext/elykseer-crypto/BUILD; nix-shell -p gcc pandoc html2text --run "./mk_cpp.sh"'
-                sh 'cd ext/elykseer-crypto/BUILD; nix-shell -p pkg-config libgpgerror libassuan gcc cmake boost zlib --run "cmake ."'
-                sh 'cd ext/elykseer-crypto/BUILD; nix-shell -p pkg-config libgpgerror libassuan gcc cmake boost zlib --run "make"'
-                sh 'cd ext/elykseer-crypto/BUILD; nix-shell -p pkg-config libgpgerror libassuan gcc cmake boost zlib busybox --run "./ut.sh"'
-                sh 'cd ext/rapidcheck; mkdir -p BUILD'
-                sh 'cd ext/rapidcheck/BUILD; nix-shell -p gcc cmake boost zlib --run "cmake .."'
-                sh 'cd ext/rapidcheck/BUILD; nix-shell -p gcc cmake boost zlib --run "make"'
+                sh 'nix-shell -p autoconf automake libtool m4 gcc boot cmake zlib busybox pkg-config --run "make -C ext"'
             }
         }
         stage('cmake') {
             steps {
                 sh 'cd build; rm -rf CMakeFiles CMakeCache.txt'
-                sh 'cd build; nix-shell -p libgpgerror libassuan gcc cmake boost zlib --run "cmake ."'
+                sh 'cd build; nix-shell -p gcc cmake boost zlib --run "cmake --freh -DCMAKE_BUILD_TYPE=Debug ."'
             }
         }
         stage('compile') {
             steps {
-                sh 'cd build; nix-shell -p libgpgerror libassuan gcc cmake boost zlib pandoc html2text --run "make clean; make"'
+                sh 'cd build; nix-shell -p gcc cmake boost zlib pandoc html2text --run "make clean; make"'
             }
         }
         stage('unit tests') {
             steps {
-                sh 'cd build; nix-shell -p libgpgerror libassuan gcc cmake boost zlib --run "./ut.sh"'
+                sh 'cd build; nix-shell -p gcc cmake boost zlib --run "./ut.sh"'
             }
         }
     }
