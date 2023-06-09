@@ -37,11 +37,21 @@ makedirs: $(CCACHE_DIR) $(TARGETDIR)
 $(CCACHE_DIR) $(TARGETDIR):
 	mkdir -vp $@
 
-make_exts: make_osmetrics make_rapidcheck make_elykseer_crypto
+make_exts: make_gitalk make_osmetrics make_rapidcheck make_elykseer_crypto
 	echo "all done."
 
-fset_os_metrics := $(TARGETDIR)/include/os-metrics.h $(TARGETDIR)/lib/libos-metrics_$(CMAKE_BUILD_TYPE)_1_0_0.a
+fset_gitalk := $(TARGETDIR)/bin/html2text
+make_gitalk: $(fset_gitalk)
+$(fset_gitalk):
+	echo "making gitalk"
+	cd ./gitalk; \
+	git submodule update --init; \
+	cd ext/html2text.git; \
+	PREFIX=${TARGETDIR} ./configure; \
+	$(MAKE); \
+	$(MAKE) install
 
+fset_os_metrics := $(TARGETDIR)/include/os-metrics.h $(TARGETDIR)/lib/libos-metrics_$(CMAKE_BUILD_TYPE)_1_0_0.a
 make_osmetrics: $(fset_os_metrics)
 $(fset_os_metrics):
 	echo "making os-metrics"
@@ -75,5 +85,4 @@ $(fset_elykseer_crypto):
 	./mk_cpp.sh; \
 	cmake --fresh -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -G "${CMAKE_GENERATOR}" . ; \
 	$(MAKE)
-
 

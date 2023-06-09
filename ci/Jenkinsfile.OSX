@@ -1,21 +1,28 @@
 pipeline {
     agent any
+    environment {
+        PATH = """${sh(
+                returnStdout: true,
+                script: 'echo "$(pwd)/ext/$(uname -s)_$(uname -m)/bin/:${PATH}"'
+            )}""".trim()
+    }
     stages {
         stage('init dependencies') {
             steps {
+                sh 'echo $PATH'
                 sh 'git submodule update --init'
             }
         }
         stage('build dependencies') {
             steps {
-                sh 'brew install autoconf pkg-config automake libgpg-error libassuan || true'
+                sh 'brew install autoconf pkg-config automake || true'
                 sh 'gmake -C ext'
             }
         }
         stage('cmake') {
             steps {
                 sh 'cd build; rm -rf CMakeFiles CMakeCache.txt'
-                sh 'cd build; cmake --freh -DCMAKE_BUILD_TYPE=Debug .'
+                sh 'cd build; cmake --fresh -DCMAKE_BUILD_TYPE=Debug .'
             }
         }
         stage('compile') {

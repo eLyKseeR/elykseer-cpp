@@ -55,7 +55,7 @@ set(LITERATE_SRC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../src/cpp")
 
 add_custom_command(
   WORKING_DIRECTORY "lxr"
-  COMMAND rm -f appid.hpp
+  COMMAND rm -f lxr.hpp
   COMMAND ${MAKE_HPP_CMD} "${LITERATE_SRC_PATH}/lxr.hpp.md"
   MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/lxr.hpp.md"
   OUTPUT lxr/lxr.hpp)
@@ -326,7 +326,7 @@ ELSE()
   file(WRITE "lib_${CMAKE_BUILD_TYPE}.mri"
 "create ${LIBRARY_NAME}\n\
 addlib ${LIB_PREFIX}${PROJECT_NAME}_${CMAKE_BUILD_TYPE}_s.a\n\
-addlib ../../ext/elykseer-crypto/BUILD/src/libelykseer-crypto.a\n\
+addlib ../../ext/elykseer-crypto/build/src/libelykseer-crypto.a\n\
 save\n\
 end")
 

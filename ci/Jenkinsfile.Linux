@@ -1,5 +1,11 @@
 pipeline {
     agent any
+    environment {
+        PATH = """${sh(
+                returnStdout: true,
+                script: 'echo "$(pwd)/ext/$(uname -s)_$(uname -m)/bin/:${PATH}"'
+            )}""".trim()
+    }
     stages {
         stage('init dependencies') {
             steps {

@@ -1,5 +1,11 @@
 pipeline {
     agent any
+    environment {
+        PATH = """${sh(
+                returnStdout: true,
+                script: 'echo "$(pwd)/ext/$(uname -s)_$(uname -m)/bin/:${PATH}"'
+            )}""".trim()
+    }
     stages {
         stage('init dependencies') {
             steps {
@@ -14,7 +20,7 @@ pipeline {
         stage('cmake') {
             steps {
                 sh 'cd build; rm -rf CMakeFiles CMakeCache.txt'
-                sh 'cd build; cmake --freh -DCMAKE_BUILD_TYPE=Debug .'
+                sh 'cd build; cmake --fresh -DCMAKE_BUILD_TYPE=Debug .'
             }
         }
         stage('compile') {
