@@ -28,25 +28,10 @@ jobs:
     - name: Update submodules
       run: git submodule update --init
 
-    - name: Build dependencies 1
+    - name: Build dependencies
       shell: bash
       working-directory: ${{github.workspace}}/ext
-      run: |
-        cd rapidcheck; mkdir -p BUILD;
-        cd BUILD; rm -rf CMakeFiles CMakeCache.txt; cmake ..; make
-    - name: Build elykseer-crypto
-      shell: bash
-      working-directory: ${{github.workspace}}/ext/elykseer-crypto
-      run: |
-        git submodule update --init
-        cd ext/cryptopp; make -f GNUmakefile
-        cd ../gpgme; ./autogen.sh
-        ./configure --enable-static --disable-shared --enable-languages=cpp --disable-gpgsm-test --disable-g13-test --disable-gpg-test --disable-gpgconf-test --with-pic
-        make
-        cd ../../BUILD; ./mk_cpp.sh
-        rm -rf CMakeFiles CMakeCache.txt
-        cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE .
-        cmake --build . --config $BUILD_TYPE
+      run: make
 
     - name: Configure CMake
       # Use a bash shell so we can use the same syntax for environment variable
@@ -58,7 +43,7 @@ jobs:
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
       run: |
         rm -rf CMakeFiles CMakeCache.txt
-        cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE .
+        cmake --fresh -DCMAKE_BUILD_TYPE=$BUILD_TYPE .
 
     - name: Build
       working-directory: ${{github.workspace}}/build

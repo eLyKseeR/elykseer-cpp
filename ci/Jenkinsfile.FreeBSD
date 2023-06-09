@@ -1,5 +1,11 @@
 pipeline {
     agent any
+    environment {
+        PATH = """${sh(
+                returnStdout: true,
+                script: 'echo "$(pwd)/ext/$(uname -s)_$(uname -m)/bin/:${PATH}"'
+            )}""".trim()
+    }
     stages {
         stage('init dependencies') {
             steps {
@@ -8,26 +14,13 @@ pipeline {
         }
         stage('build dependencies') {
             steps {
-                sh 'cd ext/elykseer-crypto; git submodule update --init'
-                sh 'cd ext/elykseer-crypto/ext/cryptopp; gmake -f GNUmakefile'
-                sh 'cd ext/elykseer-crypto/ext/gpgme; ./autogen.sh'
-                sh 'cd ext/elykseer-crypto/ext/gpgme; ./configure --enable-static --disable-shared --enable-languages=cpp --disable-gpgsm-test --disable-g13-test --disable-gpg-test --disable-gpgconf-test'
-                sh 'cd ext/elykseer-crypto/ext/gpgme; gmake'
-                sh 'cd ext/elykseer-crypto/BUILD; rm -rf CMakeFiles CMakeCache.txt'
-                sh 'cd ext/elykseer-crypto/BUILD; rm -rf src/*.cpp src/lxr/*.hpp test/*.cpp'
-                sh 'cd ext/elykseer-crypto/BUILD; ./mk_cpp.sh'
-                sh 'cd ext/elykseer-crypto/BUILD; cmake .'
-                sh 'cd ext/elykseer-crypto/BUILD; gmake'
-                sh 'cd ext/elykseer-crypto/BUILD; ./ut.sh'
-                sh 'cd ext/rapidcheck; mkdir -p BUILD'
-                sh 'cd ext/rapidcheck/BUILD; cmake ..'
-                sh 'cd ext/rapidcheck/BUILD; gmake'
+                sh 'gmake -C ext'
             }
         }
         stage('cmake') {
             steps {
                 sh 'cd build; rm -rf CMakeFiles CMakeCache.txt'
-                sh 'cd build; cmake .'
+                sh 'cd build; cmake --fresh -DCMAKE_BUILD_TYPE=Debug .'
             }
         }
         stage('compile') {

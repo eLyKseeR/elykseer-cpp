@@ -7,7 +7,11 @@ set(GENERATED_SRCS
 set_source_files_properties(${GENERATED_SRCS} GENERATED)
 
 add_library(elykseer-cpp_s STATIC IMPORTED)
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+SET_TARGET_PROPERTIES(elykseer-cpp_s PROPERTIES IMPORTED_LOCATION "${CMAKE_HOME_DIRECTORY}/src/libelykseer-cpp_d.a")
+else()
 SET_TARGET_PROPERTIES(elykseer-cpp_s PROPERTIES IMPORTED_LOCATION "${CMAKE_HOME_DIRECTORY}/src/libelykseer-cpp.a")
+endif()
 
 # generate sources from literate c++ files
 set(MAKE_CODE_CMD "${CMAKE_CURRENT_SOURCE_DIR}/../../../ext/gitalk/utils/make_all_code.sh")
