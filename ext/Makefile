@@ -74,7 +74,11 @@ $(fset_rapidcheck):
 	cmake -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} --install-prefix "${TARGETDIR}" -G "${CMAKE_GENERATOR}" .. ; \
 	$(MAKE)
 
-fset_elykseer_crypto := $(TARGETDIR)/include/yaml-cpp/yaml.h $(TARGETDIR)/lib/libyaml-cpp.a
+ifeq (${CMAKE_BUILD_TYPE},Debug)
+fset_elykseer_crypto := $(TARGETDIR)/../elykseer-crypto/build/src/libelykseer-crypto_d.a
+else
+fset_elykseer_crypto := $(TARGETDIR)/../elykseer-crypto/build/src/libelykseer-crypto.a
+endif
 make_elykseer_crypto: $(fset_elykseer_crypto)
 $(fset_elykseer_crypto):
 	echo "making elykseer_crypto"
