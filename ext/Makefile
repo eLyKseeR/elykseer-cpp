@@ -11,8 +11,8 @@ export CCACHE_DIR = $(CCACHE_BASEDIR)/_ccache/
 
 ifeq ($(OS),Windows_NT)
 	uname_s := Windows
-	uname_m := $(ARCHITECTURE)
-	export CMAKE_GENERATOR := MinGW Makefiles
+        uname_m := $(MSYSTEM_CARCH)
+        export CMAKE_GENERATOR := MSYS Makefiles
 else
 	uname_s := $(shell uname -s)
 	uname_m := $(shell uname -m)
