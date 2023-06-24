@@ -20,3 +20,4 @@ build/test
 src/cpp/obsolete/
 tests/cpp/obsolete/
 
+ext/Windows_x86_64
