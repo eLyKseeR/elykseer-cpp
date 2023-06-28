@@ -10,12 +10,12 @@ export CCACHE_DIR = $(CCACHE_BASEDIR)/_ccache/
 
 
 ifeq ($(OS),Windows_NT)
-	uname_s := Windows
-        uname_m := $(MSYSTEM_CARCH)
+	export uname_s := Windows
+        export uname_m := $(MSYSTEM_CARCH)
         export CMAKE_GENERATOR := MSYS Makefiles
 else
-	uname_s := $(shell uname -s)
-	uname_m := $(shell uname -m)
+	export uname_s := $(shell uname -s)
+	export uname_m := $(shell uname -m)
 	export CMAKE_GENERATOR := Unix Makefiles
 endif
 
@@ -46,10 +46,7 @@ $(fset_gitalk):
 	echo "making gitalk"
 	cd ./gitalk; \
 	git submodule update --init; \
-	cd ext/html2text.git; \
-	PREFIX=${TARGETDIR} ./configure; \
-	$(MAKE); \
-	$(MAKE) install
+	$(MAKE) -C ext
 
 fset_os_metrics := $(TARGETDIR)/include/os-metrics.h $(TARGETDIR)/lib/libos-metrics_$(CMAKE_BUILD_TYPE)_1_0_0.a
 make_osmetrics: $(fset_os_metrics)
