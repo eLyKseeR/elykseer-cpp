@@ -16,6 +16,7 @@ using clk = boost::chrono::high_resolution_clock;
 #include "boost/property_tree/ptree.hpp"
 #include "boost/property_tree/xml_parser.hpp"
 
+#include <cstdint>
 #include <iostream>
 #include <fstream>
 #include <sstream>

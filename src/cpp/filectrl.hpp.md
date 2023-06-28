@@ -16,9 +16,10 @@ typedef boost::filesystem::path filepath;
 typedef std::filesystem::path filepath;
 #endif
 
-#include <vector>
+#include <cstdint>
 #include <ctime>
 #include <optional>
+#include <vector>
 ````
 
 namespace [lxr](namespace.list) {
