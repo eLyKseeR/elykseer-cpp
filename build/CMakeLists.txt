@@ -89,7 +89,8 @@ set(LIB_PREFIX "")
 
 # OS dependent
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0")
+  set(PLATFORM "darwin")
+  set(CMAKE_OSX_DEPLOYMENT_TARGET "13.0")
   set(SELECTED_AR "/opt/homebrew/opt/binutils/bin/ar")
   link_directories(/usr/local/lib)
   link_directories(/opt/homebrew/lib)
