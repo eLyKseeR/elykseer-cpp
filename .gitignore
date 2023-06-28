@@ -21,3 +21,4 @@ src/cpp/obsolete/
 tests/cpp/obsolete/
 
 ext/Windows_x86_64
+ext/Darwin_arm64
