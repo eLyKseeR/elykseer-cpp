@@ -11,6 +11,7 @@
 #include "lxr/dbkey.hpp"
 
 #include <chrono>
+#include <cstdint>
 #include <ctime>
 #include <memory>
 

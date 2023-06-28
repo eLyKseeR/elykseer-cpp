@@ -11,6 +11,7 @@
 #include "lxr/key128.hpp"
 #include "lxr/md5.hpp"
 
+#include <cstdint>
 #include <filesystem>
 #include <iostream>
 #include <string>
