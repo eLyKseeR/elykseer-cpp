@@ -23,7 +23,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt-get -y install cmake pandoc html2text libboost-all-dev libboost-contract-dev libgpg-error-dev libassuan-dev libdigest-sha3-perl
+        sudo apt-get -y install cmake gcc m4 busybox pandoc libdigest-sha3-perl libboost-all-dev libboost-contract-dev gettext pkg-config automake autoconf libtool
 
     - name: Update submodules
       run: git submodule update --init
@@ -41,15 +41,13 @@ jobs:
       # Note the current convention is to use the -S and -B options here to specify source 
       # and build directories, but this is only available with CMake 3.13 and higher.  
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-      run: |
-        rm -rf CMakeFiles CMakeCache.txt
-        cmake --fresh -DCMAKE_BUILD_TYPE=$BUILD_TYPE .
+      run: PATH=${{github.workspace}}/ext/Linux_x86_64/bin:${PATH} cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE .
 
     - name: Build
       working-directory: ${{github.workspace}}/build
       shell: bash
       # Execute the build.  You can specify a specific target with "--target <NAME>"
-      run: cmake --build . --config $BUILD_TYPE
+      run: PATH=${{github.workspace}}/ext/Linux_x86_64/bin:${PATH} cmake --build . --config $BUILD_TYPE
 
     - name: Test
       working-directory: ${{github.workspace}}/build
