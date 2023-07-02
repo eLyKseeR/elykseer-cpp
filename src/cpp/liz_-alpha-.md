@@ -7,6 +7,7 @@
 
 #include "lxr/liz.hpp"
 
+#include <cstdint>
 #include <iostream>
 
 namespace lxr {
