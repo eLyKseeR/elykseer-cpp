@@ -64,6 +64,7 @@ fset_rapidcheck := $(TARGETDIR)/../rapidcheck/build/librapidcheck.a
 make_rapidcheck: $(fset_rapidcheck)
 $(fset_rapidcheck):
 	echo "making rapidcheck"
+	patch -N -d rapidcheck -p 1 < rapidcheck-cstdint.patch; \
 	cd ./rapidcheck; \
 	if [ -e build ]; then rm -rf build; fi; \
 	mkdir -vp build; \

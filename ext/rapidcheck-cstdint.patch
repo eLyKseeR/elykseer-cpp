@@ -1,0 +1,33 @@
+diff --git a/include/rapidcheck/detail/Serialization.h b/include/rapidcheck/detail/Serialization.h
+index cac64df..caa2ec6 100644
+--- a/include/rapidcheck/detail/Serialization.h
++++ b/include/rapidcheck/detail/Serialization.h
+@@ -1,5 +1,6 @@
+ #pragma once
+ 
++#include <cstdint>
+ #include <stdexcept>
+ #include <string>
+ #include <unordered_map>
+diff --git a/include/rapidcheck/detail/Utility.h b/include/rapidcheck/detail/Utility.h
+index b2de72c..2e4c9e0 100644
+--- a/include/rapidcheck/detail/Utility.h
++++ b/include/rapidcheck/detail/Utility.h
+@@ -1,5 +1,6 @@
+ #pragma once
+ 
++#include <cstdint>
+ #include <string>
+ #include <tuple>
+ #include <limits>
+diff --git a/src/detail/Base64.h b/src/detail/Base64.h
+index 3cf8682..2d0fa4b 100644
+--- a/src/detail/Base64.h
++++ b/src/detail/Base64.h
+@@ -1,5 +1,6 @@
+ #pragma once
+ 
++#include <cstdint>
+ #include <string>
+ #include <vector>
+ 
