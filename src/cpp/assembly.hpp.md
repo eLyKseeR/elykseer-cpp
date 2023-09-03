@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "lxr/aes.hpp"
 #include "lxr/filectrl.hpp"
 #include "lxr/key128.hpp"
 #include "lxr/key256.hpp"
@@ -109,7 +110,7 @@ module Assembly =
 
 >std::string const [said](assembly_functions.cpp.md)() const;
 
->static constexpr int datasz { 1024*4 };
+>static constexpr int datasz { 1024*128 };
 
 >int [getData](assembly_functions.cpp.md)(int startpos, int endpos, sizebounded&lt;unsigned char,datasz&gt; &) const;
 
@@ -151,9 +152,13 @@ module Assembly =
 
 >bool [insertChunk](assembly_functions.cpp.md)(std::string const &, int idx);
 
->int [get_data](assembly_functions.cpp.md)(const int pos, const int len, sizebounded&lt;unsigned char, datasz&gt; &) const;
+>int [get_data](assembly_functions.cpp.md)(const int pos, const int len, sizebounded&lt;unsigned char, Aes::datasz&gt; &) const;
 
->int [set_data](assembly_functions.cpp.md)(const int pos, const int len, sizebounded&lt;unsigned char, datasz&gt; const &, int p0 = 0);
+>int [get_data](assembly_functions.cpp.md)(const int pos, const int len, sizebounded&lt;unsigned char, Assembly::datasz&gt; &) const;
+
+>int [set_data](assembly_functions.cpp.md)(const int pos, const int len, sizebounded&lt;unsigned char, Aes::datasz&gt; const &, int p0 = 0);
+
+>int [set_data](assembly_functions.cpp.md)(const int pos, const int len, sizebounded&lt;unsigned char, Assembly::datasz&gt; const &, int p0 = 0);
 
 >struct pimpl;
 

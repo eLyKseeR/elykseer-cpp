@@ -236,21 +236,35 @@ int Assembly::addData(int dlen, const sizebounded<unsigned char, datasz> & d, in
   return wlen;
 }
 
-int Assembly::set_data(const int pos, const int dlen, sizebounded<unsigned char, datasz> const & d, int p0)
+int Assembly::set_data(const int pos, const int dlen, sizebounded<unsigned char, Aes::datasz> const & d, int p0)
 {
-  if (dlen + p0 > datasz) { return 0; }
+  if (dlen + p0 > Aes::datasz) { return 0; }
   if (pos < 0) { return 0; }
   if (pos + dlen > size()) { return 0; }
 
+  return _pimpl->set_data(pos, dlen, d.ptr(), p0);
+}
+
+int Assembly::set_data(const int pos, const int dlen, sizebounded<unsigned char, Assembly::datasz> const & d, int p0)
+{
+  if (dlen + p0 > Assembly::datasz) { return 0; }
+  if (pos < 0) { return 0; }
+  if (pos + dlen > size()) { return 0; }
+
+  return _pimpl->set_data(pos, dlen, d.ptr(), p0);
+}
+
+int Assembly::pimpl::set_data(const int pos, const int dlen, const unsigned char *d, int p0)
+{
   int cnum, bidx;
   int idx;
-  const int n = _pimpl->_n.nchunks();
+  const int n = _n.nchunks();
   omp_set_num_threads(2); // fixed
   #pragma omp parallel for shared (d,dlen,pos,n) private(idx,bidx,cnum) schedule(static)
   for(idx = 0; idx < dlen; idx++ ) {
     cnum = (idx+pos) % n;   // 0 .. n-1  ; chunk number
     bidx = (idx+pos) / n;   // 0 .. dlen/n ; pos in chunk
-    _pimpl->_chunks[cnum].set(bidx, d.get(p0 + idx));
+    _chunks[cnum].set(bidx, d[p0 + idx]);
   }
   return dlen;
 }
@@ -264,21 +278,35 @@ int Assembly::getData(int pos0, int pos1, sizebounded<unsigned char, datasz> & d
   return get_data(pos0, pos1 - pos0 + 1, d);
 }
 
-int Assembly::get_data(const int pos, const int dlen, sizebounded<unsigned char, datasz> & d) const
+int Assembly::get_data(const int pos, const int dlen, sizebounded<unsigned char, Aes::datasz> & d) const
 {
-  if (dlen > datasz) { return 0; }
+  if (dlen > Aes::datasz) { return 0; }
   if (pos < 0) { return 0; }
   if (pos + dlen > size()) { return 0; }
 
+  return _pimpl->get_data(pos, dlen, (unsigned char*)d.ptr());
+}
+
+int Assembly::get_data(const int pos, const int dlen, sizebounded<unsigned char, Assembly::datasz> & d) const
+{
+  if (dlen > Assembly::datasz) { return 0; }
+  if (pos < 0) { return 0; }
+  if (pos + dlen > size()) { return 0; }
+
+  return _pimpl->get_data(pos, dlen, (unsigned char*)d.ptr());
+}
+
+int Assembly::pimpl::get_data(const int pos, const int dlen, unsigned char *d) const
+{
   int cnum, bidx;
   int idx;
-  const int n = _pimpl->_n.nchunks();
+  const int n = _n.nchunks();
   omp_set_num_threads(2); // fixed
   #pragma omp parallel for shared (d,dlen,pos,n) private(idx,bidx,cnum) schedule(static)
   for(idx = 0; idx < dlen; idx++ ) {
     cnum = (idx+pos) % n;   // 0 .. n-1  ; chunk number
     bidx = (idx+pos) / n;   // 0 .. dlen/n ; pos in chunk
-    d[idx] = _pimpl->_chunks[cnum].get(bidx);
+    d[idx] = _chunks[cnum].get(bidx);
   }
   return dlen;
 }

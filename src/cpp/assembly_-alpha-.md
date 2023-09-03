@@ -58,6 +58,9 @@ struct Assembly::pimpl :
     return Sha256::hash(b.append(k.toHex()));
   }
 
+  int set_data(const int pos, const int dlen, const unsigned char *d, int p0);
+  int get_data(const int pos, const int dlen, unsigned char *d) const;
+
   Chunk *_chunks{nullptr};
   Nchunks _n;
   Key256  _aid;
