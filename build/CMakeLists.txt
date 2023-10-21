@@ -34,6 +34,51 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+set(PLATFORM ${CMAKE_SYSTEM_NAME})
+set(PROCESSOR_TYPE ${CMAKE_HOST_SYSTEM_PROCESSOR})
+set(SELECTED_AR ${CMAKE_AR})
+set(LIB_PREFIX "")
+
+# OS dependent
+IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  set(CMAKE_OSX_DEPLOYMENT_TARGET "13.6")
+  set(SELECTED_AR "/opt/homebrew/opt/binutils/bin/ar")
+  if(CMAKE_C_COMPILER_ID MATCHES "Clang\$")
+      set(OpenMP_C_FLAGS "-Xpreprocessor -fopenmp")
+      set(OpenMP_C_LIB_NAMES "omp")
+      set(OpenMP_omp_LIBRARY omp)
+  endif()
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang\$")
+      set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp")
+      set(OpenMP_CXX_LIB_NAMES "omp")
+      set(OpenMP_omp_LIBRARY omp)
+  endif()
+  set(LIB_PREFIX "lib")
+  set(libs "dl" "z" "intl")
+ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+
+IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+  set(PLATFORM "win64")
+  IF(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "AMD64")
+          set(PROCESSOR_TYPE "x86_64")
+  ENDIF(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "AMD64")
+  set(LIB_PREFIX "lib")
+  set(libs "z" "ws2_32")
+ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+
+IF(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+  set(SELECTED_AR "/usr/local/bin/ar")
+  set(LIB_PREFIX "lib")
+  set(libs "dl" "z")
+ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+
+IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+  set(LIB_PREFIX "lib")
+  set(libs "dl" "z")
+ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+
+set(EXT_PATH ${CMAKE_SYSTEM_NAME}_${PROCESSOR_TYPE})
+
 # boost
 add_definitions( -DBOOST_ALL_DYN_LINK )
 set(Boost_DEBUG OFF)
@@ -59,8 +104,6 @@ if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
   add_definitions(-DBOOST_CONTRACT_NO_CHECKS)
 endif()
 
-find_package(OpenMP)
-
 if (CMAKE_COMPILER_IS_GNUCC)
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O")
   set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O")
@@ -75,7 +118,7 @@ if(CPPCHECK)
         ${CMAKE_SOURCE_DIR}/src/lxr/*.hpp
         ${CMAKE_SOURCE_DIR}/src/*.cpp
         ${CMAKE_SOURCE_DIR}/test/*.cpp
-        -I ${CMAKE_SOURCE_DIR}/ext
+        -I ${CMAKE_SOURCE_DIR}/../ext
         -I /opt/homebrew/include
     )
 else()
@@ -83,42 +126,23 @@ else()
     message(STATUS "  Build target 'cppcheck' not available.")
 endif()
 
-set(PLATFORM "unk")
-set(SELECTED_AR ${CMAKE_AR})
-set(LIB_PREFIX "")
-
-# OS dependent
-IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  set(PLATFORM "darwin")
-  set(CMAKE_OSX_DEPLOYMENT_TARGET "13.0")
-  set(SELECTED_AR "/opt/homebrew/opt/binutils/bin/ar")
-  link_directories(/usr/local/lib)
-  link_directories(/opt/homebrew/lib)
-  set(LIB_PREFIX "lib")
-  set(libs "dl" "z" "intl")
-ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-
-IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-  set(PLATFORM "win64")
-  set(LIB_PREFIX "lib")
-  set(libs "z" "ws2_32")
-ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-
-IF(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
-  set(PLATFORM "freebsd")
-  set(SELECTED_AR "/usr/local/bin/ar")
-  set(LIB_PREFIX "lib")
-  set(libs "dl" "z")
-ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
-
-IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  set(PLATFORM "linux")
-  set(LIB_PREFIX "lib")
-  set(libs "dl" "z")
-ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+find_package(OpenMP REQUIRED)
+if(OPENMP_FOUND)
+    # Darwin: setting this explicitly
+    link_directories("/opt/homebrew/opt/libomp/lib")
+    include_directories("/opt/homebrew/opt/libomp/include")
+endif(OPENMP_FOUND)
 
 # other external tools
 include_directories(../ext)
+include_directories(../ext/${EXT_PATH}/include)
+link_directories("../ext/${EXT_PATH}/lib")
+
+find_program (HTML2TEXT NAMES html2text html2text.exe PATHS ../ext/${EXT_PATH}/bin NO_DEFAULT_PATH REQUIRED)
+IF(HTML2TEXT)
+    message(STATUS "Found: html2text in " ${HTML2TEXT})
+    set(ENV{HTML2TEXT} ${HTML2TEXT})
+ENDIF()
 
 
 add_subdirectory( src )

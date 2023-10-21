@@ -14,7 +14,7 @@ SET_TARGET_PROPERTIES(elykseer-cpp_s PROPERTIES IMPORTED_LOCATION "${CMAKE_HOME_
 endif()
 
 # generate sources from literate c++ files
-set(MAKE_CODE_CMD "${CMAKE_CURRENT_SOURCE_DIR}/../../../ext/gitalk/utils/make_all_code.sh")
+set(MAKE_CODE_CMD ${CMAKE_COMMAND} -E env HTML2TEXT=${HTML2TEXT} ${CMAKE_CURRENT_SOURCE_DIR}/../../../ext/gitalk/utils/make_all_code.sh)
 
 set(LITERATE_SRC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/cpp/cli")
 

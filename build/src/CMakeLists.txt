@@ -48,8 +48,8 @@ set(GENERATED_HDRS
 set_source_files_properties(${GENERATED_HDRS} GENERATED)
 
 # generate sources from literate c++ files
-set(MAKE_CPP_CMD "${CMAKE_CURRENT_SOURCE_DIR}/../../ext/gitalk/utils/make_cpp.sh")
-set(MAKE_HPP_CMD "${CMAKE_CURRENT_SOURCE_DIR}/../../ext/gitalk/utils/make_hpp.sh")
+set(MAKE_CPP_CMD ${CMAKE_CURRENT_SOURCE_DIR}/../../ext/gitalk/utils/make_cpp.sh)
+set(MAKE_HPP_CMD ${CMAKE_COMMAND} -E env HTML2TEXT=${HTML2TEXT} ${CMAKE_CURRENT_SOURCE_DIR}/../../ext/gitalk/utils/make_hpp.sh)
 
 set(LITERATE_SRC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../src/cpp")
 
@@ -285,7 +285,7 @@ ELSE()
 
   target_link_libraries (${PROJECT_NAME}_${CMAKE_BUILD_TYPE} PUBLIC
       ${libs}
-	  elykseer-crypto_s
+	    elykseer-crypto_s
       ${Boost_LIBRARIES}
   )
   if(OpenMP_CXX_FOUND)
@@ -356,9 +356,6 @@ endif()
 
 add_subdirectory( cli )
 
-set(CPACK_BINARY_STGZ "OFF")
-set(CPACK_BINARY_TGZ "ON")
-
 set(CPACK_PACKAGE_VERSION ${${PROJECT_NAME}_VERSION_STRING})
 set(CPACK_PACKAGE_VERSION_MAJOR ${${PROJECT_NAME}_VERSION_MAJOR})
 set(CPACK_PACKAGE_VERSION_MINOR ${${PROJECT_NAME}_VERSION_MINOR})
@@ -366,3 +363,6 @@ set(CPACK_PACKAGE_VERSION_PATCH ${${PROJECT_NAME}_VERSION_PATCH})
 install(FILES ${LIBRARY_NAME} DESTINATION lib)
 install(FILES ${GENERATED_HDRS} DESTINATION include/lxr)
 include(CPack)
+
+set(CPACK_BINARY_STGZ "OFF")
+set(CPACK_BINARY_TGZ "ON")

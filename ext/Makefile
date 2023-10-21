@@ -84,7 +84,6 @@ $(fset_elykseer_crypto):
 	git submodule update --init; \
 	$(MAKE) -C ext; \
 	cd build; \
-	./mk_cpp.sh; \
 	cmake --fresh -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -G "${CMAKE_GENERATOR}" . ; \
 	$(MAKE)
 

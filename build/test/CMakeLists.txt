@@ -12,7 +12,7 @@ set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_USE_STATIC_RUNTIME OFF)
 set(Boost_USE_MULTITHREADED ON)
 find_package( Boost 1.74.0 REQUIRED COMPONENTS system thread date_time chrono unit_test_framework contract)
-include_directories(${Boost_INCLUDE_DIRS})
+#include_directories(${Boost_INCLUDE_DIRS})
 
 # mine
 include_directories(../src)
@@ -23,7 +23,7 @@ include_directories("${CMAKE_HOME_DIRECTORY}/../ext/rapidcheck/extras/boost_test
 # link external libraries
 link_directories("${CMAKE_HOME_DIRECTORY}/../ext/elykseer-crypto/build/src")
 link_directories("${CMAKE_HOME_DIRECTORY}/../ext/rapidcheck/build/")
-set(libs "dl" "z" "rapidcheck")
+set(testlibs "rapidcheck")
 
 set(GENERATED_SRCS
   utAssembly.cpp
@@ -49,13 +49,13 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         target_link_libraries(ut${PROJECT_NAME}
           elykseer-cpp_${CMAKE_BUILD_TYPE}
           OpenMP::OpenMP_CXX
-          ${libs}
+          ${libs} ${testlibs}
           ${Boost_LIBRARIES}
         )
         else()
         target_link_libraries(ut${PROJECT_NAME}
           elykseer-cpp_${CMAKE_BUILD_TYPE}
-          ${libs}
+          ${libs} ${testlibs}
           ${Boost_LIBRARIES}
         )
         endif()    
@@ -69,15 +69,15 @@ if (CMAKE_BUILD_TYPE STREQUAL "DebugProfile")
         target_link_libraries ( utp${PROJECT_NAME}
                 elykseer-cpp_p${CMAKE_BUILD_TYPE}
                 #gcov
-                ${libs}
+                ${libs} ${testlibs}
                 ${Boost_LIBRARIES}
         )
 endif()
 
 # generate sources from literate c++ files
-set(EXTRACT_CPP_CMD "../../ext/gitalk/utils/extract_cpp.sh")
+set(EXTRACT_CPP_CMD "${CMAKE_CURRENT_SOURCE_DIR}/../../ext/gitalk/utils/extract_cpp.sh")
 
-set(LITERATE_SRC_PATH "../../tests/cpp")
+set(LITERATE_SRC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/cpp")
 
 add_custom_command(
   COMMAND rm -f utAssembly.cpp
