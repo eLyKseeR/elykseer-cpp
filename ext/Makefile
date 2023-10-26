@@ -70,7 +70,7 @@ $(fset_rapidcheck):
 	mkdir -vp build; \
 	cd build; \
 	cmake -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} --install-prefix "${TARGETDIR}" -G "${CMAKE_GENERATOR}" .. ; \
-	$(MAKE) \
+	$(MAKE); \
 	$(MAKE) install
 
 ifeq (${CMAKE_BUILD_TYPE},Debug)
