@@ -116,7 +116,7 @@ module Assembly =
 
 >int [addData](assembly_functions.cpp.md)(int length, sizebounded&lt;unsigned char, datasz&gt; const &, int startpos = 0);
 
->bool [encrypt](assembly_functions.cpp.md)(Key256 const & k, Key128 & iv);
+>bool [encrypt](assembly_functions.cpp.md)(Key256 const & k, Key128 const & iv);
 
 >bool [decrypt](assembly_functions.cpp.md)(Key256 const & k, Key128 const & iv);
 
@@ -139,6 +139,8 @@ module Assembly =
 >bool [isWritable](assembly_functions.cpp.md)() const;
 
 >bool [isEncrypted](assembly_functions.cpp.md)() const;
+
+>void [setReadable](assembly_functions.cpp.md)();
 
 >static std::optional&lt;const std::filesystem::path&gt; [mk_chunk_path](assembly_functions.cpp.md)(filepath fp, std::string const & cid0);
 
