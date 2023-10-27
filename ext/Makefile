@@ -60,7 +60,7 @@ $(fset_os_metrics):
 	$(MAKE); \
 	$(MAKE) install
 
-fset_rapidcheck := $(TARGETDIR)/../rapidcheck/build/librapidcheck.a
+fset_rapidcheck := $(TARGETDIR)/include/rapidcheck.h $(TARGETDIR)/lib/librapidcheck.a
 make_rapidcheck: $(fset_rapidcheck)
 $(fset_rapidcheck):
 	echo "making rapidcheck"
@@ -70,7 +70,8 @@ $(fset_rapidcheck):
 	mkdir -vp build; \
 	cd build; \
 	cmake -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} --install-prefix "${TARGETDIR}" -G "${CMAKE_GENERATOR}" .. ; \
-	$(MAKE)
+	$(MAKE); \
+	$(MAKE) install
 
 ifeq (${CMAKE_BUILD_TYPE},Debug)
 fset_elykseer_crypto := $(TARGETDIR)/../elykseer-crypto/build/src/libelykseer-crypto_d.a

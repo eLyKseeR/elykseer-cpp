@@ -144,6 +144,7 @@ IF(HTML2TEXT)
     set(ENV{HTML2TEXT} ${HTML2TEXT})
 ENDIF()
 
+enable_testing()
 
 add_subdirectory( src )
 add_subdirectory( test )

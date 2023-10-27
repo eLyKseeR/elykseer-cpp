@@ -20,5 +20,14 @@ build/test
 src/cpp/obsolete/
 tests/cpp/obsolete/
 
+*.swp
+
+CPackConfig.cmake
+CPackSourceConfig.cmake
+CTestTestfile.cmake
+Testing/
+_CPack_Packages/
+install_manifest.txt
+
 ext/Windows_x86_64
 ext/Darwin_arm64

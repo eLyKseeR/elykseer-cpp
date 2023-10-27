@@ -1,13 +1,12 @@
 declared in [Assembly](assembly.hpp.md)
 
 ```c++
-bool Assembly::encrypt(Key256 const & k, Key128 & ivout)
+bool Assembly::encrypt(Key256 const & k, Key128 const & iv)
 {
   // take ownership of buffer
   _pimpl->_state &= ~readable;
   _pimpl->_state &= ~writable;
 
-  Key128 iv;
   AesEncrypt aesenc(k, iv);
 
   //
@@ -29,8 +28,6 @@ bool Assembly::encrypt(Key256 const & k, Key128 & ivout)
   lenc = aesenc.finish(0, buf);
   if (lenc > 0) {
     set_data(lastpos, lenc, buf); }
-
-  ivout = iv;
 
   // new state
   _pimpl->_state |= encrypted;
@@ -226,6 +223,11 @@ bool Assembly::isEncrypted() const
 bool Assembly::isReadable() const
 {
   return (_pimpl->_state & readable) != 0;
+}
+
+void Assembly::setReadable()
+{
+  _pimpl->_state |= readable;
 }
 
 int Assembly::addData(int dlen, const sizebounded<unsigned char, datasz> & d, int p0)

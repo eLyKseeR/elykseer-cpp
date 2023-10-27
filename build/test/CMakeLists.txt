@@ -12,17 +12,14 @@ set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_USE_STATIC_RUNTIME OFF)
 set(Boost_USE_MULTITHREADED ON)
 find_package( Boost 1.74.0 REQUIRED COMPONENTS system thread date_time chrono unit_test_framework contract)
-#include_directories(${Boost_INCLUDE_DIRS})
 
 # mine
 include_directories(../src)
 include_directories("${CMAKE_HOME_DIRECTORY}/../ext/elykseer-crypto/build/src")
-include_directories("${CMAKE_HOME_DIRECTORY}/../ext/rapidcheck/include")
 include_directories("${CMAKE_HOME_DIRECTORY}/../ext/rapidcheck/extras/boost_test/include")
 
 # link external libraries
 link_directories("${CMAKE_HOME_DIRECTORY}/../ext/elykseer-crypto/build/src")
-link_directories("${CMAKE_HOME_DIRECTORY}/../ext/rapidcheck/build/")
 set(testlibs "rapidcheck")
 
 set(GENERATED_SRCS
@@ -44,17 +41,18 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         add_executable ( ut${PROJECT_NAME}
           ${GENERATED_SRCS}
         )
+        add_test(NAME ut${PROJECT_NAME} COMMAND ut${PROJECT_NAME} --show_progress)
 
         if(OpenMP_CXX_FOUND)
         target_link_libraries(ut${PROJECT_NAME}
-          elykseer-cpp_${CMAKE_BUILD_TYPE}
+          ${PROJECT_NAME}_${CMAKE_BUILD_TYPE}
           OpenMP::OpenMP_CXX
           ${libs} ${testlibs}
           ${Boost_LIBRARIES}
         )
         else()
         target_link_libraries(ut${PROJECT_NAME}
-          elykseer-cpp_${CMAKE_BUILD_TYPE}
+          ${PROJECT_NAME}_${CMAKE_BUILD_TYPE}
           ${libs} ${testlibs}
           ${Boost_LIBRARIES}
         )
@@ -67,7 +65,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "DebugProfile")
         )
         set_target_properties(utp${PROJECT_NAME} PROPERTIES LINK_FLAGS "-fprofile-arcs -ftest-coverage ")
         target_link_libraries ( utp${PROJECT_NAME}
-                elykseer-cpp_p${CMAKE_BUILD_TYPE}
+                ${PROJECT_NAME}_p${CMAKE_BUILD_TYPE}
                 #gcov
                 ${libs} ${testlibs}
                 ${Boost_LIBRARIES}
