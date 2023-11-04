@@ -23,6 +23,12 @@ read [more](https://github.com/eLyKseeR/elykseer-cpp)
 > $ ./ut.sh
 
 
+# cross compilation
+
+cd build
+cmake --fresh -DCMAKE_TOOLCHAIN_FILE=Toolchain_Darwin_to_Windows.cmake --install-prefix=$(pwd)/../dist -DCMAKE_BUILD_TYPE=Release .
+make && make install/strip
+
 # copyright
 
 Copyright 2018-2023 by Alexander Diemand

@@ -13,6 +13,11 @@ else()
 SET_TARGET_PROPERTIES(elykseer-cpp_s PROPERTIES IMPORTED_LOCATION "${CMAKE_HOME_DIRECTORY}/src/libelykseer-cpp.a")
 endif()
 
+set(STATIC_BUILD "")
+IF(${CMAKE_CROSSCOMPILING})
+set(STATIC_BUILD "-static")
+ENDIF(${CMAKE_CROSSCOMPILING})
+
 # generate sources from literate c++ files
 set(MAKE_CODE_CMD ${CMAKE_COMMAND} -E env HTML2TEXT=${HTML2TEXT} ${CMAKE_CURRENT_SOURCE_DIR}/../../../ext/gitalk/utils/make_all_code.sh)
 
@@ -36,6 +41,7 @@ target_link_libraries (LXRbackup PUBLIC
   elykseer-cpp_s
   ${libs}
   ${Boost_LIBRARIES}
+  ${STATIC_BUILD}
 )
 if(OpenMP_CXX_FOUND)
   target_link_libraries (LXRbackup PUBLIC OpenMP::OpenMP_CXX)
@@ -59,6 +65,7 @@ target_link_libraries (LXRrestore PUBLIC
   elykseer-cpp_s
   ${libs}
   ${Boost_LIBRARIES}
+  ${STATIC_BUILD}
 )
 if(OpenMP_CXX_FOUND)
   target_link_libraries (LXRrestore PUBLIC OpenMP::OpenMP_CXX)
@@ -81,6 +88,7 @@ target_link_libraries (LXRverify PUBLIC
   elykseer-cpp_s
   ${libs}
   ${Boost_LIBRARIES}
+  ${STATIC_BUILD}
 )
 if(OpenMP_CXX_FOUND)
   target_link_libraries (LXRverify PUBLIC OpenMP::OpenMP_CXX)

@@ -89,7 +89,6 @@ bool Assembly::decrypt(Key256 const & k, Key128 const & iv)
 ```c++
 Key256 Assembly::mkChunkId(int idx) const
 {
-  BOOST_CONTRACT_ASSERT(idx >= 0 && idx < _pimpl->_n.nchunks());
   constexpr int bsz = 256/8*2 + 3 + 2 + 3;
   char buf[bsz+1];
   snprintf(buf, bsz+1, "%s%03dch%03d__", _pimpl->said().c_str(), idx, idx);
@@ -129,8 +128,10 @@ bool Assembly::extractChunks(filepath const &_bd) const
   bool res = true;
   int n;
   const int nlim = _pimpl->_n.nchunks();
+#ifdef OpenMP_available
   omp_set_num_threads(2); // fixed
   #pragma omp parallel for private(n) schedule(static)
+#endif
   for (n = 0; n < nlim; n++) {
     res &= extractChunk(_bd, n);
   }
@@ -139,7 +140,6 @@ bool Assembly::extractChunks(filepath const &_bd) const
 
 bool Assembly::extractChunk(filepath const &_bd, int cnum) const
 {
-  BOOST_CONTRACT_ASSERT(cnum >= 0 && cnum < _pimpl->_n.nchunks());
   auto fp = mk_chunk_path(_bd, mkChunkId(cnum).toHex());
   if (! fp) { return false; }
 #ifdef DEBUG
@@ -162,8 +162,10 @@ bool Assembly::insertChunks(filepath const &_bd)
   bool res = true;
   int n;
   const int nlim = _pimpl->_n.nchunks();
-  //omp_set_num_threads(2); // fixed
-  //#pragma omp parallel for private(n) schedule(static)
+#ifdef OpenMP_available
+  omp_set_num_threads(2); // fixed
+  #pragma omp parallel for private(n) schedule(static)
+#endif
   for (n = 0; n < nlim; n++) {
     res &= insertChunk(_bd,n);
   }
@@ -176,7 +178,7 @@ bool Assembly::insertChunks(filepath const &_bd)
 
 bool Assembly::insertChunk(filepath const &_bd, int cnum)
 {
-  BOOST_CONTRACT_ASSERT(cnum >= 0 && cnum < _pimpl->_n.nchunks());
+  // BOOST_CONTRACT_ASSERT(cnum >= 0 && cnum < _pimpl->_n.nchunks());
   auto fp = mk_chunk_path(_bd, mkChunkId(cnum).toHex());
   if (! fp) { return false; }
 #ifdef DEBUG
@@ -261,8 +263,10 @@ int Assembly::pimpl::set_data(const int pos, const int dlen, const unsigned char
   int cnum, bidx;
   int idx;
   const int n = _n.nchunks();
+#ifdef OpenMP_available
   omp_set_num_threads(2); // fixed
   #pragma omp parallel for shared (d,dlen,pos,n) private(idx,bidx,cnum) schedule(static)
+#endif
   for(idx = 0; idx < dlen; idx++ ) {
     cnum = (idx+pos) % n;   // 0 .. n-1  ; chunk number
     bidx = (idx+pos) / n;   // 0 .. dlen/n ; pos in chunk
@@ -303,8 +307,10 @@ int Assembly::pimpl::get_data(const int pos, const int dlen, unsigned char *d) c
   int cnum, bidx;
   int idx;
   const int n = _n.nchunks();
+#ifdef OpenMP_available
   omp_set_num_threads(2); // fixed
   #pragma omp parallel for shared (d,dlen,pos,n) private(idx,bidx,cnum) schedule(static)
+#endif
   for(idx = 0; idx < dlen; idx++ ) {
     cnum = (idx+pos) % n;   // 0 .. n-1  ; chunk number
     bidx = (idx+pos) / n;   // 0 .. dlen/n ; pos in chunk

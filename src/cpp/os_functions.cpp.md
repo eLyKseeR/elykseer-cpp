@@ -8,6 +8,8 @@
 #include "lxr/os.hpp"
 #include "date/date.h"
 
+#include <format>
+
 #ifndef _WIN32
 #include <unistd.h>
 #else
@@ -76,6 +78,7 @@ const std::string OS::timestamp() noexcept
 {
     auto now = std::chrono::system_clock::now();
     return date::format("%Y%m%dT%H%M%S", date::floor<std::chrono::seconds>(now));
+    // return std::format("%Y%m%dT%H%M%S", date::floor<std::chrono::seconds>(now));
 }
 
 const std::string OS::time2string(time_t _t) noexcept

@@ -3,12 +3,16 @@ cmake_minimum_required(VERSION 3.5)
 # search path for headers
 include_directories(".")
 include_directories("${CMAKE_HOME_DIRECTORY}/../ext/date/include")
-include_directories("${CMAKE_HOME_DIRECTORY}/../ext/elykseer-crypto/build/src")
 
 # link external libraries
-link_directories("${CMAKE_HOME_DIRECTORY}/../ext/elykseer-crypto/build/src/")
 add_library(elykseer-crypto_s STATIC IMPORTED)
-SET_TARGET_PROPERTIES(elykseer-crypto_s PROPERTIES IMPORTED_LOCATION "${CMAKE_HOME_DIRECTORY}/../ext/elykseer-crypto/build/src/libelykseer-crypto.a")
+SET_TARGET_PROPERTIES(elykseer-crypto_s PROPERTIES IMPORTED_LOCATION "${CMAKE_HOME_DIRECTORY}/../ext/${EXT_PATH}/lib/libelykseer-crypto.a")
+
+IF(${CMAKE_CROSSCOMPILING})
+add_library(z STATIC IMPORTED)
+SET_TARGET_PROPERTIES(z PROPERTIES IMPORTED_LOCATION "${CMAKE_HOME_DIRECTORY}/../ext/${EXT_PATH}/lib/libzlibstatic.a")
+ENDIF(${CMAKE_CROSSCOMPILING})
+
 
 # list of source files to be compiled
 set(GENERATED_SRCS
@@ -286,7 +290,6 @@ ELSE()
   target_link_libraries (${PROJECT_NAME}_${CMAKE_BUILD_TYPE} PUBLIC
       ${libs}
 	    elykseer-crypto_s
-      ${Boost_LIBRARIES}
   )
   if(OpenMP_CXX_FOUND)
     target_link_libraries (${PROJECT_NAME}_${CMAKE_BUILD_TYPE} PUBLIC
@@ -302,7 +305,6 @@ add_library (${PROJECT_NAME}_${CMAKE_BUILD_TYPE}_s STATIC
 )
 target_link_libraries(${PROJECT_NAME}_${CMAKE_BUILD_TYPE}_s PUBLIC
   ${libs}
-  ${Boost_LIBRARIES}
 )
 if(OpenMP_CXX_FOUND)
   target_link_libraries (${PROJECT_NAME}_${CMAKE_BUILD_TYPE}_s PUBLIC
@@ -318,7 +320,7 @@ ENDIF()
 
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   add_custom_command(OUTPUT ${LIBRARY_NAME}
-        COMMAND libtool -static -o ${LIBRARY_NAME} ${LIB_PREFIX}${PROJECT_NAME}_${CMAKE_BUILD_TYPE}_s.a ../../ext/elykseer-crypto/build/src/libelykseer-crypto.a
+        COMMAND libtool -static -o ${LIBRARY_NAME} ${LIB_PREFIX}${PROJECT_NAME}_${CMAKE_BUILD_TYPE}_s.a ../../ext/${EXT_PATH}/lib/libelykseer-crypto.a
         DEPENDS ${PROJECT_NAME}_${CMAKE_BUILD_TYPE}_s 
         COMMENT "combining static libraries into ${LIBRARY_NAME}"
   )
@@ -326,7 +328,7 @@ ELSE()
   file(WRITE "lib_${CMAKE_BUILD_TYPE}.mri"
 "create ${LIBRARY_NAME}\n\
 addlib ${LIB_PREFIX}${PROJECT_NAME}_${CMAKE_BUILD_TYPE}_s.a\n\
-addlib ../../ext/elykseer-crypto/build/src/libelykseer-crypto.a\n\
+addlib ../../ext/${EXT_PATH}/lib/libelykseer-crypto.a\n\
 save\n\
 end")
 
@@ -350,7 +352,6 @@ if (CMAKE_BUILD_TYPE STREQUAL "DebugProfile")
 	#set(libs, "${libs} gcov")
 	target_link_libraries (${PROJECT_NAME}_p${CMAKE_BUILD_TYPE}
 		${libs}
-		${Boost_LIBRARIES}
 	)
 endif()
 

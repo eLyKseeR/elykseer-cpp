@@ -8,13 +8,8 @@
 
 #include <string>
 
-#ifdef USE_BOOST_FILESYSTEM
-#include "boost/filesystem.hpp"
-typedef boost::filesystem::path filepath;
-#else
 #include <filesystem>
 typedef std::filesystem::path filepath;
-#endif
 
 #include <cstdint>
 #include <ctime>
@@ -53,8 +48,6 @@ module FileCtrl =
 
 >public:
 
->static std::optional&lt;std::string&gt; [fileDate](filectrl_functions.cpp.md)(filepath const &) noexcept;
-
 >static std::optional&lt;std::filesystem::file_time_type&gt; [fileLastWriteTime](filectrl_functions.cpp.md)(filepath const &) noexcept;
 
 >static std::optional&lt;uint64_t&gt; [fileSize](filectrl_functions.cpp.md)(filepath const &) noexcept;
@@ -81,9 +74,5 @@ module FileCtrl =
 
 ```cpp
 } // namespace
-
-#ifdef USE_BOOST_FILESYSTEM
-inline boost::filesystem::path operator+(boost::filesystem::path leftp, boost::filesystem::path rightp) { return boost::filesystem::path(leftp) += rightp; }
-#endif
 
 ```

@@ -11,15 +11,13 @@ set(Boost_DEBUG OFF)
 set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_USE_STATIC_RUNTIME OFF)
 set(Boost_USE_MULTITHREADED ON)
-find_package( Boost 1.74.0 REQUIRED COMPONENTS system thread date_time chrono unit_test_framework contract)
+find_package( Boost 1.83.0 REQUIRED COMPONENTS system thread date_time chrono unit_test_framework )
 
 # mine
 include_directories(../src)
-include_directories("${CMAKE_HOME_DIRECTORY}/../ext/elykseer-crypto/build/src")
 include_directories("${CMAKE_HOME_DIRECTORY}/../ext/rapidcheck/extras/boost_test/include")
 
 # link external libraries
-link_directories("${CMAKE_HOME_DIRECTORY}/../ext/elykseer-crypto/build/src")
 set(testlibs "rapidcheck")
 
 set(GENERATED_SRCS

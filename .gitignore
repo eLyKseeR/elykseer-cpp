@@ -28,6 +28,13 @@ CTestTestfile.cmake
 Testing/
 _CPack_Packages/
 install_manifest.txt
+/dist/
 
+ext/xWindows_x86_64
 ext/Windows_x86_64
 ext/Darwin_arm64
+ext/_ccache
+ext/boost_*
+ext/zlib-*
+ext/w64devkit*
+

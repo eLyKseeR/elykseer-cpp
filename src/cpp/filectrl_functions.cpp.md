@@ -2,11 +2,6 @@ declared in [FileCtrl](filectrl.hpp.md)
 
 ```cpp
 
-std::optional<std::string> FileCtrl::fileDate(std::filesystem::path const & fp) noexcept
-{
-    return {};
-}
-
 std::optional<std::filesystem::file_time_type> FileCtrl::fileLastWriteTime(std::filesystem::path const & fp) noexcept
 {
     try {

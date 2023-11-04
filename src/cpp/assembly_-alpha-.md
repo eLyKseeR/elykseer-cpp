@@ -19,23 +19,19 @@
 #include "sizebounded/sizebounded.hpp"
 #include "sizebounded/sizebounded.ipp"
 
-#include "boost/contract_macro.hpp"
-
 #include <iostream>
 #include <string>
+#ifdef OpenMP_available
 #include <omp.h>
+#endif
 
 namespace lxr {
 
 enum tAstate { readable=1, writable=2, encrypted=4 };
 
-struct Assembly::pimpl :
-  private boost::contract::constructor_precondition<pimpl>
+struct Assembly::pimpl
 {
   pimpl(Key256 const & aid, Nchunks const & n) :
-      // BOOST_CONTRACT_CONSTRUCTOR_PRECONDITION(pimpl)([&] {
-      //       BOOST_CONTRACT_ASSERT(n >= Assembly::min_n && n <= Assembly::max_n);
-      //   })
       _chunks(new Chunk[n.nchunks()])
     , _n(n)
     , _aid(aid)
