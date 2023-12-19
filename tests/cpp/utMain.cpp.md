@@ -6,9 +6,9 @@ Copyright (C) 2018 Alexander Diemand
 
 // Boost link dynamically
 
-#ifndef BOOST_ALL_DYN_LINK
-#define BOOST_ALL_DYN_LINK
-#endif
+//#ifndef BOOST_ALL_DYN_LINK
+//#define BOOST_ALL_DYN_LINK
+//#endif
 
 // Boost test main entry point
 
