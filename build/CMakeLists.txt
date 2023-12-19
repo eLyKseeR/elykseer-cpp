@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 
+cmake_policy(SET CMP0074 NEW)
+
 IF(DEFINED CMAKE_BUILD_TYPE)
    SET(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING 
         "Choose the type of build, options are: 
@@ -38,7 +40,7 @@ IF(${CMAKE_CROSSCOMPILING})
   message(STATUS "make sure dependencies have been cross compiled and are available.")
 ELSE()
   # boost
-  add_definitions( -DBOOST_ALL_DYN_LINK )
+  #add_definitions( -DBOOST_ALL_DYN_LINK )
   set(Boost_DEBUG OFF)
   set(Boost_USE_STATIC_LIBS OFF)
   set(Boost_USE_STATIC_RUNTIME OFF)
