@@ -34,6 +34,7 @@ BOOST_AUTO_TEST_CASE( get_username )
 	std::string msg = lxr::OS::username();
 	//std::clog << std::endl << msg << std::endl;
 	BOOST_CHECK(! msg.empty());
+	BOOST_CHECK_NE(msg, "unknown");
 }
 ```
 
