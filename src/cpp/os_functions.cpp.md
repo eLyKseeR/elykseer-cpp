@@ -11,6 +11,9 @@
 //#include <format>
 
 #ifndef _WIN32
+#include <cstring>
+#include <pwd.h>
+#include <sys/types.h>
 #include <unistd.h>
 #else
 #include <windows.h>
@@ -48,9 +51,17 @@ const std::string OS::hostname() noexcept
 const std::string OS::username() noexcept
 {
 #if defined( __linux__ ) || defined( __APPLE__ ) || defined(__FreeBSD__)
+    constexpr int blen = 65536;
+    char buffer[blen];
     char username[1024];
-    username[1023] = '\0';
-    getlogin_r(username, 1023);
+    uid_t uid = geteuid();
+    struct passwd pwd, *res;
+    int retval;
+    if ((retval = getpwuid_r(uid, &pwd, buffer, blen, &res)) == 0) {
+        strncpy(username, pwd.pw_name, 1023);
+    } else {
+        strncpy(username, "unknown\0\0", 1023);
+    }
     return username;
 #else
     #ifdef _WIN32
