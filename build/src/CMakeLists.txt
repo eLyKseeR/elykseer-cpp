@@ -20,6 +20,9 @@ set(GENERATED_SRCS
 	assembly.cpp
 	backupctrl.cpp
 	chunk.cpp
+	coqassembly.cpp
+	coqbuffer.cpp
+	coqenvironment.cpp
 	dbbackupjob.cpp
 	dbfp.cpp
 	dbkey.cpp
@@ -36,6 +39,10 @@ set(GENERATED_HDRS
 	lxr/assembly.hpp
 	lxr/backupctrl.hpp
 	lxr/chunk.hpp
+	lxr/coqassembly.hpp
+	lxr/coqbuffer.hpp
+	lxr/coqconfiguration.hpp
+	lxr/coqenvironment.hpp
 	lxr/dbbackupjob.hpp
 	lxr/dbctrl.hpp
 	lxr/dbfp.hpp
@@ -119,6 +126,55 @@ add_custom_command(
   MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/chunk.hpp.md"
   DEPENDS "${LITERATE_SRC_PATH}/chunk*.md"
   OUTPUT lxr/chunk.hpp)
+
+add_custom_command(
+  COMMAND rm -f coqassembly.cpp
+  COMMAND ${MAKE_CPP_CMD} "${LITERATE_SRC_PATH}/coqassembly.hpp.md"
+  MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/coqassembly.hpp.md"
+  DEPENDS "${LITERATE_SRC_PATH}/coqassembly*.md"
+  OUTPUT coqassembly.cpp)
+add_custom_command(
+  WORKING_DIRECTORY "lxr"
+  COMMAND rm -f coqassembly.hpp
+  COMMAND ${MAKE_HPP_CMD} "${LITERATE_SRC_PATH}/coqassembly.hpp.md"
+  MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/coqassembly.hpp.md"
+  DEPENDS "${LITERATE_SRC_PATH}/coqassembly*.md"
+  OUTPUT lxr/coqassembly.hpp)
+
+add_custom_command(
+  COMMAND rm -f coqbuffer.cpp
+  COMMAND ${MAKE_CPP_CMD} "${LITERATE_SRC_PATH}/coqbuffer.hpp.md"
+  MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/coqbuffer.hpp.md"
+  DEPENDS "${LITERATE_SRC_PATH}/coqbuffer*.md"
+  OUTPUT coqbuffer.cpp)
+add_custom_command(
+  WORKING_DIRECTORY "lxr"
+  COMMAND rm -f coqbuffer.hpp
+  COMMAND ${MAKE_HPP_CMD} "${LITERATE_SRC_PATH}/coqbuffer.hpp.md"
+  MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/coqbuffer.hpp.md"
+  DEPENDS "${LITERATE_SRC_PATH}/coqbuffer*.md"
+  OUTPUT lxr/coqbuffer.hpp)
+
+add_custom_command(
+  WORKING_DIRECTORY "lxr"
+  COMMAND rm -f coqconfiguration.hpp
+  COMMAND ${MAKE_HPP_CMD} "${LITERATE_SRC_PATH}/coqconfiguration.hpp.md"
+  MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/coqconfiguration.hpp.md"
+  OUTPUT lxr/coqconfiguration.hpp)
+
+add_custom_command(
+  COMMAND rm -f coqenvironment.cpp
+  COMMAND ${MAKE_CPP_CMD} "${LITERATE_SRC_PATH}/coqenvironment.hpp.md"
+  MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/coqenvironment.hpp.md"
+  DEPENDS "${LITERATE_SRC_PATH}/coqenvironment*.md"
+  OUTPUT coqenvironment.cpp)
+add_custom_command(
+  WORKING_DIRECTORY "lxr"
+  COMMAND rm -f coqenvironment.hpp
+  COMMAND ${MAKE_HPP_CMD} "${LITERATE_SRC_PATH}/coqenvironment.hpp.md"
+  MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/coqenvironment.hpp.md"
+  DEPENDS "${LITERATE_SRC_PATH}/coqenvironment*.md"
+  OUTPUT lxr/coqenvironment.hpp)
 
 add_custom_command(
   COMMAND rm -f dbbackupjob.cpp
