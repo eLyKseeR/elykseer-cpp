@@ -5,7 +5,7 @@
 ```cpp
 */
 
-#include <memory>
+#include <algorithm>
 
 #include "lxr/coqassembly.hpp"
 #include "lxr/coqenvironment.hpp"

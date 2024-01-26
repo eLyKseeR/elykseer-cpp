@@ -7,7 +7,13 @@
 
 #include "lxr/coqbuffer.hpp"
 
+#include "lxr/aes.hpp"
+#include "lxr/key128.hpp"
+#include "lxr/key256.hpp"
 #include "lxr/sha256.hpp"
+
+#include "sizebounded/sizebounded.hpp"
+#include "sizebounded/sizebounded.ipp"
 
 #include <algorithm>
 #include <iostream>

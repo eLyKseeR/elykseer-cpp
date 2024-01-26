@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.28)
 
 IF(DEFINED CMAKE_BUILD_TYPE)
    SET(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release DebugProfile RelWithDebInfo MinSizeRel.")
@@ -28,6 +28,8 @@ set(GENERATED_SRCS
   utDbKey.cpp
   utFileCtrl.cpp
   utFsUtils.cpp
+  utCoqAssembly.cpp
+  utCoqEnvironment.cpp
   utLiz.cpp
   utMain.cpp
   utOptions.cpp
@@ -63,7 +65,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "DebugProfile")
         )
         set_target_properties(utp${PROJECT_NAME} PROPERTIES LINK_FLAGS "-fprofile-arcs -ftest-coverage ")
         target_link_libraries ( utp${PROJECT_NAME}
-                ${PROJECT_NAME}_p${CMAKE_BUILD_TYPE}
+                ${PROJECT_NAME}_${CMAKE_BUILD_TYPE}
                 #gcov
                 ${libs} ${testlibs}
                 ${Boost_LIBRARIES}
@@ -100,6 +102,16 @@ add_custom_command(
   COMMAND ${EXTRACT_CPP_CMD} "${LITERATE_SRC_PATH}/utDbKey.cpp.md"  utDbKey.cpp
   DEPENDS "${LITERATE_SRC_PATH}/utDbKey.cpp.md"
   OUTPUT utDbKey.cpp)
+add_custom_command(
+  COMMAND rm -f utCoqAssembly.cpp
+  COMMAND ${EXTRACT_CPP_CMD} "${LITERATE_SRC_PATH}/utCoqAssembly.cpp.md"  utCoqAssembly.cpp
+  DEPENDS "${LITERATE_SRC_PATH}/utCoqAssembly.cpp.md"
+  OUTPUT utCoqAssembly.cpp)
+add_custom_command(
+  COMMAND rm -f utCoqEnvironment.cpp
+  COMMAND ${EXTRACT_CPP_CMD} "${LITERATE_SRC_PATH}/utCoqEnvironment.cpp.md"  utCoqEnvironment.cpp
+  DEPENDS "${LITERATE_SRC_PATH}/utCoqEnvironment.cpp.md"
+  OUTPUT utCoqEnvironment.cpp)
 add_custom_command(
   COMMAND rm -f utFileCtrl.cpp
   COMMAND ${EXTRACT_CPP_CMD} "${LITERATE_SRC_PATH}/utFileCtrl.cpp.md"  utFileCtrl.cpp

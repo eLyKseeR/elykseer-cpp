@@ -16,9 +16,19 @@ Definition initial_environment (c : configuration) : environment :=
 
 CoqEnvironment::CoqEnvironment(const CoqConfiguration &c)
   : _config(c)
-{
-}
+{}
 
 CoqEnvironment::~CoqEnvironment() = default;
+```
 
+```cpp
+CoqEnvironmentWriteable::CoqEnvironmentWriteable(const CoqConfiguration &c)
+  : CoqEnvironment(c)
+{}
+```
+
+```cpp
+CoqEnvironmentReadable::CoqEnvironmentReadable(const CoqConfiguration &c)
+  : CoqEnvironment(c)
+{}
 ```

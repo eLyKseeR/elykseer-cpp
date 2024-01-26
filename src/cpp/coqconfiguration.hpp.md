@@ -57,7 +57,7 @@ End Configuration.
 
     std::string path_chunks;
 
-    //std::string path_db;
+    std::string path_db;
 
     std::string my_id;
 

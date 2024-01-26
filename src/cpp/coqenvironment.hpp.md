@@ -72,6 +72,21 @@ End Environment.
 
 {
 
+>public:
+
+>typedef std::pair&lt;std::string, CoqAssembly::BlockInformation&gt; bipair_t;
+
+>typedef std::vector&lt;bipair_t&gt; rel_fname_fblocks;
+
+>typedef std::pair&lt;CoqAssembly::aid_t, CoqAssembly::KeyInformation&gt; pkpair_t;
+
+>typedef std::vector&lt;pkpair_t&gt; rel_aid_keys;
+
+>virtual rel_fname_fblocks [extract_fblocks](coqenvironment_functions.cpp.md)() final;
+
+>virtual rel_aid_keys [extract_keys](coqenvironment_functions.cpp.md)() final;
+
+
 >protected:
 
 >explicit [CoqEnvironment](coqenvironment_ctor.cpp.md)(const CoqConfiguration & c);
@@ -87,16 +102,15 @@ End Environment.
 
 >virtual bool [restore_assembly](coqenvironment_functions.cpp.md)(const CoqAssembly::aid_t &aid, const CoqAssembly::KeyInformation & ki) = 0;
 
+>virtual bool [backup](coqenvironment_functions.cpp.md)(const std::string &fname, uint64_t fpos, const CoqBufferPlain &b, const uint32_t dlen) = 0;
 
->//void [add_file_block](coqenvironment_functions.cpp.md)(const std::string &fname, const CoqAssembly::BlockInformation &bi);
-
->//CoqAssembly::KeyInformation&& [add_aid_key](coqenvironment_functions.cpp.md)(const CoqAssembly::aid_t &aid);
 
 >const CoqConfiguration _config;
 
->std::vector&lt;std::pair&lt;const std::string, CoqAssembly::BlockInformation&gt;&gt; _fblocks{};
+>rel_fname_fblocks _fblocks{};
 
->std::vector&lt;std::pair&lt;const std::string, CoqAssembly::KeyInformation&gt;&gt; _keys{};
+>rel_aid_keys _keys{};
+
 
 >private:
 
@@ -113,11 +127,16 @@ End Environment.
 
 {
 
+>public:
+
 >explicit [CoqEnvironmentReadable](coqenvironment_ctor.cpp.md)(const CoqConfiguration & c);
 
->virtual [~CoqEnvironmentReadable](coqenvironment_ctor.cpp.md)();
+>virtual [~CoqEnvironmentReadable](coqenvironment_ctor.cpp.md)() = default;
 
 >virtual bool [restore_assembly](coqenvironment_functions.cpp.md)(const CoqAssembly::aid_t &aid, const CoqAssembly::KeyInformation & ki) override final;
+
+>std::shared_ptr&lt;CoqAssemblyPlainFull&gt; _assembly{nullptr};
+
 
 >private:
 
@@ -127,9 +146,10 @@ End Environment.
 
 >virtual void [finalise_and_recreate_assembly](coqenvironment_functions.cpp.md)() override final;
 
->std::shared_ptr&lt;CoqAssemblyPlainFull&gt; _assembly{nullptr};
+>virtual bool [backup](coqenvironment_functions.cpp.md)(const std::string &fname, uint64_t fpos, const CoqBufferPlain &b, const uint32_t dlen) override final;
 
 };
+
 
 # class CoqEnvironmentWriteable : public CoqEnvironment
 
@@ -139,7 +159,7 @@ End Environment.
 
 >explicit [CoqEnvironmentWriteable](coqenvironment_ctor.cpp.md)(const CoqConfiguration & c);
 
->virtual [~CoqEnvironmentWriteable](coqenvironment_ctor.cpp.md)();
+>virtual [~CoqEnvironmentWriteable](coqenvironment_ctor.cpp.md)() = default;
 
 >virtual void [recreate_assembly](coqenvironment_functions.cpp.md)() override final;
 
@@ -147,12 +167,14 @@ End Environment.
 
 >virtual void [finalise_and_recreate_assembly](coqenvironment_functions.cpp.md)() override final;
 
+>virtual bool [backup](coqenvironment_functions.cpp.md)(const std::string &fname, uint64_t fpos, const CoqBufferPlain &b, const uint32_t dlen) override final;
+
+>std::shared_ptr&lt;CoqAssemblyPlainWritable&gt; _assembly{nullptr};
+
 
 >private:
 
 >virtual bool [restore_assembly](coqenvironment_functions.cpp.md)(const CoqAssembly::aid_t &aid, const CoqAssembly::KeyInformation & ki) override;
-
->std::shared_ptr&lt;CoqAssemblyPlainWritable&gt; _assembly{nullptr};
 
 };
 

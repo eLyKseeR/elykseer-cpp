@@ -7,16 +7,35 @@ CoqAssembly::KeyInformation::KeyInformation(const CoqConfiguration & c)
 ```
 
 ```cpp
+CoqAssembly::AssemblyInformation::AssemblyInformation()
+{}
+
+CoqAssembly::AssemblyInformation::AssemblyInformation(const CoqConfiguration & c)
+  : _nchunks(c.nchunks())
+{}
+
+CoqAssembly::AssemblyInformation::AssemblyInformation(const CoqConfiguration & c, const std::string & aid)
+  : _nchunks(c.nchunks()), _aid(aid)
+{}
+```
+
+```cpp
 CoqAssembly::CoqAssembly(const CoqConfiguration &c)
   : _config(c)
-{}
+{
+  std::clog << "CoqAssembly::CoqAssembly(const CoqConfiguration &c)" << std::endl;
+}
 
 CoqAssembly::CoqAssembly(CoqAssembly *ca)
   : _config(ca->_config), _assemblyinformation(ca->_assemblyinformation)
-{}
+{
+  std::clog << "CoqAssembly::CoqAssembly(CoqAssembly *ca)" << std::endl;
+}
 
 CoqAssembly::CoqAssembly()
-{}
+{
+  std::clog << "CoqAssembly::CoqAssembly()" << std::endl;
+}
 
 CoqAssembly::~CoqAssembly() = default;
 ```
@@ -38,10 +57,14 @@ void CoqAssembly::mk_assembly_id()
   std::stringstream ss;
   lxr::Random r;
   ss << r.random() << _config.my_id << OS::hostname() << tstamp;
-  const auto h = Sha256::hash(ss.str()).toHex();
+  const std::string v{ss.str()};
+  const auto h = Sha256::hash(v).toHex();
+  std::clog << "  mk_assembly_id: " << v << " => " << h << std::endl;
   _assemblyinformation._aid = h;
 }
 ```
+
+## CoqAssemblyPlainWritable
 
 ```coq
     Definition create (c : configuration) : H * B :=
@@ -57,12 +80,16 @@ void CoqAssembly::mk_assembly_id()
 CoqAssemblyPlainWritable::CoqAssemblyPlainWritable(const CoqConfiguration &c)
   : CoqAssembly(c)
 {
-  _buffer.reset(new CoqBufferPlain(CoqAssembly::chunksize * c.nchunks()));
+  std::clog << "CoqAssemblyPlainWritable::CoqAssemblyPlainWritable(const CoqConfiguration &c)" << std::endl;
+  uint32_t nchunks = c.nchunks();
+  _buffer.reset(new CoqBufferPlain(CoqAssembly::chunksize * nchunks));
   Key128 _rand128{false};
   const char *r = (const char*)_rand128.bytes();
   for (int i = 0; i < 16; i++) {
-    _buffer->at(i, r[i]);
+    _buffer->at(idx2apos(i,nchunks), r[i]);
   }
+  _assemblyinformation._apos = 16;
+  _assemblyinformation._nchunks = nchunks;
   mk_assembly_id();
 }
 
@@ -78,24 +105,29 @@ CoqAssemblyPlainWritable::~CoqAssemblyPlainWritable() = default;
         (mkassembly chunks (Utilities.rnd256 (my_id c)) sz, b).
 ```
 
+## CoqAssemblyPlainFull
+
 ```cpp
 
 CoqAssemblyPlainFull::CoqAssemblyPlainFull(const CoqConfiguration &c)
   : CoqAssembly(c)
 {
+  std::clog << "CoqAssemblyPlainFull::CoqAssemblyPlainFull(const CoqConfiguration &c)" << std::endl;
   _buffer.reset(new CoqBufferPlain(CoqAssembly::chunksize * c.nchunks()));
 }
 
-CoqAssemblyPlainFull::CoqAssemblyPlainFull(CoqAssemblyEncrypted *ca)
+CoqAssemblyPlainFull::CoqAssemblyPlainFull(CoqAssemblyEncrypted *ca, std::shared_ptr<CoqBufferPlain> &b)
   : CoqAssembly(ca)
 {
-  // TODO decrypt assembly
+  std::clog << "CoqAssemblyPlainFull::CoqAssemblyPlainFull(CoqAssemblyEncrypted *ca, std::shared_ptr<CoqBufferPlain> &b)" << std::endl;
+  _buffer = b;
 }
 
-CoqAssemblyPlainFull::CoqAssemblyPlainFull(CoqAssemblyPlainWritable *ca)
+CoqAssemblyPlainFull::CoqAssemblyPlainFull(CoqAssemblyPlainWritable *ca, std::shared_ptr<CoqBufferPlain> &b)
   : CoqAssembly(ca)
 {
-  // TODO finish assembly
+  std::clog << "CoqAssemblyPlainFull::CoqAssemblyPlainFull(CoqAssemblyPlainWritable *ca, std::shared_ptr<CoqBufferPlain> &b)" << std::endl;
+  _buffer = b;
 }
 
 CoqAssemblyPlainFull::~CoqAssemblyPlainFull() = default;
@@ -110,18 +142,22 @@ CoqAssemblyPlainFull::~CoqAssemblyPlainFull() = default;
         (mkassembly chunks (Utilities.rnd256 (my_id c)) 0, b).
 ```
 
+## CoqAssemblyEncrypted
+
 ```cpp
 
 CoqAssemblyEncrypted::CoqAssemblyEncrypted(const CoqConfiguration &c)
   : CoqAssembly(c)
 {
+  std::clog << "CoqAssemblyEncrypted::CoqAssemblyEncrypted(const CoqConfiguration &c)" << std::endl;
   _buffer.reset(new CoqBufferEncrypted(CoqAssembly::chunksize * c.nchunks()));
 }
 
-CoqAssemblyEncrypted::CoqAssemblyEncrypted(CoqAssemblyPlainFull *ca)
+CoqAssemblyEncrypted::CoqAssemblyEncrypted(CoqAssemblyPlainFull *ca, std::shared_ptr<CoqBufferEncrypted> &b)
   : CoqAssembly(ca)
 {
-  // TODO encrypt assembly
+  std::clog << "CoqAssemblyEncrypted::CoqAssemblyEncrypted(CoqAssemblyPlainFull *ca, std::shared_ptr<CoqBufferEncrypted> &b)" << std::endl;
+  _buffer = std::move(std::reinterpret_pointer_cast<CoqBufferEncrypted>(b));
 }
 
 

@@ -158,6 +158,7 @@ End Assembly.
 
 */
 
+
 # class CoqAssembly
 
 {
@@ -178,12 +179,17 @@ End Assembly.
 # struct AssemblyInformation
 
 {
+    AssemblyInformation();
 
-    uint16_t _nchunks;
+    AssemblyInformation(const CoqConfiguration & c);
 
-    uint32_t _apos;
+    AssemblyInformation(const CoqConfiguration & c, const std::string & aid);
 
-    aid_t _aid;
+    uint16_t _nchunks{16};
+
+    uint32_t _apos{0};
+
+    aid_t _aid{""};
 
 };
 
@@ -204,15 +210,14 @@ End Assembly.
 
 };
 
-
 ## struct KeyInformation
 
 {
     KeyInformation(const CoqConfiguration & c);
 
-    Key128 _ivec;
+    Key128 _ivec{false};
 
-    Key256 _pkey;
+    Key256 _pkey{false};
 
     std::string _localid;
 
@@ -239,6 +244,23 @@ End Assembly.
 >virtual std::optional&lt;const std::filesystem::path&gt; [chunk_path](coqassembly_functions.cpp.md)(const uint16_t cnum, const aid_t aid) const final;
 
 >virtual std::optional&lt;const std::filesystem::path&gt; [chunk_path](coqassembly_functions.cpp.md)(const uint16_t cnum) const final { return chunk_path(cnum, _assemblyinformation._aid); }
+
+>public:
+
+>virtual int [apos](coqassembly_functions.cpp.md)() const final;
+
+>virtual int [afree](coqassembly_functions.cpp.md)() const final;
+
+>virtual std::string [aid](coqassembly_functions.cpp.md)() const final;
+
+>inline const uint32_t idx2apos (const uint32_t idx, const uint32_t nchunks) const {
+    uint32_t cnum = idx % nchunks;
+    uint32_t cidx = idx / nchunks;
+    return cnum * CoqAssembly::chunklength + cidx;
+}
+
+
+>protected:
 
 >const CoqConfiguration _config;
 
@@ -272,11 +294,13 @@ class CoqAssemblyPlainFull;
 
 >virtual std::shared_ptr&lt;CoqAssemblyPlainFull&gt; [finish](coqassembly_functions.cpp.md)() final;
 
->virtual CoqAssembly::BlockInformation [backup](coqassembly_functions.cpp.md)(uint64_t fpos, const CoqBufferPlain &) final;
+>virtual CoqAssembly::BlockInformation [backup](coqassembly_functions.cpp.md)(const CoqBufferPlain &b) final;
+
+>virtual CoqAssembly::BlockInformation [backup](coqassembly_functions.cpp.md)(const CoqBufferPlain &b, const uint32_t offset, const uint32_t dlen) final;
 
 >private:
 
->std::unique_ptr&lt;CoqBufferPlain&gt; _buffer{nullptr};
+>std::shared_ptr&lt;CoqBufferPlain&gt; _buffer{nullptr};
 
 };
 
@@ -291,9 +315,9 @@ class CoqAssemblyEncrypted;
 
 >explicit [CoqAssemblyPlainFull](coqassembly_ctor.cpp.md)(const CoqConfiguration & c);
 
->explicit [CoqAssemblyPlainFull](coqassembly_ctor.cpp.md)(CoqAssemblyEncrypted *);
+>explicit [CoqAssemblyPlainFull](coqassembly_ctor.cpp.md)(CoqAssemblyEncrypted *, std::shared_ptr&lt;CoqBufferPlain&gt; &b);
 
->explicit [CoqAssemblyPlainFull](coqassembly_ctor.cpp.md)(CoqAssemblyPlainWritable *);
+>explicit [CoqAssemblyPlainFull](coqassembly_ctor.cpp.md)(CoqAssemblyPlainWritable *, std::shared_ptr&lt;CoqBufferPlain&gt; &b);
 
 >virtual [~CoqAssemblyPlainFull](coqassembly_ctor.cpp.md)();
 
@@ -307,7 +331,7 @@ class CoqAssemblyEncrypted;
 
 >private:
 
->std::unique_ptr&lt;CoqBufferPlain&gt; _buffer{nullptr};
+>std::shared_ptr&lt;CoqBufferPlain&gt; _buffer{nullptr};
 
 };
 
@@ -320,7 +344,7 @@ class CoqAssemblyEncrypted;
 
 >explicit [CoqAssemblyEncrypted](coqassembly_ctor.cpp.md)(const CoqConfiguration & c);
 
->explicit [CoqAssemblyEncrypted](coqassembly_ctor.cpp.md)(CoqAssemblyPlainFull*);
+>explicit [CoqAssemblyEncrypted](coqassembly_ctor.cpp.md)(CoqAssemblyPlainFull*, std::shared_ptr&lt;CoqBufferEncrypted&gt; &b);
 
 >virtual [~CoqAssemblyEncrypted](coqassembly_ctor.cpp.md)();
 
@@ -330,13 +354,13 @@ class CoqAssemblyEncrypted;
 
 >virtual std::shared_ptr&lt;CoqAssemblyPlainFull&gt; [decrypt](coqassembly_functions.cpp.md)(const CoqAssembly::KeyInformation & ki) final;
 
->virtual uint32_t [extract](coqassembly_functions.cpp.md)() const final;
+>virtual uint32_t [extract](coqassembly_functions.cpp.md)() final;
 
->static std::shared_ptr&lt;CoqAssemblyEncrypted&gt; [recall](coqassembly_functions.cpp.md)(const CoqConfiguration & c, const CoqAssembly::AssemblyInformation & ainfo);
+>static std::shared_ptr&lt;CoqAssemblyEncrypted&gt; [recall](coqassembly_functions.cpp.md)(const CoqConfiguration & c, const CoqAssembly::aid_t & aid);
 
 >private:
 
->std::unique_ptr&lt;CoqBufferEncrypted&gt; _buffer{nullptr};
+>std::shared_ptr&lt;CoqBufferEncrypted&gt; _buffer{nullptr};
 
 };
 

@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "lxr/key128.hpp"
 #include "lxr/key256.hpp"
 
 #include <memory>
@@ -108,9 +109,13 @@ End Buffer.
 
 >protected:
 
+>struct pimpl;
+
 >explicit [CoqBuffer](coqbuffer_ctor.cpp.md)(int n);
 
 >explicit [CoqBuffer](coqbuffer_ctor.cpp.md)(int n, const char *b);
+
+>explicit [CoqBuffer](coqbuffer_ctor.cpp.md)(std::unique_ptr&lt;struct CoqBuffer::pimpl&gt; &&);
 
 >[~CoqBuffer](coqbuffer_ctor.cpp.md)();
 
@@ -121,6 +126,8 @@ End Buffer.
 >uint32_t [len](coqbuffer_functions.cpp.md)() const;
 
 >std::optional&lt;const Key256&gt; [calc_checksum](coqbuffer_functions.cpp.md)() const;
+
+>std::optional&lt;const Key256&gt; [calc_checksum](coqbuffer_functions.cpp.md)(int offset, int dlen) const;
 
 >int [copy_sz_pos](coqbuffer_functions.cpp.md)(int pos0, int sz, CoqBuffer & target, int pos1) const;
 
@@ -136,13 +143,11 @@ End Buffer.
 
 >protected:
 
->EncryptionState _state;
-
->private:
-
->struct pimpl;
+// >EncryptionState _state;
 
 >std::unique_ptr&lt;struct pimpl&gt; _pimpl;
+
+>private:
 
 >CoqBuffer(CoqBuffer const &) = delete;
 
@@ -163,9 +168,13 @@ class CoqBufferEncrypted;
 
 >explicit [CoqBufferPlain](coqbuffer_ctor.cpp.md)(int n, const char *b);
 
+>explicit [CoqBufferPlain](coqbuffer_ctor.cpp.md)(CoqBufferEncrypted *, std::unique_ptr&lt;struct pimpl&gt; &&p);
+
+>[~CoqBufferPlain](coqbuffer_ctor.cpp.md)();
+
 >virtual EncryptionState [state](coqbuffer_ctor.cpp.md)() const override final;
 
->CoqBufferEncrypted&& [encrypt](coqbuffer_functions.cpp.md)(const std::string &iv, const std::string &key) const;
+>std::shared_ptr&lt;CoqBufferEncrypted&gt; [encrypt](coqbuffer_functions.cpp.md)(const Key128 &iv, const Key256 &key);
 
 };
 
@@ -178,11 +187,17 @@ class CoqBufferEncrypted;
 
 >explicit [CoqBufferEncrypted](coqbuffer_ctor.cpp.md)(int n);
 
->explicit [CoqBufferEncrypted](coqbuffer_ctor.cpp.md)(int n, const char *b);
+>explicit [CoqBufferEncrypted](coqbuffer_ctor.cpp.md)(CoqBufferPlain *, std::unique_ptr&lt;struct pimpl&gt; &&p);
+
+>[~CoqBufferEncrypted](coqbuffer_ctor.cpp.md)();
 
 >virtual EncryptionState [state](coqbuffer_ctor.cpp.md)() const override final;
 
->CoqBufferPlain&& [decrypt](coqbuffer_functions.cpp.md)(const std::string &iv, const std::string &key) const;
+>std::shared_ptr&lt;CoqBufferPlain&gt; [decrypt](coqbuffer_functions.cpp.md)(const Key128 &iv, const Key256 &key);
+
+>protected:
+
+>explicit [CoqBufferEncrypted](coqbuffer_ctor.cpp.md)(int n, const char *b);
 
 };
 

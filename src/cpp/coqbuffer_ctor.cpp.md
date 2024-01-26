@@ -12,17 +12,22 @@ public:
             _len = n;
         }
     };
+    pimpl(int n, const char *m) : pimpl(n) {
+        std::memcpy(_buffer, m, n);
+    };
     ~pimpl() {
         if (_buffer) { free(_buffer); }
     }
     uint32_t len() const;
-    std::optional<const Key256> calc_checksum() const;
+    std::optional<const Key256> calc_checksum(int offset, int dlen) const;
     int copy_sz_pos(int pos0, int sz, CoqBuffer &target, int pos1) const;
     int fileout_sz_pos(int pos, int sz, FILE *fstr) const;
     int filein_sz_pos(int pos, int sz, FILE *fstr);
     int to_buffer(int n, char *b) const;
     char at(uint32_t idx0) const { return _buffer[std::min(_len, idx0)]; }
     void at(uint32_t idx0, char v) { _buffer[std::min(_len, idx0)] = v; }
+    void encrypt_buffer(const Key128 &iv, const Key256 &pk);
+    void decrypt_buffer(const Key128 &iv, const Key256 &pk);
 
 private:
     uint32_t _len{0};
@@ -38,10 +43,10 @@ uint32_t CoqBuffer::pimpl::len() const
     return _len;
 }
 
-std::optional<const Key256> CoqBuffer::pimpl::calc_checksum() const
+std::optional<const Key256> CoqBuffer::pimpl::calc_checksum(int offset, int dlen) const
 {
-    if (_buffer) {
-        return Sha256::hash(_buffer, _len);
+    if (_buffer && dlen + offset <= _len) {
+        return Sha256::hash(_buffer + offset, dlen);
     } else {
         return {};
     }
@@ -81,6 +86,52 @@ int CoqBuffer::pimpl::to_buffer(int n, char *b) const
     return n;
 }
 
+void CoqBuffer::pimpl::encrypt_buffer(const Key128 &iv, const Key256 &pk)
+{
+    constexpr uint32_t datasz{4096};
+    AesEncrypt aesenc(pk, iv);
+    sizebounded<unsigned char, datasz> buf;
+    uint32_t n_encrypted{0};
+    int blen, plen;
+    while (n_encrypted <= _len) {
+        blen = std::min(_len - n_encrypted, datasz);
+        // copy blen@n_encrypted data into buf
+        std::memcpy((char*)buf.ptr(), _buffer+n_encrypted, blen);
+        if (blen < datasz) {
+            plen = aesenc.finish(blen, buf);
+        } else {
+            plen = aesenc.process(blen, buf);
+        }
+        // copy back plen bytes from buf to buffer@n_encrypted
+        std::memcpy(_buffer+n_encrypted, buf.ptr(), plen);
+        n_encrypted += blen;
+        if (blen == 0) break;
+    }
+}
+
+void CoqBuffer::pimpl::decrypt_buffer(const Key128 &iv, const Key256 &pk)
+{
+    constexpr uint32_t datasz{4096};
+    AesDecrypt aesdec(pk, iv);
+    sizebounded<unsigned char, datasz> buf;
+    uint32_t n_encrypted{0};
+    int blen, plen;
+    while (n_encrypted <= _len) {
+        blen = std::min(_len - n_encrypted, datasz);
+        // copy blen@n_encrypted data into buf
+        std::memcpy((char*)buf.ptr(), _buffer+n_encrypted, blen);
+        if (blen < datasz) {
+            plen = aesdec.finish(blen, buf);
+        } else {
+            plen = aesdec.process(blen, buf);
+        }
+        // copy back plen bytes from buf to buffer@n_encrypted
+        std::memcpy(_buffer+n_encrypted, buf.ptr(), plen);
+        n_encrypted += blen;
+        if (blen == 0) break;
+    }
+}
+
 ```
 
 
@@ -88,10 +139,23 @@ int CoqBuffer::pimpl::to_buffer(int n, char *b) const
 
 CoqBuffer::CoqBuffer(int n)
   : _pimpl(new pimpl(n))
-{
-}
+{}
 
-CoqBuffer::~CoqBuffer() = default;
+CoqBuffer::CoqBuffer(int n, const char *m)
+  : _pimpl(new pimpl(n,m))
+{}
+
+CoqBuffer::CoqBuffer(std::unique_ptr<struct pimpl> &&p)
+  : _pimpl(std::move(p))
+{}
+
+CoqBuffer::~CoqBuffer()
+{
+    std::clog << "DTOR CoqBuffer::~CoqBuffer" << std::endl;
+    if (_pimpl) {
+        _pimpl.reset();
+    }
+}
 
 ```
 
@@ -105,46 +169,46 @@ void CoqBuffer::at(uint32_t idx, char v) {
 }
 ```
 
+## CoqBufferPlain
 ```cpp
 
 CoqBufferPlain::CoqBufferPlain(int n)
   : CoqBuffer(n)
+{}
+
+CoqBufferPlain::CoqBufferPlain(int n, const char *m)
+  : CoqBuffer(n, m)
+{}
+
+CoqBufferPlain::CoqBufferPlain(CoqBufferEncrypted *cb, std::unique_ptr<struct pimpl> &&p)
+  : CoqBuffer(std::move(p))
+{}
+
+CoqBufferPlain::~CoqBufferPlain()
 {
+    std::clog << "DTOR CoqBufferPlain::~CoqBufferPlain" << std::endl;
 }
 
 EncryptionState CoqBufferPlain::state() const { return EncryptionState::Plain; }
 
 ```
 
+## CoqBufferEncrypted
 ```cpp
 
 CoqBufferEncrypted::CoqBufferEncrypted(int n)
   : CoqBuffer(n)
+{}
+
+CoqBufferEncrypted::CoqBufferEncrypted(CoqBufferPlain *cb, std::unique_ptr<struct pimpl> &&p)
+  : CoqBuffer(std::move(p))
+{}
+
+CoqBufferEncrypted::~CoqBufferEncrypted()
 {
+    std::clog << "DTOR CoqBufferEncrypted::~CoqBufferEncrypted" << std::endl;
 }
 
 EncryptionState CoqBufferEncrypted::state() const { return EncryptionState::Encrypted; }
-
-```
-
-```cpp
-
-CoqBufferEncrypted&& CoqBufferPlain::encrypt(const std::string &iv, const std::string &key) const
-{
-    CoqBufferEncrypted *res = new CoqBufferEncrypted(len());
-
-    return std::move(*res);
-}
-
-```
-
-```cpp
-
-CoqBufferPlain&& CoqBufferEncrypted::decrypt(const std::string &iv, const std::string &key) const
-{
-    CoqBufferPlain *res = new CoqBufferPlain(len());
-
-    return std::move(*res);
-}
 
 ```

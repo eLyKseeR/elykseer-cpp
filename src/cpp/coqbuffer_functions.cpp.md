@@ -15,7 +15,16 @@ uint32_t CoqBuffer::len() const
 std::optional<const Key256> CoqBuffer::calc_checksum() const
 {
     if (_pimpl) {
-        return _pimpl->calc_checksum();
+        return _pimpl->calc_checksum(0, _pimpl->len());
+    } else {
+        return {};
+    }
+}
+
+std::optional<const Key256> CoqBuffer::calc_checksum(int offset, int dlen) const
+{
+    if (_pimpl) {
+        return _pimpl->calc_checksum(offset, dlen);
     } else {
         return {};
     }
@@ -48,5 +57,39 @@ int CoqBuffer::filein_sz_pos(int pos, int sz, FILE *fstr)
     }
 }
 
+int CoqBuffer::to_buffer(int n, char *b) const
+{
+    if (_pimpl && b) {
+        return _pimpl->to_buffer(n, b);
+    } else {
+        return -1;
+    }
+}
 
+```
+
+## buffer encryption
+
+```cpp
+std::shared_ptr<CoqBufferEncrypted> CoqBufferPlain::encrypt(const Key128 &iv, const Key256 &key)
+{
+    if (_pimpl) {
+        _pimpl->encrypt_buffer(iv, key);
+        return std::make_shared<CoqBufferEncrypted>(this, std::move(_pimpl));
+    } else {
+        return nullptr;
+    }
+}
+```
+
+```cpp
+std::shared_ptr<CoqBufferPlain> CoqBufferEncrypted::decrypt(const Key128 &iv, const Key256 &key)
+{
+    if (_pimpl) {
+        _pimpl->decrypt_buffer(iv, key);
+        return std::make_shared<CoqBufferPlain>(this, std::move(_pimpl));
+    } else {
+        return nullptr;
+    }
+}
 ```

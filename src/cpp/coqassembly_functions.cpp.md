@@ -1,11 +1,6 @@
 ## calculate position in assembly
 
 ```cpp
-inline const uint32_t idx2apos (const uint32_t idx, const uint32_t nchunks) {
-    uint32_t cnum = idx % nchunks;
-    uint32_t cidx = idx / nchunks;
-    return cnum * CoqAssembly::chunklength + cidx;
-}
 ```
 
 ## compute file path of a chunk
@@ -21,15 +16,24 @@ std::optional<const std::filesystem::path> CoqAssembly::chunk_path(const uint16_
         return {};
     }
     std::filesystem::path fp = _config.path_chunks;
+    if (! std::filesystem::exists(fp)) {
+        std::filesystem::create_directory(fp);
+    }
     char subdir[3];
     subdir[0]=h[len-2];
     subdir[1]=h[len-1];
     subdir[2]='\0';
-    fp /= subdir;
+    fp /= std::string(subdir,2);
+    if (! std::filesystem::exists(fp)) {
+        std::filesystem::create_directory(fp);
+    }
     subdir[0]=h[len-4];
     subdir[1]=h[len-3];
     subdir[2]='\0';
-    fp /= subdir;
+    fp /= std::string(subdir,2);
+    if (! std::filesystem::exists(fp)) {
+        std::filesystem::create_directory(fp);
+    }
     (fp /= h) . replace_extension("lxr");
     return fp;
 }
@@ -62,6 +66,23 @@ int CoqAssemblyEncrypted::buffer_len() const
         return _buffer->len();
     }
     return 0;
+}
+```
+
+```cpp
+int CoqAssembly::apos() const
+{
+    return _assemblyinformation._apos;
+}
+
+int CoqAssembly::afree() const
+{
+    return assemblysize(_assemblyinformation._nchunks) - _assemblyinformation._apos;
+}
+
+std::string CoqAssembly::aid() const
+{
+    return _assemblyinformation._aid;
 }
 ```
 
@@ -117,7 +138,10 @@ Program Definition decrypt (a : AssemblyEncrypted.H) (b : AssemblyEncrypted.B) (
 
 std::shared_ptr<CoqAssemblyPlainFull> CoqAssemblyEncrypted::decrypt(const CoqAssembly::KeyInformation & ki)
 {
-    return std::make_shared<CoqAssemblyPlainFull>(this);
+    auto newbuf = _buffer->decrypt(ki._ivec, ki._pkey);
+    auto res = std::make_shared<CoqAssemblyPlainFull>(this, newbuf);
+    _buffer.reset();
+    return res;
 }
 ```
 
@@ -127,10 +151,11 @@ Program Definition finish (a : AssemblyPlainWritable.H) (b : AssemblyPlainWritab
     , id_assembly_full_buffer_from_writable b ).
 ```
 ```cpp
-
 std::shared_ptr<CoqAssemblyPlainFull> CoqAssemblyPlainWritable::finish()
 {
-    return std::make_shared<CoqAssemblyPlainFull>(this);
+    auto res = std::make_shared<CoqAssemblyPlainFull>(this, _buffer);
+    _buffer.reset();
+    return res;
 }
 ```
 
@@ -145,7 +170,10 @@ Program Definition encrypt (a : AssemblyPlainFull.H) (b : AssemblyPlainFull.B) (
 
 std::shared_ptr<CoqAssemblyEncrypted> CoqAssemblyPlainFull::encrypt(const CoqAssembly::KeyInformation & ki)
 {
-    return std::make_shared<CoqAssemblyEncrypted>(this);
+    auto newbuf = _buffer->encrypt(ki._ivec, ki._pkey);
+    auto res = std::make_shared<CoqAssemblyEncrypted>(this, newbuf);
+    _buffer.reset();
+    return res;
 }
 ```
 
@@ -165,20 +193,25 @@ Program Definition backup (a : AssemblyPlainWritable.H) (b : AssemblyPlainWritab
     (a', bi).
 ```
 ```cpp
-CoqAssembly::BlockInformation CoqAssemblyPlainWritable::backup(uint64_t fpos, const CoqBufferPlain &b)
+CoqAssembly::BlockInformation CoqAssemblyPlainWritable::backup(const CoqBufferPlain &b)
+{
+    return backup(b, 0, b.len());
+}
+
+CoqAssembly::BlockInformation CoqAssemblyPlainWritable::backup(const CoqBufferPlain &b, const uint32_t offset, const uint32_t dlen)
 {
     uint32_t apos_n = _assemblyinformation._apos;
-    uint32_t bsz = b.len();
-    if (bsz > 0) {
-        auto const chksum = b.calc_checksum();
-        if (chksum) {
-            int nwritten = b.copy_sz_pos(0, bsz, *_buffer, apos_n);
-            if (nwritten > 0 && nwritten == bsz) {
-                _assemblyinformation._apos += nwritten;
-                return { 1, chksum.value(), static_cast<uint32_t>(nwritten), fpos,
-                         _assemblyinformation._aid, apos_n };
-            }
+    uint32_t nchunks = _config.nchunks();
+    if (dlen + offset > b.len()) { return {}; }
+    auto const chksum = b.calc_checksum(offset, dlen);
+    if (chksum) {
+        // TODO parallelise !
+        for (int i = 0; i < dlen; i++) {
+            _buffer->at(idx2apos(i + apos_n, nchunks), b.at(i + offset));
         }
+        _assemblyinformation._apos += dlen;
+        return { 1, chksum.value(), dlen, 0,
+                    _assemblyinformation._aid, apos_n };
     }
     return {};
 }
@@ -221,7 +254,7 @@ Program Definition extract (c : configuration) (a : AssemblyEncrypted.H) (b : As
         0.
 ```
 ```cpp
-uint32_t CoqAssemblyEncrypted::extract() const
+uint32_t CoqAssemblyEncrypted::extract()
 {
     if (! _buffer) { return 0; }
     const aid_t aid = _assemblyinformation._aid;
@@ -230,8 +263,9 @@ uint32_t CoqAssemblyEncrypted::extract() const
         if (const auto cfpathopt = chunk_path(cid); cfpathopt) {
             const std::filesystem::path cfpath = cfpathopt.value();
             if (! std::filesystem::exists(cfpath)) {
-                if (FILE * fstr = fopen(cfpath.string().c_str(), "wb"); ! fstr) {
-                    if (int n = _buffer->fileout_sz_pos(CoqAssembly::chunksize * (cid - 1), CoqAssembly::chunksize, fstr); n > 0) {
+                if (FILE * fstr = fopen(cfpath.string().c_str(), "wb"); fstr) {
+                    std::clog << "    extract chunk " << cid << " to path " << cfpath << std::endl;
+                    if (int n = _buffer->fileout_sz_pos(CoqAssembly::chunksize * (cid - 1), CoqAssembly::chunksize, fstr); n == CoqAssembly::chunksize) {
                         nwritten += n;
                     } else {
                         std::clog << "only wrote " << n << " bytes to chunk with path " << cfpath.string() << std::endl;
@@ -245,6 +279,7 @@ uint32_t CoqAssemblyEncrypted::extract() const
             }
         }
     }
+    _buffer.reset();
     return nwritten;
 }
 ```
@@ -276,31 +311,34 @@ Program Definition recall (c : configuration) (a : AssemblyEncrypted.H) : option
     else None.
 ```
 ```cpp
-std::shared_ptr<CoqAssemblyEncrypted> CoqAssemblyEncrypted::recall(const CoqConfiguration & c, const CoqAssembly::AssemblyInformation & ainfo)
+std::shared_ptr<CoqAssemblyEncrypted> CoqAssemblyEncrypted::recall(const CoqConfiguration & c, const CoqAssembly::aid_t & aid)
 {
-    CoqAssemblyEncrypted *newassembly = new CoqAssemblyEncrypted(c);
-    newassembly->_assemblyinformation._aid = ainfo._aid;
+    std::shared_ptr<CoqAssemblyEncrypted> newassembly{new CoqAssemblyEncrypted(c)};
+    newassembly->_assemblyinformation._aid = aid;
+    uint32_t nchunks = c.nchunks();
+    newassembly->_assemblyinformation._nchunks = nchunks;
     uint32_t nread{0};
-    for (int cid = 1; cid <= ainfo._nchunks; cid++) {
+    for (int cid = 1; cid <= nchunks; cid++) {
         if (const auto cfpathopt = newassembly->chunk_path(cid); cfpathopt) {
             const std::filesystem::path cfpath = cfpathopt.value();
             if (std::filesystem::exists(cfpath)) {
-                if (FILE * fstr = fopen(cfpath.string().c_str(), "rb"); ! fstr) {
-                    if (int n = newassembly->_buffer->filein_sz_pos(CoqAssembly::chunksize * (cid - 1), CoqAssembly::chunksize, fstr); n > 0) {
+                if (FILE * fstr = fopen(cfpath.string().c_str(), "rb"); fstr) {
+                    std::clog << "    recall chunk " << cid << " from path " << cfpath << std::endl;
+                    if (int n = newassembly->_buffer->filein_sz_pos(CoqAssembly::chunksize * (cid - 1), CoqAssembly::chunksize, fstr); n == CoqAssembly::chunksize) {
                         nread += n;
                     } else {
                         std::clog << "only read " << n << " bytes from chunk with path " << cfpath.string() << std::endl;
                     }
                     fclose(fstr);
                 } else {
-                    std::clog << "cannot write to chunk with path " << cfpath.string() << std::endl;
+                    std::clog << "cannot read from chunk with path " << cfpath.string() << std::endl;
                 }
             } else {
                 std::clog << "chunk file does not exists at path " << cfpath.string() << std::endl;
             }
         }
     }
-    return {};
+    return std::move(newassembly);
 }
 ```
 
@@ -321,13 +359,11 @@ Program Definition restore (b : AssemblyPlainFull.B) (bi : blockinformation) : o
 ```cpp
 std::shared_ptr<CoqBufferPlain> CoqAssemblyPlainFull::restore(const CoqAssembly::BlockInformation & bi) const
 {
-    CoqBufferPlain *b = new CoqBufferPlain(bi.blocksize);
-    const int nchunks = _config.nchunks();
-    uint32_t apos;
+    std::shared_ptr<CoqBufferPlain> b{new CoqBufferPlain(bi.blocksize)};
+    const uint32_t nchunks = _config.nchunks();
     for (uint32_t idx = 0; idx < bi.blocksize; idx++) {
-        apos = idx2apos(idx + bi.blockapos, nchunks);
-        b->at(idx, _buffer->at(apos)); 
+        b->at(idx, _buffer->at(idx2apos(idx + bi.blockapos, nchunks))); 
     }
-    return {};
+    return b;
 }
 ```

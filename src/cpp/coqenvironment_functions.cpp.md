@@ -10,6 +10,9 @@ void CoqEnvironmentWriteable::recreate_assembly()
 {
     _assembly.reset(new CoqAssemblyPlainWritable(_config));
 }
+
+void CoqEnvironmentReadable::recreate_assembly()
+{}
 ```
 
 ```coq
@@ -39,13 +42,17 @@ void CoqEnvironmentWriteable::finalise_assembly()
     if (! _assembly) { return; }
     std::shared_ptr<CoqAssemblyPlainFull> finished_assembly = _assembly->finish();
     _assembly.reset();
-    _assembly = nullptr;
     CoqAssembly::KeyInformation ki(_config);
     std::shared_ptr<CoqAssemblyEncrypted> encrypted_assembly = finished_assembly->encrypt(ki);
     if (encrypted_assembly) {
+        std::clog << "have encrypted assembly" << std::endl;
+        _keys.push_back({encrypted_assembly->aid(), ki});
         encrypted_assembly->extract();
     }
 }
+
+void CoqEnvironmentReadable::finalise_assembly()
+{}
 ```
 
 ```coq
@@ -59,7 +66,45 @@ void CoqEnvironmentWriteable::finalise_and_recreate_assembly()
     finalise_assembly();
     recreate_assembly();
 }
+
+void CoqEnvironmentReadable::finalise_and_recreate_assembly()
+{}
+
 ```
+
+## Extract relations
+
+extract blockinformation of backuped file content as a relation
+from filename to _CoqAssembly::BlockInformation_ aka. as a pair.
+
+the environments memory of this relation is cleared.
+
+```cpp
+CoqEnvironment::rel_fname_fblocks CoqEnvironment::extract_fblocks()
+{
+    rel_fname_fblocks res = _fblocks;
+    _fblocks.clear();
+
+    // sort by fname, fpos
+    std::sort(res.begin(), res.end(), [](const bipair_t &a, const bipair_t &b) { return a.first < b.first && a.second.filepos < b.second.filepos; });
+
+    // reset blockid numbers
+    std::string lastfn{";"};
+    int bnum{0};
+    std::for_each(res.begin(), res.end(), [&lastfn,&bnum](bipair_t &v) { if (v.first != lastfn) { bnum=0; }; v.second.blockid = ++bnum; });
+
+    return res;
+}
+
+CoqEnvironment::rel_aid_keys CoqEnvironment::extract_keys()
+{
+    rel_aid_keys res = _keys;
+    _keys.clear();
+    return res;
+}
+```
+
+## Restore assembly from chunks
 
 ```coq
 Definition restore_assembly (e0 : environment) (aid : Assembly.aid_t) : option environment :=
@@ -80,10 +125,7 @@ Definition restore_assembly (e0 : environment) (aid : Assembly.aid_t) : option e
 ```cpp
 bool CoqEnvironmentReadable::restore_assembly(const CoqAssembly::aid_t & aid, const CoqAssembly::KeyInformation & ki)
 {
-    CoqAssembly::AssemblyInformation ainfo;
-    ainfo._nchunks = _config.nchunks();
-    ainfo._aid = aid; ainfo._apos = 0;
-    std::shared_ptr<CoqAssemblyEncrypted> new_assembly = CoqAssemblyEncrypted::recall(_config, ainfo);
+    std::shared_ptr<CoqAssemblyEncrypted> new_assembly = CoqAssemblyEncrypted::recall(_config, aid);
     if (new_assembly) {
         auto decrypt_assembly = new_assembly->decrypt(ki);
         if (decrypt_assembly) {
@@ -97,6 +139,56 @@ bool CoqEnvironmentReadable::restore_assembly(const CoqAssembly::aid_t & aid, co
 
 ```cpp
 bool CoqEnvironmentWriteable::restore_assembly(const CoqAssembly::aid_t & aid, const CoqAssembly::KeyInformation & ki)
+{
+    return false;
+}
+```
+
+## Backup file content
+
+```coq
+    Program Definition backup (e0 : environment AB) (fp : string) (fpos : N) (content : BufferPlain.buffer_t) : environment AB :=
+        let afree := N.sub (Assembly.assemblysize e0.(config AB).(Configuration.config_nchunks)) e0.(cur_assembly AB).(apos) in
+        let blen := BufferPlain.buffer_len content in
+        let e1 := if N.ltb afree blen then
+                    finalise_and_recreate_assembly e0
+                else e0 in
+        let (a', bi) := Assembly.backup e1.(cur_assembly AB) e1.(cur_buffer AB) fpos content in
+        {| cur_assembly := a'
+        ;  cur_buffer := e1.(cur_buffer AB)
+        ;  config := e1.(config AB)
+        ;  fblocks := (fp,bi) :: e1.(fblocks AB)
+        ;  keys := e1.(keys AB)
+        |}.
+```
+
+```cpp
+bool CoqEnvironmentWriteable::backup(const std::string &fname, uint64_t fpos, const CoqBufferPlain &b, const uint32_t dlen)
+{
+    if (! _assembly) { return false; }
+    uint32_t blen = b.len();
+    if (dlen > blen) { return false; }
+
+    uint32_t nwritten{0};
+    while (nwritten < dlen) {
+        bool recreate{false};
+        int sz = dlen - nwritten;
+        int afree = _assembly->afree();
+        if (sz > afree) {
+            sz = afree;
+            recreate = true;
+        }
+        auto bi = _assembly->backup(b, nwritten, sz);
+        nwritten += sz; // sz > 0 -> we make progress
+        _fblocks.push_back({fname, bi});
+        if (recreate) { finalise_and_recreate_assembly(); }
+    }
+    return true;
+}
+```
+
+```cpp
+bool CoqEnvironmentReadable::backup(const std::string &fname, uint64_t fpos, const CoqBufferPlain &b, const uint32_t dlen)
 {
     return false;
 }
