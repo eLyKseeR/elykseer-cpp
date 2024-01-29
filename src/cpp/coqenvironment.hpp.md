@@ -23,6 +23,7 @@
 
 #include "lxr/coqassembly.hpp"
 #include "lxr/coqconfiguration.hpp"
+#include "lxr/coqenvironment.hpp"
 
 #include <memory>
 #include <vector>
@@ -151,15 +152,15 @@ End Environment.
 };
 
 
-# class CoqEnvironmentWriteable : public CoqEnvironment
+# class CoqEnvironmentWritable : public CoqEnvironment
 
 {
 
 >public:
 
->explicit [CoqEnvironmentWriteable](coqenvironment_ctor.cpp.md)(const CoqConfiguration & c);
+>explicit [CoqEnvironmentWritable](coqenvironment_ctor.cpp.md)(const CoqConfiguration & c);
 
->virtual [~CoqEnvironmentWriteable](coqenvironment_ctor.cpp.md)() = default;
+>virtual [~CoqEnvironmentWritable](coqenvironment_ctor.cpp.md)() = default;
 
 >virtual void [recreate_assembly](coqenvironment_functions.cpp.md)() override final;
 

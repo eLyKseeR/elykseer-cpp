@@ -215,6 +215,10 @@ End Assembly.
 {
     KeyInformation(const CoqConfiguration & c);
 
+    // KeyInformation(const KeyInformation &);
+
+    // KeyInformation(const KeyInformation &&);
+
     Key128 _ivec{false};
 
     Key256 _pkey{false};

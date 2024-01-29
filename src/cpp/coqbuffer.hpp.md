@@ -143,15 +143,13 @@ End Buffer.
 
 >protected:
 
-// >EncryptionState _state;
-
 >std::unique_ptr&lt;struct pimpl&gt; _pimpl;
 
->private:
+// >public:
 
->CoqBuffer(CoqBuffer const &) = delete;
+// >CoqBuffer(CoqBuffer &&);
 
->CoqBuffer & operator=(CoqBuffer const &) = delete;
+// >CoqBuffer & operator=(CoqBuffer const &) = delete;
 
 };
 

@@ -21,6 +21,7 @@ set(GENERATED_SRCS
 	backupctrl.cpp
 	chunk.cpp
 	coqassembly.cpp
+	coqassemblycache.cpp
 	coqbuffer.cpp
 	coqenvironment.cpp
 	dbbackupjob.cpp
@@ -40,6 +41,7 @@ set(GENERATED_HDRS
 	lxr/backupctrl.hpp
 	lxr/chunk.hpp
 	lxr/coqassembly.hpp
+	lxr/coqassemblycache.hpp
 	lxr/coqbuffer.hpp
 	lxr/coqconfiguration.hpp
 	lxr/coqenvironment.hpp
@@ -140,6 +142,20 @@ add_custom_command(
   MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/coqassembly.hpp.md"
   DEPENDS "${LITERATE_SRC_PATH}/coqassembly*.md"
   OUTPUT lxr/coqassembly.hpp)
+
+add_custom_command(
+  COMMAND rm -f coqassemblycache.cpp
+  COMMAND ${MAKE_CPP_CMD} "${LITERATE_SRC_PATH}/coqassemblycache.hpp.md"
+  MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/coqassemblycache.hpp.md"
+  DEPENDS "${LITERATE_SRC_PATH}/coqassemblycache*.md"
+  OUTPUT coqassemblycache.cpp)
+add_custom_command(
+  WORKING_DIRECTORY "lxr"
+  COMMAND rm -f coqassemblycache.hpp
+  COMMAND ${MAKE_HPP_CMD} "${LITERATE_SRC_PATH}/coqassemblycache.hpp.md"
+  MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/coqassemblycache.hpp.md"
+  DEPENDS "${LITERATE_SRC_PATH}/coqassemblycache*.md"
+  OUTPUT lxr/coqassemblycache.hpp)
 
 add_custom_command(
   COMMAND rm -f coqbuffer.cpp

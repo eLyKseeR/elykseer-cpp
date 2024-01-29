@@ -22,7 +22,7 @@ CoqEnvironment::~CoqEnvironment() = default;
 ```
 
 ```cpp
-CoqEnvironmentWriteable::CoqEnvironmentWriteable(const CoqConfiguration &c)
+CoqEnvironmentWritable::CoqEnvironmentWritable(const CoqConfiguration &c)
   : CoqEnvironment(c)
 {}
 ```

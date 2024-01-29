@@ -12,9 +12,9 @@
 #include <sstream>
 ````
 
-# Test suite: utAssembly
+# Test suite: utCoqAssembly
 
-on class [Assembly](../src/coqassembly.hpp.md)
+on class [CoqAssembly](../src/coqassembly.hpp.md)
 
 ```cpp
 BOOST_AUTO_TEST_SUITE( utCoqAssembly )

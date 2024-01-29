@@ -20,13 +20,13 @@ on class [CoqEnvironment](../src/coqenvironment.hpp.md)
 BOOST_AUTO_TEST_SUITE( utCoqEnvironment )
 ```
 
-## Test case: create a _CoqEnvironmentWriteable_
+## Test case: create a _CoqEnvironmentWritable_
 
 ```cpp
-BOOST_AUTO_TEST_CASE( instantiate_CoqEnvironmentWriteable )
+BOOST_AUTO_TEST_CASE( instantiate_CoqEnvironmentWritable )
 {
     lxr::CoqConfiguration _config;
-    lxr::CoqEnvironmentWriteable _env(_config);
+    lxr::CoqEnvironmentWritable _env(_config);
     _env.finalise_assembly();
 
     BOOST_CHECK(_env.extract_keys().empty());
@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE( backup_restore_roundtrip )
     _config.path_chunks = (chunk_path /= "lxr").string();
     _config.path_db = (chunk_path /= "meta").string();
     
-    lxr::CoqEnvironmentWriteable _wenv(_config);
+    lxr::CoqEnvironmentWritable _wenv(_config);
     _wenv.recreate_assembly();
 
     // backup

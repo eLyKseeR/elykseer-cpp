@@ -6,7 +6,7 @@ Definition recreate_assembly (e : environment) : environment :=
 ```
 ```cpp
 
-void CoqEnvironmentWriteable::recreate_assembly()
+void CoqEnvironmentWritable::recreate_assembly()
 {
     _assembly.reset(new CoqAssemblyPlainWritable(_config));
 }
@@ -37,7 +37,7 @@ Definition finalise_assembly (e0 : environment) : environment :=
     else e0.
 ```
 ```cpp
-void CoqEnvironmentWriteable::finalise_assembly()
+void CoqEnvironmentWritable::finalise_assembly()
 {
     if (! _assembly) { return; }
     std::shared_ptr<CoqAssemblyPlainFull> finished_assembly = _assembly->finish();
@@ -46,7 +46,7 @@ void CoqEnvironmentWriteable::finalise_assembly()
     std::shared_ptr<CoqAssemblyEncrypted> encrypted_assembly = finished_assembly->encrypt(ki);
     if (encrypted_assembly) {
         std::clog << "have encrypted assembly" << std::endl;
-        _keys.push_back({encrypted_assembly->aid(), ki});
+        _keys.push_back({encrypted_assembly->aid(), std::move(ki)});
         encrypted_assembly->extract();
     }
 }
@@ -61,7 +61,7 @@ Definition finalise_and_recreate_assembly (e0 : environment) : environment :=
     recreate_assembly e1.
 ```
 ```cpp
-void CoqEnvironmentWriteable::finalise_and_recreate_assembly()
+void CoqEnvironmentWritable::finalise_and_recreate_assembly()
 {
     finalise_assembly();
     recreate_assembly();
@@ -98,7 +98,7 @@ CoqEnvironment::rel_fname_fblocks CoqEnvironment::extract_fblocks()
 
 CoqEnvironment::rel_aid_keys CoqEnvironment::extract_keys()
 {
-    rel_aid_keys res = _keys;
+    rel_aid_keys res = std::move(_keys);
     _keys.clear();
     return res;
 }
@@ -138,7 +138,7 @@ bool CoqEnvironmentReadable::restore_assembly(const CoqAssembly::aid_t & aid, co
 ```
 
 ```cpp
-bool CoqEnvironmentWriteable::restore_assembly(const CoqAssembly::aid_t & aid, const CoqAssembly::KeyInformation & ki)
+bool CoqEnvironmentWritable::restore_assembly(const CoqAssembly::aid_t & aid, const CoqAssembly::KeyInformation & ki)
 {
     return false;
 }
@@ -163,7 +163,7 @@ bool CoqEnvironmentWriteable::restore_assembly(const CoqAssembly::aid_t & aid, c
 ```
 
 ```cpp
-bool CoqEnvironmentWriteable::backup(const std::string &fname, uint64_t fpos, const CoqBufferPlain &b, const uint32_t dlen)
+bool CoqEnvironmentWritable::backup(const std::string &fname, uint64_t fpos, const CoqBufferPlain &b, const uint32_t dlen)
 {
     if (! _assembly) { return false; }
     uint32_t blen = b.len();

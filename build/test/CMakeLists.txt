@@ -29,6 +29,7 @@ set(GENERATED_SRCS
   utFileCtrl.cpp
   utFsUtils.cpp
   utCoqAssembly.cpp
+  utCoqAssemblyCache.cpp
   utCoqEnvironment.cpp
   utLiz.cpp
   utMain.cpp
@@ -107,6 +108,11 @@ add_custom_command(
   COMMAND ${EXTRACT_CPP_CMD} "${LITERATE_SRC_PATH}/utCoqAssembly.cpp.md"  utCoqAssembly.cpp
   DEPENDS "${LITERATE_SRC_PATH}/utCoqAssembly.cpp.md"
   OUTPUT utCoqAssembly.cpp)
+add_custom_command(
+  COMMAND rm -f utCoqAssemblyCache.cpp
+  COMMAND ${EXTRACT_CPP_CMD} "${LITERATE_SRC_PATH}/utCoqAssemblyCache.cpp.md"  utCoqAssemblyCache.cpp
+  DEPENDS "${LITERATE_SRC_PATH}/utCoqAssemblyCache.cpp.md"
+  OUTPUT utCoqAssemblyCache.cpp)
 add_custom_command(
   COMMAND rm -f utCoqEnvironment.cpp
   COMMAND ${EXTRACT_CPP_CMD} "${LITERATE_SRC_PATH}/utCoqEnvironment.cpp.md"  utCoqEnvironment.cpp
