@@ -6,6 +6,7 @@
 #include "boost/test/unit_test.hpp"
 
 #include "lxr/coqassemblycache.hpp"
+#include "lxr/coqstore.hpp"
 #include "lxr/key256.hpp"
 #include "lxr/sha256.hpp"
 
@@ -70,9 +71,9 @@ BOOST_AUTO_TEST_CASE( backup_restore_roundtrip )
         _config.path_db = (chunk_path /= "meta").string();
     }
 
-    std::map<lxr::CoqAssembly::aid_t, lxr::CoqAssembly::KeyInformation> _keys{};
+    std::shared_ptr<lxr::CoqKeyStore> _keystore{new lxr::CoqKeyStore(_config)};
+    std::shared_ptr<lxr::CoqFBlockStore> _fblockstore{new lxr::CoqFBlockStore(_config)};
     std::map<std::string, lxr::CoqAssemblyCache::mvalue_t> map_metrics1{};
-    lxr::CoqEnvironment::rel_fname_fblocks _fblocks{};
 
     std::string msg{"abcdef012345789"};
     lxr::Key256 _fhash = lxr::Sha256::hash(std::string("/etc/motd"));
@@ -80,18 +81,8 @@ BOOST_AUTO_TEST_CASE( backup_restore_roundtrip )
     // create CoqAssemblyCache and store a string
     {
         lxr::CoqAssemblyCache qac(_config, 3, 12);
-
-        // qac.register_key_query([&_keys](const lxr::CoqAssembly::aid_t & aid)->std::optional<lxr::CoqAssembly::KeyInformation> {
-        //     try {
-        //         return std::move(_keys.at(aid));
-        //     } catch (std::exception &e) {
-        //         return {};
-        //     }
-        // });
-        qac.register_key_store([&_keys](const lxr::CoqEnvironment::pkpair_t & pkp) {
-            std::clog << "key store: " << pkp.first << std::endl;
-            _keys.insert(std::move(pkp));
-        });
+        qac.register_key_store(_keystore);
+        qac.register_fblock_store(_fblockstore);
 
         lxr::WriteQueueEntity wqe;
         wqe._fhash = _fhash;
@@ -102,8 +93,8 @@ BOOST_AUTO_TEST_CASE( backup_restore_roundtrip )
         auto wrote = qac.iterate_write_queue();
         qac.close();
 
-        _fblocks = qac.extract_fblocks();
-        BOOST_CHECK_EQUAL(_fblocks.size(), 1);
+        BOOST_CHECK_EQUAL(_keystore->size(), 1);
+        BOOST_CHECK_EQUAL(_fblockstore->size(), 1);
 
         auto metrics = qac.metrics();
         map_metrics1.insert(metrics.begin(), metrics.end());
@@ -112,12 +103,7 @@ BOOST_AUTO_TEST_CASE( backup_restore_roundtrip )
 
     // ----
 
-    BOOST_CHECK_EQUAL(1, _keys.size());
-    lxr::CoqAssembly::aid_t _aid;
-    for (auto const & k : _keys) {
-        _aid = k.first;
-        std::clog << "key for aid = " << k.first << std::endl;
-    }
+    lxr::CoqAssembly::aid_t _aid = _keystore->at(0)->first;
 
     for (auto const &e : map_metrics1) {
         std::clog << "  " << e.first << ": ";
@@ -143,18 +129,12 @@ BOOST_AUTO_TEST_CASE( backup_restore_roundtrip )
     // create CoqAssemblyCache and retrieve a string
     {
         lxr::CoqAssemblyCache qac(_config, 3, 12);
-
-        qac.register_key_query([&_keys](const lxr::CoqAssembly::aid_t & aid)->std::optional<lxr::CoqAssembly::KeyInformation> {
-            try {
-                return std::move(_keys.at(aid));
-            } catch (std::exception &e) {
-                return {};
-            }
-        });
+        qac.register_key_store(_keystore);
+        qac.register_fblock_store(_fblockstore);
 
         lxr::ReadQueueEntity rqe;
         rqe._aid = _aid;
-        lxr::CoqAssembly::BlockInformation bi = _fblocks[0].second;
+        lxr::CoqAssembly::BlockInformation bi = _fblockstore->at(0)->second;
         rqe._apos = bi.blockapos;
         rqe._rlen = msg.length();
 

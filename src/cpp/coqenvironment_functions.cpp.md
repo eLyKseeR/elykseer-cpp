@@ -80,6 +80,7 @@ from filename to _CoqAssembly::BlockInformation_ aka. as a pair.
 the environments memory of this relation is cleared.
 
 ```cpp
+/*
 CoqEnvironment::rel_fname_fblocks CoqEnvironment::extract_fblocks()
 {
     rel_fname_fblocks res = _fblocks;
@@ -95,11 +96,14 @@ CoqEnvironment::rel_fname_fblocks CoqEnvironment::extract_fblocks()
 
     return res;
 }
+*/
+```
 
+```cpp
 CoqEnvironment::rel_aid_keys CoqEnvironment::extract_keys()
 {
     rel_aid_keys res = std::move(_keys);
-    _keys.clear();
+    _keys.clear(); // TODO already gone; on all platforms?
     return res;
 }
 ```
@@ -163,12 +167,13 @@ bool CoqEnvironmentWritable::restore_assembly(const CoqAssembly::aid_t & aid, co
 ```
 
 ```cpp
-bool CoqEnvironmentWritable::backup(const std::string &fname, uint64_t fpos, const CoqBufferPlain &b, const uint32_t dlen)
+CoqEnvironment::rel_fname_fblocks CoqEnvironmentWritable::backup(const std::string &fname, uint64_t fpos, const CoqBufferPlain &b, const uint32_t dlen)
 {
-    if (! _assembly) { return false; }
+    if (! _assembly) { return {}; }
     uint32_t blen = b.len();
-    if (dlen > blen) { return false; }
+    if (dlen > blen) { return {}; }
 
+    rel_fname_fblocks _fblocks{};
     uint32_t nwritten{0};
     while (nwritten < dlen) {
         bool recreate{false};
@@ -183,13 +188,13 @@ bool CoqEnvironmentWritable::backup(const std::string &fname, uint64_t fpos, con
         _fblocks.push_back({fname, bi});
         if (recreate) { finalise_and_recreate_assembly(); }
     }
-    return true;
+    return _fblocks;
 }
 ```
 
 ```cpp
-bool CoqEnvironmentReadable::backup(const std::string &fname, uint64_t fpos, const CoqBufferPlain &b, const uint32_t dlen)
+CoqEnvironment::rel_fname_fblocks CoqEnvironmentReadable::backup(const std::string &fname, uint64_t fpos, const CoqBufferPlain &b, const uint32_t dlen)
 {
-    return false;
+    return {};
 }
 ```

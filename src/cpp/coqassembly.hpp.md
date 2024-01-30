@@ -18,20 +18,24 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+```
 
-#pragma once
+`#pragma once`
 
-#include <filesystem>
-#include <memory>
-#include <string>
+`#include <filesystem>`
 
-#include "lxr/coqbuffer.hpp"
-#include "lxr/coqconfiguration.hpp"
+`#include <memory>`
 
-#include "lxr/key256.hpp"
-#include "lxr/key128.hpp"
+`#include <string>`
 
-````
+`#include` "[lxr/coqbuffer.hpp](coqbuffer.hpp.md)"
+
+`#include` "[lxr/coqconfiguration.hpp](coqconfiguration.hpp.md)"
+
+`#include "lxr/key256.hpp"`
+
+`#include "lxr/key128.hpp"`
+
 
 namespace [lxr](namespace.list) {
 
@@ -176,62 +180,63 @@ End Assembly.
 >static const uint32_t assemblysize (int nchunks) { return chunksize * nchunks; }
 
 
-# struct AssemblyInformation
+## struct AssemblyInformation
 
 {
-    AssemblyInformation();
 
-    AssemblyInformation(const CoqConfiguration & c);
+>AssemblyInformation();
 
-    AssemblyInformation(const CoqConfiguration & c, const std::string & aid);
+>AssemblyInformation(const [CoqConfiguration](coqconfiguration.hpp) & c);
 
-    uint16_t _nchunks{16};
+>AssemblyInformation(const [CoqConfiguration](coqconfiguration.hpp) & c, const std::string & aid);
 
-    uint32_t _apos{0};
+>uint16_t _nchunks{16};
 
-    aid_t _aid{""};
+>uint32_t _apos{0};
+
+>aid_t _aid{""};
 
 };
 
 ## struct BlockInformation
 
 {
-    int blockid;
 
-    Key256 bchecksum;
+>int blockid;
 
-    uint32_t blocksize;
+>Key256 bchecksum;
 
-    uint64_t filepos;
+>uint32_t blocksize;
 
-    aid_t blockaid;
+>uint64_t filepos;
 
-    uint32_t blockapos;
+>aid_t blockaid;
+
+>uint32_t blockapos;
 
 };
 
 ## struct KeyInformation
 
 {
-    KeyInformation(const CoqConfiguration & c);
 
-    // KeyInformation(const KeyInformation &);
+>KeyInformation() {};
 
-    // KeyInformation(const KeyInformation &&);
+>KeyInformation(const [CoqConfiguration](coqconfiguration.hpp) & c);
 
-    Key128 _ivec{false};
+>Key128 _ivec{false};
 
-    Key256 _pkey{false};
+>Key256 _pkey{false};
 
-    std::string _localid;
+>std::string _localid;
 
-    int _localnchunks;
+>int _localnchunks;
 
 };
 
 >protected:
 
->explicit [CoqAssembly](coqassembly_ctor.cpp.md)(const CoqConfiguration & c);
+>explicit [CoqAssembly](coqassembly_ctor.cpp.md)(const [CoqConfiguration](coqconfiguration.hpp) & c);
 
 >explicit [CoqAssembly](coqassembly_ctor.cpp.md)(CoqAssembly*);
 
@@ -266,7 +271,7 @@ End Assembly.
 
 >protected:
 
->const CoqConfiguration _config;
+>const [CoqConfiguration](coqconfiguration.hpp) _config;
 
 >struct AssemblyInformation _assemblyinformation;
 
@@ -288,7 +293,7 @@ class CoqAssemblyPlainFull;
 
 >public:
 
->explicit [CoqAssemblyPlainWritable](coqassembly_ctor.cpp.md)(const CoqConfiguration & c);
+>explicit [CoqAssemblyPlainWritable](coqassembly_ctor.cpp.md)(const [CoqConfiguration](coqconfiguration.hpp) & c);
 
 >virtual [~CoqAssemblyPlainWritable](coqassembly_ctor.cpp.md)();
 
@@ -304,7 +309,7 @@ class CoqAssemblyPlainFull;
 
 >private:
 
->std::shared_ptr&lt;CoqBufferPlain&gt; _buffer{nullptr};
+>std::shared_ptr&lt;[CoqBufferPlain](coqbuffer.hpp.md#class-coqbufferplain--public-coqbuffer)&gt; _buffer{nullptr};
 
 };
 
@@ -317,7 +322,7 @@ class CoqAssemblyEncrypted;
 
 >public:
 
->explicit [CoqAssemblyPlainFull](coqassembly_ctor.cpp.md)(const CoqConfiguration & c);
+>explicit [CoqAssemblyPlainFull](coqassembly_ctor.cpp.md)(const [CoqConfiguration](coqconfiguration.hpp) & c);
 
 >explicit [CoqAssemblyPlainFull](coqassembly_ctor.cpp.md)(CoqAssemblyEncrypted *, std::shared_ptr&lt;CoqBufferPlain&gt; &b);
 
@@ -335,7 +340,7 @@ class CoqAssemblyEncrypted;
 
 >private:
 
->std::shared_ptr&lt;CoqBufferPlain&gt; _buffer{nullptr};
+>std::shared_ptr&lt;[CoqBufferPlain](coqbuffer.hpp.md#class-coqbufferplain--public-coqbuffer)&gt; _buffer{nullptr};
 
 };
 
@@ -346,7 +351,7 @@ class CoqAssemblyEncrypted;
 
 >public:
 
->explicit [CoqAssemblyEncrypted](coqassembly_ctor.cpp.md)(const CoqConfiguration & c);
+>explicit [CoqAssemblyEncrypted](coqassembly_ctor.cpp.md)(const [CoqConfiguration](coqconfiguration.hpp) & c);
 
 >explicit [CoqAssemblyEncrypted](coqassembly_ctor.cpp.md)(CoqAssemblyPlainFull*, std::shared_ptr&lt;CoqBufferEncrypted&gt; &b);
 
@@ -360,11 +365,11 @@ class CoqAssemblyEncrypted;
 
 >virtual uint32_t [extract](coqassembly_functions.cpp.md)() final;
 
->static std::shared_ptr&lt;CoqAssemblyEncrypted&gt; [recall](coqassembly_functions.cpp.md)(const CoqConfiguration & c, const CoqAssembly::aid_t & aid);
+>static std::shared_ptr&lt;CoqAssemblyEncrypted&gt; [recall](coqassembly_functions.cpp.md)(const [CoqConfiguration](coqconfiguration.hpp) & c, const CoqAssembly::aid_t & aid);
 
 >private:
 
->std::shared_ptr&lt;CoqBufferEncrypted&gt; _buffer{nullptr};
+>std::shared_ptr&lt;[CoqBufferEncrypted](coqbuffer.hpp.md#class-coqbufferencrypted--public-coqbuffer)&gt; _buffer{nullptr};
 
 };
 

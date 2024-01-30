@@ -61,6 +61,8 @@ End Configuration.
 
     std::string my_id;
 
+    CoqConfiguration & operator=(CoqConfiguration const &) = default;
+
     private:
 
     uint16_t _nchunks{16};

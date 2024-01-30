@@ -20,19 +20,25 @@
 */
 
 #pragma once
+```
 
-#include "lxr/coqassembly.hpp"
-#include "lxr/coqbuffer.hpp"
-#include "lxr/coqenvironment.hpp"
+`#include` "[lxr/coqassembly.hpp](coqassembly.hpp.md)"
 
-#include <memory>
-#include <variant>
+`#include` "[lxr/coqbuffer.hpp](coqbuffer.hpp.md)"
 
-````
+`#include` "[lxr/coqenvironment.hpp](coqenvironment.hpp.md)"
+
+`#include` "[lxr/coqstore.hpp](coqstore.hpp.md)"
+
+`#include <memory>`
+
+`#include <variant>`
+
 
 namespace [lxr](namespace.list) {
 
 /*
+Coq defines data structures in module [Configuration](https://github.com/eLyKseeR/elykseer-ml/blob/main/theories/Configuration.v)
 ```coq
 Record readqueueentity : Type :=
     mkreadqueueentity
@@ -64,11 +70,11 @@ Record writequeueresult : Type :=
 
 {
 
-    CoqAssembly::aid_t _aid;
+>CoqAssembly::aid_t _aid;
 
-    uint32_t _apos;
+>uint32_t _apos;
 
-    uint32_t _rlen;
+>uint32_t _rlen;
 
 };
 
@@ -76,9 +82,9 @@ Record writequeueresult : Type :=
 
 {
 
-    struct ReadQueueEntity _readrequest;
+>struct ReadQueueEntity _readrequest;
 
-    std::shared_ptr&lt;CoqBufferPlain&gt; _rresult{nullptr};
+>std::shared_ptr&lt;[CoqBufferPlain](coqbuffer.hpp.md)&gt; _rresult{nullptr};
 
 };
 
@@ -86,11 +92,11 @@ Record writequeueresult : Type :=
 
 {
 
-    Key256 _fhash{true};
+>Key256 _fhash{true};
 
-    uint64_t _fpos{0};
+>uint64_t _fpos{0};
 
-    std::shared_ptr&lt;CoqBufferPlain&gt; _buffer{nullptr};
+>std::shared_ptr&lt;[CoqBufferPlain](coqbuffer.hpp.md)&gt; _buffer{nullptr};
 
 };
 
@@ -98,9 +104,9 @@ Record writequeueresult : Type :=
 
 {
 
-    struct WriteQueueEntity _writerequest;
+>struct WriteQueueEntity _writerequest;
 
-    struct ReadQueueEntity _wresult;
+>struct ReadQueueEntity _wresult;
 
 };
 
@@ -109,7 +115,7 @@ Record writequeueresult : Type :=
 
 {
 
->public:
+> public:
 
 >typedef std::variant&lt;uint64_t,uint32_t,std::string&gt; mvalue_t;
 
@@ -117,11 +123,9 @@ Record writequeueresult : Type :=
 
 >typedef std::vector&lt;metric_t&gt; vmetric_t;
 
->explicit [CoqAssemblyCache](coqassemblycache_ctor.cpp.md)(const CoqConfiguration &c, const int n_envs, const int depth);
+>explicit [CoqAssemblyCache](coqassemblycache_ctor.cpp.md)(const [CoqConfiguration](coqconfiguration.hpp.md) &c, const int n_envs, const int depth);
 
 >[~CoqAssemblyCache](coqassemblycache_ctor.cpp.md)();
-
->public:
 
 >bool [enqueue_write_request](coqassemblycache_functions.cpp.md)(const WriteQueueEntity &);
 
@@ -135,15 +139,15 @@ Record writequeueresult : Type :=
 
 >void [close](coqassemblycache_functions.cpp.md)();
 
->void [register_key_query](coqassemblycache_functions.cpp.md)(std::function&lt;std::optional&lt;CoqAssembly::KeyInformation&gt;(const CoqAssembly::aid_t & aid)&gt; f);
+>void [register_key_store](coqassemblycache_functions.cpp.md)(std::shared_ptr&lt;CoqKeyStore&gt; &);
 
->void [register_key_store](coqassemblycache_functions.cpp.md)(std::function&lt;void(const CoqEnvironment::pkpair_t &)&gt; f);
+>void [register_fblock_store](coqassemblycache_functions.cpp.md)(std::shared_ptr&lt;CoqFBlockStore&gt; &);
 
->CoqEnvironment::rel_fname_fblocks [extract_fblocks](coqassemblycache_functions.cpp.md)();
+>//CoqEnvironment::rel_fname_fblocks [extract_fblocks](coqassemblycache_functions.cpp.md)();
 
 >vmetric_t metrics() const;
 
->private:
+> private:
 
 >struct pimpl;
 

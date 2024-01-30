@@ -6,6 +6,7 @@
 #include "boost/test/unit_test.hpp"
 
 #include "lxr/coqenvironment.hpp"
+#include "lxr/coqstore.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -30,7 +31,6 @@ BOOST_AUTO_TEST_CASE( instantiate_CoqEnvironmentWritable )
     _env.finalise_assembly();
 
     BOOST_CHECK(_env.extract_keys().empty());
-    BOOST_CHECK(_env.extract_fblocks().empty());
 }
 ```
 
@@ -44,7 +44,6 @@ BOOST_AUTO_TEST_CASE( instantiate_CoqEnvironmentReadable )
     // _env.finalise_assembly();
 
     BOOST_CHECK(_env.extract_keys().empty());
-    BOOST_CHECK(_env.extract_fblocks().empty());
 }
 ```
 
@@ -54,30 +53,35 @@ BOOST_AUTO_TEST_CASE( instantiate_CoqEnvironmentReadable )
 BOOST_AUTO_TEST_CASE( backup_restore_roundtrip )
 {
     lxr::CoqConfiguration _config;
-    _config.my_id = "hello world.";
-    _config.nchunks(16);
-    std::filesystem::path chunk_path = std::filesystem::temp_directory_path();
-    lxr::Key128 _r;
-    chunk_path /= _r.toHex();
-    if (! std::filesystem::exists(chunk_path)) {
-        std::filesystem::create_directory(chunk_path);
+    {
+        _config.my_id = "hello world.";
+        _config.nchunks(16);
+        std::filesystem::path chunk_path = std::filesystem::temp_directory_path();
+        lxr::Key128 _r;
+        chunk_path /= _r.toHex();
+        if (! std::filesystem::exists(chunk_path)) {
+            std::filesystem::create_directory(chunk_path);
+        }
+        _config.path_chunks = (chunk_path /= "lxr").string();
+        _config.path_db = (chunk_path /= "meta").string();
     }
-    _config.path_chunks = (chunk_path /= "lxr").string();
-    _config.path_db = (chunk_path /= "meta").string();
-    
+
+    std::shared_ptr<lxr::CoqFBlockStore> _fblockstore{new lxr::CoqFBlockStore(_config)};
     lxr::CoqEnvironmentWritable _wenv(_config);
     _wenv.recreate_assembly();
 
     // backup
     const std::string msg{"good morning and hello world."};
     lxr::CoqBufferPlain buffer(msg.length(), msg.c_str());
-    BOOST_CHECK(_wenv.backup("/data/test/message.txt", 0, buffer, buffer.len()));
+    auto fblocks = _wenv.backup("/data/test/message.txt", 0, buffer, buffer.len());
+    BOOST_CHECK_EQUAL(1, fblocks.size());
+    for (auto const & fb : fblocks) {
+        _fblockstore->add(fb.first, fb.second);
+    }
 
     // finish
     _wenv.finalise_assembly();
 
-    lxr::CoqEnvironment::rel_fname_fblocks _fblocks = _wenv.extract_fblocks();
-    BOOST_CHECK_EQUAL(_fblocks.size(), 1);
     lxr::CoqEnvironment::rel_aid_keys _keys = _wenv.extract_keys();
     BOOST_CHECK_EQUAL(_keys.size(), 1);
 
@@ -86,7 +90,7 @@ BOOST_AUTO_TEST_CASE( backup_restore_roundtrip )
     _renv.restore_assembly(_keys[0].first, _keys[0].second);
 
     // test restored bytes
-    lxr::CoqAssembly::BlockInformation bi = _fblocks[0].second;
+    lxr::CoqAssembly::BlockInformation bi = _fblockstore->at(0)->second;
     BOOST_CHECK_EQUAL(bi.blocksize, msg.length());
     std::shared_ptr<lxr::CoqBufferPlain> restored_block = _renv._assembly->restore(bi);
     char restored_buffer[bi.blocksize];

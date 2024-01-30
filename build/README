@@ -28,3 +28,17 @@ and as soon as "ccache" is available, then it will be used.
 outputs a summary of cache usage:
 
 $> ccache -s
+
+
+coverage
+========
+
+cmake --fresh -DCMAKE_BUILD_TYPE=DebugProfile .
+
+./test/utp*
+
+cd src
+
+gcov -o ./CMakeFiles/elykseer-cpp_pDebugProfile.dir coqassembly.cpp.
+
+

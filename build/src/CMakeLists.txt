@@ -24,6 +24,7 @@ set(GENERATED_SRCS
 	coqassemblycache.cpp
 	coqbuffer.cpp
 	coqenvironment.cpp
+	coqstore.cpp
 	dbbackupjob.cpp
 	dbfp.cpp
 	dbkey.cpp
@@ -45,6 +46,7 @@ set(GENERATED_HDRS
 	lxr/coqbuffer.hpp
 	lxr/coqconfiguration.hpp
 	lxr/coqenvironment.hpp
+	lxr/coqstore.hpp
 	lxr/dbbackupjob.hpp
 	lxr/dbctrl.hpp
 	lxr/dbfp.hpp
@@ -191,6 +193,20 @@ add_custom_command(
   MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/coqenvironment.hpp.md"
   DEPENDS "${LITERATE_SRC_PATH}/coqenvironment*.md"
   OUTPUT lxr/coqenvironment.hpp)
+
+add_custom_command(
+  COMMAND rm -f coqstore.cpp
+  COMMAND ${MAKE_CPP_CMD} "${LITERATE_SRC_PATH}/coqstore.hpp.md"
+  MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/coqstore.hpp.md"
+  DEPENDS "${LITERATE_SRC_PATH}/coqstore*.md"
+  OUTPUT coqstore.cpp)
+add_custom_command(
+  WORKING_DIRECTORY "lxr"
+  COMMAND rm -f coqstore.hpp
+  COMMAND ${MAKE_HPP_CMD} "${LITERATE_SRC_PATH}/coqstore.hpp.md"
+  MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/coqstore.hpp.md"
+  DEPENDS "${LITERATE_SRC_PATH}/coqstore*.md"
+  OUTPUT lxr/coqstore.hpp)
 
 add_custom_command(
   COMMAND rm -f dbbackupjob.cpp

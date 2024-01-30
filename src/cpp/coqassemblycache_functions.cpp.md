@@ -1,40 +1,40 @@
 declared in [CoqAssemblyCache](coqassemblycache.hpp.md)
 
-## Query function for encryption keys
+## Store file blocks
 
 ```cpp
-void CoqAssemblyCache::register_key_query(std::function<std::optional<CoqAssembly::KeyInformation>(const CoqAssembly::aid_t & aid)> f)
+void CoqAssemblyCache::register_fblock_store(std::shared_ptr<CoqFBlockStore> &st)
 {
     if (_pimpl) {
-        _pimpl->register_key_query(f);
+        _pimpl->register_fblock_store(st);
     }
 }
 
-void CoqAssemblyCache::pimpl::register_key_query(std::function<std::optional<CoqAssembly::KeyInformation>(const CoqAssembly::aid_t & aid)> f)
+void CoqAssemblyCache::pimpl::register_fblock_store(std::shared_ptr<CoqFBlockStore> &st)
 {
-    _keyquery = f;
+    _fblockstore = st;
 }
 ```
 
-## Store function for encryption keys
+## Store encryption keys
 
 ```cpp
-void CoqAssemblyCache::register_key_store(std::function<void(const CoqEnvironment::pkpair_t &)> f)
+void CoqAssemblyCache::register_key_store(std::shared_ptr<CoqKeyStore> &st)
 {
     if (_pimpl) {
-        _pimpl->register_key_store(f);
+        _pimpl->register_key_store(st);
     }
 }
 
-void CoqAssemblyCache::pimpl::register_key_store(std::function<void(const CoqEnvironment::pkpair_t &)> f)
+void CoqAssemblyCache::pimpl::register_key_store(std::shared_ptr<CoqKeyStore> &st)
 {
-    _keystore = f;
+    _keystore = st;
 }
 ```
 
 ## Access blockinformation in writable environment
 
-```cpp
+```off_cpp
 CoqEnvironment::rel_fname_fblocks CoqAssemblyCache::extract_fblocks()
 {
     if (_pimpl) {
@@ -115,9 +115,9 @@ Program Definition ensure_assembly (ac0 : assemblycache) (sel_aid : Assembly.aid
 std::optional<std::shared_ptr<CoqEnvironmentReadable>>
 CoqAssemblyCache::pimpl::try_restore_assembly(const CoqAssembly::aid_t & sel_aid)
 {
-    if (! _keyquery) { return {}; }
+    if (! _keystore) { return {}; }
     std::shared_ptr<CoqEnvironmentReadable> _env(new CoqEnvironmentReadable(_config));
-    std::optional<CoqAssembly::KeyInformation> optki = _keyquery(sel_aid);
+    std::optional<CoqAssembly::KeyInformation> optki = _keystore->find(sel_aid);
     if (optki && _env->restore_assembly(sel_aid, optki.value())) {
         ++n_assembly_recalled;
         return _env;
@@ -281,8 +281,8 @@ bool CoqAssemblyCache::pimpl::enqueue_read_request(const ReadQueueEntity &rqe)
     if (_readqueue.size() >= n_queuesz) {
         return false;
     } else {
-        ++n_iterate_reads;
         std::lock_guard<std::mutex> guard(_read_mutex);
+        ++n_iterate_reads;
         _readqueue.push_back(rqe);
     }
     return true;
@@ -314,11 +314,13 @@ std::vector<WriteQueueResult> CoqAssemblyCache::pimpl::run_write_requests(const 
             _writeenv->recreate_assembly();
         }
         if (wreq._buffer) {
-            _writeenv->backup(wreq._fhash.toHex(), wreq._fpos, *wreq._buffer, wreq._buffer->len());
+            auto fblocks = _writeenv->backup(wreq._fhash.toHex(), wreq._fpos, *wreq._buffer, wreq._buffer->len());
+            for (auto const & fb : fblocks) {
+                _fblockstore->add(fb.first, fb.second);
+            }
             backup_bytes += wreq._buffer->len();
         }
     }
-    // TODO get keys and fblocks
     return {};
 }
 ```
@@ -344,10 +346,10 @@ std::vector<WriteQueueResult> CoqAssemblyCache::iterate_write_queue()
 std::vector<WriteQueueResult> CoqAssemblyCache::pimpl::iterate_write_queue()
 {
     if (! _writequeue.empty()) {
-        ++n_iterate_writes;
         std::vector<WriteQueueEntity> wq;
         {
             std::lock_guard<std::mutex> guard(_write_mutex);
+            ++n_iterate_writes;
             // make a copy of the write queue
             wq = std::move(_writequeue);
             _writequeue.clear();
@@ -385,8 +387,8 @@ bool CoqAssemblyCache::pimpl::enqueue_write_request(const WriteQueueEntity &wqe)
     if (_writequeue.size() >= n_queuesz) {
         return false;
     } else {
-        ++n_write_requests;
         std::lock_guard<std::mutex> guard(_write_mutex);
+        ++n_write_requests;
         _writequeue.push_back(std::move(wqe));
     }
     return true;
@@ -415,9 +417,11 @@ void CoqAssemblyCache::pimpl::flush()
     if (_writeenv) {
         ++n_assembly_finalised;
         _writeenv->finalise_and_recreate_assembly();
-        auto keys = _writeenv->extract_keys();
-        for (auto k : keys) {
-            _keystore(std::move(k));
+        if (_keystore) {
+            auto keys = _writeenv->extract_keys();
+            for (auto k : keys) {
+                _keystore->add(k.first, k.second);
+            }
         }
     } else {
         _writeenv->recreate_assembly();
@@ -447,7 +451,7 @@ void CoqAssemblyCache::pimpl::close()
         _writeenv->finalise_assembly();
         auto keys = _writeenv->extract_keys();
         for (auto k : keys) {
-            _keystore(std::move(k));
+            _keystore->add(k.first, k.second);
         }
     }
 }

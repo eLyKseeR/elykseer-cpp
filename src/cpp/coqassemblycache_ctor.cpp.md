@@ -39,9 +39,8 @@ public:
     std::optional<std::shared_ptr<CoqEnvironmentReadable>> try_restore_assembly(const CoqAssembly::aid_t & sel_aid);
     std::optional<std::shared_ptr<CoqEnvironmentReadable>> ensure_assembly(const CoqAssembly::aid_t & sel_aid);
 
-    void register_key_query(std::function<std::optional<CoqAssembly::KeyInformation>(const CoqAssembly::aid_t &)> f);
-    void register_key_store(std::function<void(const CoqEnvironment::pkpair_t &)> f);
-    CoqEnvironment::rel_fname_fblocks extract_fblocks();
+    void register_key_store(std::shared_ptr<CoqKeyStore> &st);
+    void register_fblock_store(std::shared_ptr<CoqFBlockStore> &st);
 
     bool enqueue_read_request(const ReadQueueEntity &);
     bool enqueue_write_request(const WriteQueueEntity &);
@@ -62,8 +61,8 @@ private:
     std::vector<ReadQueueEntity> _readqueue;
     std::vector<WriteQueueEntity> _writequeue;
 
-    std::function<std::optional<CoqAssembly::KeyInformation>(const CoqAssembly::aid_t &)> _keyquery{nullptr};
-    std::function<void(const CoqEnvironment::pkpair_t &)> _keystore{nullptr};
+    std::shared_ptr<CoqKeyStore> _keystore{nullptr};
+    std::shared_ptr<CoqFBlockStore> _fblockstore{nullptr};
 
     std::mutex _write_mutex;
     std::mutex _read_mutex;

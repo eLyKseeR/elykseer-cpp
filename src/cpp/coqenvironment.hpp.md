@@ -75,15 +75,13 @@ End Environment.
 
 >public:
 
->typedef std::pair&lt;std::string, CoqAssembly::BlockInformation&gt; bipair_t;
+>typedef std::pair&lt;std::string, [CoqAssembly::BlockInformation](coqassembly.hpp.md#struct-blockinformation)&gt; bipair_t;
 
 >typedef std::vector&lt;bipair_t&gt; rel_fname_fblocks;
 
->typedef std::pair&lt;CoqAssembly::aid_t, CoqAssembly::KeyInformation&gt; pkpair_t;
+>typedef std::pair&lt;CoqAssembly::aid_t, [CoqAssembly::KeyInformation](coqassembly.hpp.md#struct-keyinformation)&gt; pkpair_t;
 
 >typedef std::vector&lt;pkpair_t&gt; rel_aid_keys;
-
->virtual rel_fname_fblocks [extract_fblocks](coqenvironment_functions.cpp.md)() final;
 
 >virtual rel_aid_keys [extract_keys](coqenvironment_functions.cpp.md)() final;
 
@@ -103,12 +101,10 @@ End Environment.
 
 >virtual bool [restore_assembly](coqenvironment_functions.cpp.md)(const CoqAssembly::aid_t &aid, const CoqAssembly::KeyInformation & ki) = 0;
 
->virtual bool [backup](coqenvironment_functions.cpp.md)(const std::string &fname, uint64_t fpos, const CoqBufferPlain &b, const uint32_t dlen) = 0;
+>virtual rel_fname_fblocks [backup](coqenvironment_functions.cpp.md)(const std::string &fname, uint64_t fpos, const CoqBufferPlain &b, const uint32_t dlen) = 0;
 
 
 >const CoqConfiguration _config;
-
->rel_fname_fblocks _fblocks{};
 
 >rel_aid_keys _keys{};
 
@@ -147,7 +143,7 @@ End Environment.
 
 >virtual void [finalise_and_recreate_assembly](coqenvironment_functions.cpp.md)() override final;
 
->virtual bool [backup](coqenvironment_functions.cpp.md)(const std::string &fname, uint64_t fpos, const CoqBufferPlain &b, const uint32_t dlen) override final;
+>virtual rel_fname_fblocks [backup](coqenvironment_functions.cpp.md)(const std::string &fname, uint64_t fpos, const CoqBufferPlain &b, const uint32_t dlen) override final;
 
 };
 
@@ -168,7 +164,7 @@ End Environment.
 
 >virtual void [finalise_and_recreate_assembly](coqenvironment_functions.cpp.md)() override final;
 
->virtual bool [backup](coqenvironment_functions.cpp.md)(const std::string &fname, uint64_t fpos, const CoqBufferPlain &b, const uint32_t dlen) override final;
+>virtual rel_fname_fblocks [backup](coqenvironment_functions.cpp.md)(const std::string &fname, uint64_t fpos, const CoqBufferPlain &b, const uint32_t dlen) override final;
 
 >std::shared_ptr&lt;CoqAssemblyPlainWritable&gt; _assembly{nullptr};
 

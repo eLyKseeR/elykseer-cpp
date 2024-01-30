@@ -4,14 +4,6 @@ declared in [CoqAssembly](coqassembly.hpp.md)
 CoqAssembly::KeyInformation::KeyInformation(const CoqConfiguration & c)
   : _localid(c.my_id), _localnchunks(c.nchunks())
 {}
-
-// CoqAssembly::KeyInformation::KeyInformation(const CoqAssembly::KeyInformation && o)
-// {
-//   _ivec = std::move(o._ivec);
-//   _pkey = std::move(o._pkey);
-//   _localid = std::move(o._localid);
-//   _localnchunks = std::move(o._localnchunks);
-// }
 ```
 
 ```cpp
