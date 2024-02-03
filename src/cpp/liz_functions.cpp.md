@@ -97,7 +97,7 @@ const std::string Liz::copyright() noexcept
 
 const std::string Liz::version() noexcept
 {
-    static std::string _enc = "VmVyc2lvbiAxLjcuMSBUUjcgLSBkbyBub3QgdXNlIGZvciBwcm9kdWN0aW9uCg==";
+    static std::string _enc = "VmVyc2lvbiAyLjAuMCBiZXRhIC0gZG8gbm90IHVzZSBmb3IgcHJvZHVjdGlvbg==";
     return decodeb64(_enc);
 }
 
