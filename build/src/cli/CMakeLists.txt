@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.28)
 
 set(GENERATED_SRCS
   lxrbackup.hpp lxrbackup.cpp
@@ -7,10 +7,10 @@ set(GENERATED_SRCS
 set_source_files_properties(${GENERATED_SRCS} GENERATED)
 
 add_library(elykseer-cpp_s STATIC IMPORTED)
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-SET_TARGET_PROPERTIES(elykseer-cpp_s PROPERTIES IMPORTED_LOCATION "${CMAKE_HOME_DIRECTORY}/src/libelykseer-cpp_d.a")
-else()
+if (CMAKE_BUILD_TYPE STREQUAL "Release")
 SET_TARGET_PROPERTIES(elykseer-cpp_s PROPERTIES IMPORTED_LOCATION "${CMAKE_HOME_DIRECTORY}/src/libelykseer-cpp.a")
+else()
+SET_TARGET_PROPERTIES(elykseer-cpp_s PROPERTIES IMPORTED_LOCATION "${CMAKE_HOME_DIRECTORY}/src/libelykseer-cpp_d.a")
 endif()
 
 set(STATIC_BUILD "")

@@ -11,7 +11,7 @@
 #include <chrono>
 #include <ctime>
 
-````
+```
 
 namespace [lxr](namespace.list) {
 
