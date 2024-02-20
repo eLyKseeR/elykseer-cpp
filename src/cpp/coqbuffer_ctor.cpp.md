@@ -151,7 +151,7 @@ CoqBuffer::CoqBuffer(std::unique_ptr<struct pimpl> &&p)
 
 CoqBuffer::~CoqBuffer()
 {
-    std::clog << "DTOR CoqBuffer::~CoqBuffer" << std::endl;
+    // std::clog << "DTOR CoqBuffer::~CoqBuffer" << std::endl;
     if (_pimpl) {
         _pimpl.reset();
     }
@@ -186,7 +186,7 @@ CoqBufferPlain::CoqBufferPlain(CoqBufferEncrypted *cb, std::unique_ptr<struct pi
 
 CoqBufferPlain::~CoqBufferPlain()
 {
-    std::clog << "DTOR CoqBufferPlain::~CoqBufferPlain" << std::endl;
+    // std::clog << "DTOR CoqBufferPlain::~CoqBufferPlain" << std::endl;
 }
 
 EncryptionState CoqBufferPlain::state() const { return EncryptionState::Plain; }
@@ -206,7 +206,7 @@ CoqBufferEncrypted::CoqBufferEncrypted(CoqBufferPlain *cb, std::unique_ptr<struc
 
 CoqBufferEncrypted::~CoqBufferEncrypted()
 {
-    std::clog << "DTOR CoqBufferEncrypted::~CoqBufferEncrypted" << std::endl;
+    // std::clog << "DTOR CoqBufferEncrypted::~CoqBufferEncrypted" << std::endl;
 }
 
 EncryptionState CoqBufferEncrypted::state() const { return EncryptionState::Encrypted; }

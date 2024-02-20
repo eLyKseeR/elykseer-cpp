@@ -21,13 +21,15 @@
 
 #pragma once
 
+#include "lxr/coqassembly.hpp"
 #include "lxr/coqconfiguration.hpp"
-#include "lxr/coqenvironment.hpp"
 
+#include <filesystem>
 #include <memory>
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 ````
 
@@ -91,7 +93,7 @@ template &lt;typename V, typename K = std::string&gt;
 
 >public:
 
->[~CoqStore](coqstore_ctor.cpp.md)();
+>virtual [~CoqStore](coqstore_ctor.cpp.md)();
 
 >int [size](coqstore_functions.cpp.md)() const;
 
@@ -100,6 +102,14 @@ template &lt;typename V, typename K = std::string&gt;
 >std::optional&lt;const V&gt; [find](coqstore_functions.cpp.md)(const K &) const;
 
 >std::optional&lt;std::pair&lt;const K, const V&gt;&gt; [at](coqstore_functions.cpp.md)(int idx) const;
+
+>std::vector&lt;std::pair&lt;K,V&gt;&gt; [list](coqstore_functions.cpp.md)() const;
+
+>void [iterate](coqstore_functions.cpp.md)(std::function<void(const std::pair&lt;K,V&gt; &)> f) const;
+
+>void [reset](coqstore_functions.cpp.md)();
+
+>virtual bool [encrypted_output](coqstore_functions.cpp.md)(const std::filesystem::path &, const std::string & gpg_recipient) const = 0;
 
 >protected:
 
@@ -124,6 +134,8 @@ template &lt;typename V, typename K = std::string&gt;
 
 >explicit CoqKeyStore(const CoqConfiguration &c) : CoqStore(c) {}
 
+>virtual bool [encrypted_output](coqstore_functions.cpp.md)(const std::filesystem::path &, const std::string & gpg_recipient) const override final;
+
 >private:
 
 >CoqKeyStore & operator=(CoqKeyStore const &) = delete;
@@ -138,6 +150,8 @@ template &lt;typename V, typename K = std::string&gt;
 >public:
 
 >explicit CoqFBlockStore(const CoqConfiguration &c) : CoqStore(c) {}
+
+>virtual bool [encrypted_output](coqstore_functions.cpp.md)(const std::filesystem::path &, const std::string & gpg_recipient) const override final;
 
 >private:
 
