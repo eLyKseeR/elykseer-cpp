@@ -45,7 +45,7 @@ void CoqEnvironmentWritable::finalise_assembly()
     CoqAssembly::KeyInformation ki(_config);
     std::shared_ptr<CoqAssemblyEncrypted> encrypted_assembly = finished_assembly->encrypt(ki);
     if (encrypted_assembly) {
-        std::clog << "have encrypted assembly" << std::endl;
+        // std::clog << "have encrypted assembly" << std::endl;
         _keys.push_back({encrypted_assembly->aid(), std::move(ki)});
         encrypted_assembly->extract();
     }

@@ -264,7 +264,7 @@ uint32_t CoqAssemblyEncrypted::extract()
             const std::filesystem::path cfpath = cfpathopt.value();
             if (! std::filesystem::exists(cfpath)) {
                 if (FILE * fstr = fopen(cfpath.string().c_str(), "wb"); fstr) {
-                    std::clog << "    extract chunk " << cid << " to path " << cfpath << std::endl;
+                    // std::clog << "    extract chunk " << cid << " to path " << cfpath << std::endl;
                     if (int n = _buffer->fileout_sz_pos(CoqAssembly::chunksize * (cid - 1), CoqAssembly::chunksize, fstr); n == CoqAssembly::chunksize) {
                         nwritten += n;
                     } else {

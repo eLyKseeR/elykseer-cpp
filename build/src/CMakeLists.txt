@@ -25,6 +25,7 @@ set(GENERATED_SRCS
 	coqbuffer.cpp
 	coqenvironment.cpp
 	coqfilesupport.cpp
+	coqprocessor.cpp
 	coqstore.cpp
 	dbbackupjob.cpp
 	dbfp.cpp
@@ -48,6 +49,7 @@ set(GENERATED_HDRS
 	lxr/coqconfiguration.hpp
 	lxr/coqenvironment.hpp
 	lxr/coqfilesupport.hpp
+	lxr/coqprocessor.hpp
 	lxr/coqstore.hpp
 	lxr/dbbackupjob.hpp
 	lxr/dbctrl.hpp
@@ -209,6 +211,20 @@ add_custom_command(
   MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/coqfilesupport.hpp.md"
   DEPENDS "${LITERATE_SRC_PATH}/coqfilesupport*.md"
   OUTPUT lxr/coqfilesupport.hpp)
+
+add_custom_command(
+  COMMAND rm -f coqprocessor.cpp
+  COMMAND ${MAKE_CPP_CMD} "${LITERATE_SRC_PATH}/coqprocessor.hpp.md"
+  MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/coqprocessor.hpp.md"
+  DEPENDS "${LITERATE_SRC_PATH}/coqprocessor*.md"
+  OUTPUT coqprocessor.cpp)
+add_custom_command(
+  WORKING_DIRECTORY "lxr"
+  COMMAND rm -f coqprocessor.hpp
+  COMMAND ${MAKE_HPP_CMD} "${LITERATE_SRC_PATH}/coqprocessor.hpp.md"
+  MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/coqprocessor.hpp.md"
+  DEPENDS "${LITERATE_SRC_PATH}/coqprocessor*.md"
+  OUTPUT lxr/coqprocessor.hpp)
 
 add_custom_command(
   COMMAND rm -f coqstore.cpp
