@@ -25,6 +25,7 @@
 #include "lxr/key256.hpp"
 
 #include <memory>
+#include <optional>
 
 ````
 
