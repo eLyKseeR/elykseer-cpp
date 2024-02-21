@@ -32,6 +32,8 @@
 
 `#include <memory>`
 
+`#include <optional>`
+
 `#include <variant>`
 
 namespace [lxr](namespace.list) {

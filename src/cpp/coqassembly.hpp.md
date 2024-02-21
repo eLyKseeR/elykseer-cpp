@@ -26,6 +26,8 @@
 
 `#include <memory>`
 
+`#include <optional>`
+
 `#include <string>`
 
 `#include` "[lxr/coqbuffer.hpp](coqbuffer.hpp.md)"
