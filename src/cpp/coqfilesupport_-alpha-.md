@@ -10,7 +10,6 @@
 #include "lxr/sha256.hpp"
 
 #include <filesystem>
-#include <format>
 #include <sys/stat.h>
 
 namespace lxr {
