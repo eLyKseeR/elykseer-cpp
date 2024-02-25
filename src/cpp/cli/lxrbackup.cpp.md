@@ -88,6 +88,7 @@ void output_help() {
   std::cout << "-f             backups a file (*)" << std::endl;
   std::cout << "-d --d1        backups files in a directory (*)" << std::endl;
   std::cout << "-D --dr        recursively backups a directory and all its content (*)" << std::endl;
+  std::cout << "-y --myid      sets unique identifier for this local instance" << std::endl;
   std::cout << "-k --owner-key looks up the PGP key and encrypts meta data with it" << std::endl;
   std::cout << "options labelled with (*) can be provided multiple times on the command line." << std::endl;
 }
@@ -290,7 +291,7 @@ int main (int argc, char * const argv[]) {
   // run program
   std::shared_ptr<lxr::CoqKeyStore> _keystore{new lxr::CoqKeyStore(_config)};
   std::shared_ptr<lxr::CoqFBlockStore> _fblockstore{new lxr::CoqFBlockStore(_config)};
-  std::shared_ptr<lxr::CoqAssemblyCache> qac(new lxr::CoqAssemblyCache(_config, 3, 12));
+  std::shared_ptr<lxr::CoqAssemblyCache> qac(new lxr::CoqAssemblyCache(_config, 1, 12));
   qac->register_key_store(_keystore);
   qac->register_fblock_store(_fblockstore);
   lxr::CoqProcessor qproc(_config, qac);
