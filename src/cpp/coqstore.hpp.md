@@ -23,6 +23,8 @@
 
 #include "lxr/coqassembly.hpp"
 #include "lxr/coqconfiguration.hpp"
+#include "lxr/coqfilesupport.hpp"
+#include "lxr/streamio.hpp"
 
 #include <filesystem>
 #include <memory>
@@ -78,12 +80,25 @@ Module FBlockListStore <: STORE.
         {| config := r.(config KVs); entries := (k, v) :: r.(entries KVs) |}.
     Definition find (k : K) (r : R) : option V :=
         rec_find k r.(entries KVs).
+
+Module FileinformationStore <: STORE.
+    Definition K := String.string.
+    Definition V := Filesupport.fileinformation.
+    Definition KVs := list (K * V).
+    Definition R : RecordStore := store KVs.
+    Definition init (c : configuration) : R := {| config := c; entries := [] |}.
+    Definition add (k : K) (v : V) (r : R) : R :=
+        {| config := r.(config KVs); entries := (k, v) :: r.(entries KVs) |}.
+    Definition find (k : K) (r : R) : option V :=
+        rec_find k r.(entries KVs).
+
+End FileinformationStore.
 ```
 */
 
 template &lt;typename V, typename K = std::string&gt;
 
-# class CoqStore
+# class CoqStore : public [StreamIO](streamio.hpp.md)
 
 {
 
@@ -97,19 +112,21 @@ template &lt;typename V, typename K = std::string&gt;
 
 >int [size](coqstore_functions.cpp.md)() const;
 
->bool [add](coqstore_functions.cpp.md)(const K &, const V &);
+>bool [contains](coqstore_functions.cpp.md)(const K &) const;
 
->std::optional&lt;const V&gt; [find](coqstore_functions.cpp.md)(const K &) const;
+>virtual bool [add](coqstore_functions.cpp.md)(const K &, const V &);
+
+>std::optional&lt;V&gt; [find](coqstore_functions.cpp.md)(const K &) const;
 
 >std::optional&lt;std::pair&lt;const K, const V&gt;&gt; [at](coqstore_functions.cpp.md)(int idx) const;
 
 >std::vector&lt;std::pair&lt;K,V&gt;&gt; [list](coqstore_functions.cpp.md)() const;
 
->void [iterate](coqstore_functions.cpp.md)(std::function<void(const std::pair&lt;K,V&gt; &)> f) const;
+>void [iterate](coqstore_functions.cpp.md)(std::function<void(const std::pair&lt;K, V&gt; &)> f) const;
 
 >void [reset](coqstore_functions.cpp.md)();
 
->virtual bool [encrypted_output](coqstore_functions.cpp.md)(const std::filesystem::path &, const std::string & gpg_recipient) const = 0;
+>virtual bool [encrypted_output](coqstore_functions.cpp.md)(const std::filesystem::path &, const std::string & gpg_recipient) const final;
 
 >protected:
 
@@ -134,7 +151,11 @@ template &lt;typename V, typename K = std::string&gt;
 
 >explicit CoqKeyStore(const CoqConfiguration &c) : CoqStore(c) {}
 
->virtual bool [encrypted_output](coqstore_functions.cpp.md)(const std::filesystem::path &, const std::string & gpg_recipient) const override final;
+>virtual bool [add](coqstore_functions.cpp.md)(const std::string &, const CoqAssembly::KeyInformation &) override final;
+
+>virtual void [outStream](coqstore_functions.cpp.md)(std::ostream & os) const override final;
+
+>virtual void [inStream](coqstore_functions.cpp.md)(std::istream & ins) override final;
 
 >private:
 
@@ -143,7 +164,7 @@ template &lt;typename V, typename K = std::string&gt;
 };
 
 
-# class CoqFBlockStore : public CoqStore&lt;CoqAssembly::BlockInformation, std::string&gt;
+# class CoqFBlockStore : public CoqStore&lt;std::vector&lt;CoqAssembly::BlockInformation&gt;, std::string&gt;
 
 {
 
@@ -151,14 +172,42 @@ template &lt;typename V, typename K = std::string&gt;
 
 >explicit CoqFBlockStore(const CoqConfiguration &c) : CoqStore(c) {}
 
->virtual bool [encrypted_output](coqstore_functions.cpp.md)(const std::filesystem::path &, const std::string & gpg_recipient) const override final;
+>bool [add](coqstore_functions.cpp.md)(const std::string &, const CoqAssembly::BlockInformation &);
+
+>virtual void [outStream](coqstore_functions.cpp.md)(std::ostream & os) const override final;
+
+>virtual void [inStream](coqstore_functions.cpp.md)(std::istream & ins) override final;
 
 >private:
+
+>virtual bool [add](coqstore_functions.cpp.md)(const std::string &, const std::vector&lt;CoqAssembly::BlockInformation&gt; &) override final
+
+>{ return false; }
 
 >CoqFBlockStore & operator=(CoqFBlockStore const &) = delete;
 
 };
 
+
+# class CoqFInfoStore : public CoqStore&lt;CoqFilesupport::FileInformation, std::string&gt;
+
+{
+
+>public:
+
+>explicit CoqFInfoStore(const CoqConfiguration &c) : CoqStore(c) {}
+
+>virtual bool [add](coqstore_functions.cpp.md)(const std::string &, const CoqFilesupport::FileInformation &) override final;
+
+>virtual void [outStream](coqstore_functions.cpp.md)(std::ostream & os) const override final;
+
+>virtual void [inStream](coqstore_functions.cpp.md)(std::istream & ins) override final;
+
+>private:
+
+>CoqFInfoStore & operator=(CoqFBlockStore const &) = delete;
+
+};
 ```cpp
 } // namespace
 ```

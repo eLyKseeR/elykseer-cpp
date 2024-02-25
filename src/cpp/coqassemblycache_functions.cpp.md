@@ -137,15 +137,15 @@ CoqAssemblyCache::pimpl::ensure_assembly(const CoqAssembly::aid_t & sel_aid)
             _readenvs.erase(std::remove_if(_readenvs.begin(), _readenvs.end(), match_aid));
             _readenvs.push_front(head);
         }
-        std::clog << "    found " << sel_aid << std::endl;
+        // std::clog << "    found " << sel_aid << std::endl;
         return *found;
     }
 
     auto n_envs = _readenvs.size();
     if (n_envs < n_readenvs) {
-        std::clog << "    free positions in _readenvs" << std::endl;
+        // std::clog << "    free positions in _readenvs" << std::endl;
     } else {
-        std::clog << "    replace env in _readenvs" << std::endl;
+        // std::clog << "    replace env in _readenvs" << std::endl;
         // drop last
         _readenvs.pop_back();
     }
@@ -153,7 +153,7 @@ CoqAssemblyCache::pimpl::ensure_assembly(const CoqAssembly::aid_t & sel_aid)
     // push new to front
     auto new_env = try_restore_assembly(sel_aid);
     if (new_env) {
-        std::clog << "    new env " << sel_aid << std::endl;
+        // std::clog << "    new env " << sel_aid << std::endl;
         _readenvs.push_front(new_env.value());
         return new_env.value();
     } else {
@@ -229,8 +229,9 @@ std::vector<ReadQueueResult> CoqAssemblyCache::pimpl::iterate_read_queue()
     // std::clog << "AssemblyCache::iterate_read_queue  readqueue size = " << _pimpl->_readqueue.size() << std::endl;
     if (! _readqueue.empty()) {
         ++n_iterate_reads;
+        std::clog << "CoqAssemblyCache::iterate_read_queue  size of queue: " << _readqueue.size() << std::endl;
         // get first item
-        auto const & aid1st = _readqueue[0]._aid;
+        auto const & aid1st = _readqueue.front()._aid;
         if (aid1st.size() == 256/8*2) {
             // extract all with the same aid from the read queue
             std::vector<lxr::ReadQueueEntity> rmatches;
@@ -314,7 +315,7 @@ std::vector<WriteQueueResult> CoqAssemblyCache::pimpl::run_write_requests(const 
             _writeenv->recreate_assembly();
         }
         if (wreq._buffer) {
-            auto fblocks = _writeenv->backup(wreq._fhash.toHex(), wreq._fpos, *wreq._buffer, wreq._buffer->len());
+            CoqEnvironment::rel_fname_fblocks fblocks = _writeenv->backup(wreq._fhash.toHex(), wreq._fpos, *wreq._buffer, wreq._buffer->len());
             for (auto const & fb : fblocks) {
                 _fblockstore->add(fb.first, fb.second);
             }

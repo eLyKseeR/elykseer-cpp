@@ -1,7 +1,7 @@
 declared in [CoqStore](coqstore.hpp.md)
 
 ```cpp
-std::optional<CoqFileSupport::FileInformation> CoqFileSupport::get_file_information(const filename &fn) noexcept
+std::optional<CoqFilesupport::FileInformation> CoqFilesupport::get_file_information(const filename &fn) noexcept
 {
     FileInformation fi;
 

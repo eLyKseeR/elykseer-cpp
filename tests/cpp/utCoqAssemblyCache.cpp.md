@@ -134,7 +134,7 @@ BOOST_AUTO_TEST_CASE( backup_restore_roundtrip )
 
         lxr::ReadQueueEntity rqe;
         rqe._aid = _aid;
-        lxr::CoqAssembly::BlockInformation bi = _fblockstore->at(0)->second;
+        lxr::CoqAssembly::BlockInformation bi = _fblockstore->at(0)->second.front();
         rqe._apos = bi.blockapos;
         rqe._rlen = msg.length();
 

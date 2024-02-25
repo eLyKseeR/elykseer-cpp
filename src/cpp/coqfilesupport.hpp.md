@@ -51,7 +51,7 @@ Axiom get_file_information : filename -> fileinformation.
 */
 
 
-# class CoqFileSupport
+# class CoqFilesupport
 
 {
 
@@ -83,11 +83,11 @@ Axiom get_file_information : filename -> fileinformation.
 
 >private:
 
->CoqFileSupport() {}
+>CoqFilesupport() {}
 
->CoqFileSupport(const CoqFileSupport &) = delete;
+>CoqFilesupport(const CoqFilesupport &) = delete;
 
->CoqFileSupport & operator=(const CoqFileSupport &) = delete;
+>CoqFilesupport & operator=(const CoqFilesupport &) = delete;
 
 };
 
