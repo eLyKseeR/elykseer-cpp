@@ -208,7 +208,6 @@ CoqAssembly::BlockInformation CoqAssemblyPlainWritable::backup(const CoqBufferPl
         // TODO parallelise !
         for (int i = 0; i < dlen; i++) {
             uint32_t apos = idx2apos(i + apos_n, nchunks);
-            std::clog << "   backup " << i << " + " << apos_n << " => @" << apos << std::endl;
             _buffer->at(apos, b.at(i + offset));
         }
         _assemblyinformation._apos += dlen;
@@ -343,7 +342,6 @@ std::shared_ptr<CoqBufferPlain> CoqAssemblyPlainFull::restore(const CoqAssembly:
     const uint32_t nchunks = _config.nchunks();
     for (uint32_t idx = 0; idx < bi.blocksize; idx++) {
         uint32_t apos = idx2apos(idx + bi.blockapos, nchunks);
-        std::clog << "   restore " << idx << " + " << bi.blockapos << " => @" << apos << std::endl;
         b->at(idx, _buffer->at(apos)); 
     }
     return b;
