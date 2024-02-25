@@ -192,10 +192,12 @@ std::vector<ReadQueueResult> CoqAssemblyCache::pimpl::run_read_requests(const st
         bi.blockid = 1; bi.blocksize = rreq._rlen; bi.blockaid = rreq._aid; bi.blockapos = rreq._apos;
         if (auto const &_renv = _readenvs.front(); _renv->_assembly) {
             std::shared_ptr<lxr::CoqBufferPlain> restored_block = _renv->_assembly->restore(bi);
+            restored_bytes += restored_block->len();
             lxr::ReadQueueResult rres;
             rres._readrequest = rreq;
             rres._rresult = restored_block;
             results.push_back(rres);
+            ++n_read_requests;
         }
     }
     return results;
