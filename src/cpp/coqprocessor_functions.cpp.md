@@ -58,11 +58,11 @@ Program Definition file_backup (fp : Filesystem.path) : (fileinformation * proce
 ```
 
 ```cpp
-std::optional<CoqFileSupport::FileInformation> CoqProcessor::file_backup(const std::filesystem::path &fp)
+std::optional<CoqFilesupport::FileInformation> CoqProcessor::file_backup(const std::filesystem::path &fp)
 {
-    auto mayfi = CoqFileSupport::get_file_information(fp.string());
+    auto mayfi = CoqFilesupport::get_file_information(fp.string());
     if (mayfi) {
-        CoqFileSupport::FileInformation fi = mayfi.value();
+        CoqFilesupport::FileInformation fi = mayfi.value();
         FILE *fstr = fopen(fp.c_str(), "rb");
         if (! fstr) { return {}; }
         {
@@ -88,6 +88,7 @@ std::optional<CoqFileSupport::FileInformation> CoqProcessor::file_backup(const s
                 }
                 fpos += sz;
             }
+            _cache->iterate_write_queue();
         }
         fclose(fstr);
         return fi;
@@ -141,8 +142,8 @@ Program Definition directory_backup (this : processor) (fp : Filesystem.path) : 
 ```
 
 ```cpp
-std::vector<CoqFileSupport::FileInformation> CoqProcessor::directory_backup(const std::filesystem::path &fp) {
-    std::vector<CoqFileSupport::FileInformation> _res{};
+std::vector<CoqFilesupport::FileInformation> CoqProcessor::directory_backup(const std::filesystem::path &fp) {
+    std::vector<CoqFilesupport::FileInformation> _res{};
     if (std::filesystem::is_directory(fp)) {
         auto lfiles = directory_files(fp);
         for (auto const &p : lfiles) {
@@ -193,8 +194,8 @@ Program Definition recursive_backup (this : processor) (maxdepth : N) (fp : File
 ```
 
 ```cpp
-std::vector<CoqFileSupport::FileInformation> CoqProcessor::recursive_backup(const std::filesystem::path &fp) {
-    std::vector<CoqFileSupport::FileInformation> _res{};
+std::vector<CoqFilesupport::FileInformation> CoqProcessor::recursive_backup(const std::filesystem::path &fp) {
+    std::vector<CoqFilesupport::FileInformation> _res{};
     if (std::filesystem::is_directory(fp)) {
         auto vfiles = directory_backup(fp);
         for (auto const &f : vfiles) {

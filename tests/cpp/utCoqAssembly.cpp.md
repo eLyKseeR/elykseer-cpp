@@ -115,7 +115,7 @@ BOOST_AUTO_TEST_CASE( backup_restore_roundtrip )
     // encrypt
     lxr::CoqAssembly::KeyInformation ki(_config);
     std::clog << "ivec: " << ki._ivec.toHex() << std::endl;
-    std::clog << "ivec: " << ki._pkey.toHex() << std::endl;
+    std::clog << "pkey: " << ki._pkey.toHex() << std::endl;
     std::shared_ptr<lxr::CoqAssemblyEncrypted> aencrypted = afinished->encrypt(ki);
 
     // extract

@@ -207,7 +207,9 @@ CoqAssembly::BlockInformation CoqAssemblyPlainWritable::backup(const CoqBufferPl
     if (chksum) {
         // TODO parallelise !
         for (int i = 0; i < dlen; i++) {
-            _buffer->at(idx2apos(i + apos_n, nchunks), b.at(i + offset));
+            uint32_t apos = idx2apos(i + apos_n, nchunks);
+            std::clog << "   backup " << i << " + " << apos_n << " => @" << apos << std::endl;
+            _buffer->at(apos, b.at(i + offset));
         }
         _assemblyinformation._apos += dlen;
         return { 1, chksum.value(), dlen, 0,
@@ -217,28 +219,6 @@ CoqAssembly::BlockInformation CoqAssemblyPlainWritable::backup(const CoqBufferPl
 }
 ```
 
-This function is not used:
-```coq
-Program Definition restore (b : AssemblyPlainFull.B) (bi : blockinformation) : option BufferPlain.buffer_t :=
-    let bsz := blocksize bi in
-    let b' := BufferPlain.buffer_create bsz in
-    let nw := assembly_get_content b bsz (blockapos bi) b' in
-    if N.eqb nw bsz then
-        let bcksum := calc_checksum b' in
-        if String.eqb bcksum (bchecksum bi) then
-            Some b'
-        else
-            None
-    else None.```
-```cpp
-/*
-CoqBufferPlain CoqAssemblyPlainFull::restore(const CoqAssembly::BlockInformation &bi)
-{
-    // TODO
-    return {};
-}
-*/
-```
 
 ```coq
 Program Definition extract (c : configuration) (a : AssemblyEncrypted.H) (b : AssemblyEncrypted.B) : N :=
@@ -260,11 +240,11 @@ uint32_t CoqAssemblyEncrypted::extract()
     const aid_t aid = _assemblyinformation._aid;
     uint32_t nwritten{0};
     for (int cid = 1; cid <= _assemblyinformation._nchunks; cid++) {
-        if (const auto cfpathopt = chunk_path(cid); cfpathopt) {
+        if (const auto cfpathopt = chunk_path(cid, aid); cfpathopt) {
             const std::filesystem::path cfpath = cfpathopt.value();
             if (! std::filesystem::exists(cfpath)) {
                 if (FILE * fstr = fopen(cfpath.string().c_str(), "wb"); fstr) {
-                    // std::clog << "    extract chunk " << cid << " to path " << cfpath << std::endl;
+                    std::clog << "    extract chunk " << cid << " to path " << cfpath << std::endl;
                     if (int n = _buffer->fileout_sz_pos(CoqAssembly::chunksize * (cid - 1), CoqAssembly::chunksize, fstr); n == CoqAssembly::chunksize) {
                         nwritten += n;
                     } else {
@@ -319,11 +299,11 @@ std::shared_ptr<CoqAssemblyEncrypted> CoqAssemblyEncrypted::recall(const CoqConf
     newassembly->_assemblyinformation._nchunks = nchunks;
     uint32_t nread{0};
     for (int cid = 1; cid <= nchunks; cid++) {
-        if (const auto cfpathopt = newassembly->chunk_path(cid); cfpathopt) {
+        if (const auto cfpathopt = newassembly->chunk_path(cid, aid); cfpathopt) {
             const std::filesystem::path cfpath = cfpathopt.value();
             if (std::filesystem::exists(cfpath)) {
                 if (FILE * fstr = fopen(cfpath.string().c_str(), "rb"); fstr) {
-                    std::clog << "    recall chunk " << cid << " from path " << cfpath << std::endl;
+                    // std::clog << "    recall chunk " << cid << " from path " << cfpath << std::endl;
                     if (int n = newassembly->_buffer->filein_sz_pos(CoqAssembly::chunksize * (cid - 1), CoqAssembly::chunksize, fstr); n == CoqAssembly::chunksize) {
                         nread += n;
                     } else {
@@ -345,12 +325,12 @@ std::shared_ptr<CoqAssemblyEncrypted> CoqAssemblyEncrypted::recall(const CoqConf
 ```coq
 Axiom assembly_get_content : AssemblyPlainFull.B -> N -> N -> BufferPlain.buffer_t -> N.
 Program Definition restore (b : AssemblyPlainFull.B) (bi : blockinformation) : option BufferPlain.buffer_t :=
-    let bsz := blocksize bi in
+    let bsz := bi.(blocksize) in
     let b' := BufferPlain.buffer_create bsz in
-    let nw := assembly_get_content b bsz (blockapos bi) b' in
+    let nw := assembly_get_content b bsz bi.(blockapos) b' in
     if N.eqb nw bsz then
         let bcksum := calc_checksum b' in
-        if String.eqb bcksum (bchecksum bi) then
+        if String.eqb bcksum bi.(bchecksum) then
             Some b'
         else
             None
@@ -362,7 +342,9 @@ std::shared_ptr<CoqBufferPlain> CoqAssemblyPlainFull::restore(const CoqAssembly:
     std::shared_ptr<CoqBufferPlain> b{new CoqBufferPlain(bi.blocksize)};
     const uint32_t nchunks = _config.nchunks();
     for (uint32_t idx = 0; idx < bi.blocksize; idx++) {
-        b->at(idx, _buffer->at(idx2apos(idx + bi.blockapos, nchunks))); 
+        uint32_t apos = idx2apos(idx + bi.blockapos, nchunks);
+        std::clog << "   restore " << idx << " + " << bi.blockapos << " => @" << apos << std::endl;
+        b->at(idx, _buffer->at(apos)); 
     }
     return b;
 }

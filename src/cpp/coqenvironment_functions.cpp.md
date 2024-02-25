@@ -45,10 +45,10 @@ void CoqEnvironmentWritable::finalise_assembly()
     CoqAssembly::KeyInformation ki(_config);
     std::shared_ptr<CoqAssemblyEncrypted> encrypted_assembly = finished_assembly->encrypt(ki);
     if (encrypted_assembly) {
-        // std::clog << "have encrypted assembly" << std::endl;
         _keys.push_back({encrypted_assembly->aid(), std::move(ki)});
         encrypted_assembly->extract();
     }
+    std::clog << "CoqEnvironmentWritable::finalise_assembly()" << std::endl;
 }
 
 void CoqEnvironmentReadable::finalise_assembly()
@@ -167,6 +167,7 @@ bool CoqEnvironmentWritable::restore_assembly(const CoqAssembly::aid_t & aid, co
 ```
 
 ```cpp
+// TODO argument fname should be fhash
 CoqEnvironment::rel_fname_fblocks CoqEnvironmentWritable::backup(const std::string &fname, uint64_t fpos, const CoqBufferPlain &b, const uint32_t dlen)
 {
     if (! _assembly) { return {}; }
@@ -184,8 +185,9 @@ CoqEnvironment::rel_fname_fblocks CoqEnvironmentWritable::backup(const std::stri
             recreate = true;
         }
         auto bi = _assembly->backup(b, nwritten, sz);
+        bi.filepos = fpos;
         nwritten += sz; // sz > 0 -> we make progress
-        _fblocks.push_back({fname, bi});
+        _fblocks.push_back({fname, bi});   // TODO pass in fhash
         if (recreate) { finalise_and_recreate_assembly(); }
     }
     return _fblocks;

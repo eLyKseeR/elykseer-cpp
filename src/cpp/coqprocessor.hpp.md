@@ -85,13 +85,13 @@ End Processor.
 
 >void [close](coqprocessor_functions.cpp.md)();
 
->std::optional&lt;CoqFileSupport::FileInformation&gt; [file_backup](coqprocessor_functions.cpp.md)(const std::filesystem::path &);
+>std::optional&lt;CoqFilesupport::FileInformation&gt; [file_backup](coqprocessor_functions.cpp.md)(const std::filesystem::path &);
 
->std::vector&lt;CoqFileSupport::FileInformation&gt; [directory_backup](coqprocessor_functions.cpp.md)(const std::filesystem::path &);
+>std::vector&lt;CoqFilesupport::FileInformation&gt; [directory_backup](coqprocessor_functions.cpp.md)(const std::filesystem::path &);
 
 >void [directory_backup_0](coqprocessor_functions.cpp.md)(const std::filesystem::path &);
 
->std::vector&lt;CoqFileSupport::FileInformation&gt; [recursive_backup](coqprocessor_functions.cpp.md)(const std::filesystem::path &);
+>std::vector&lt;CoqFilesupport::FileInformation&gt; [recursive_backup](coqprocessor_functions.cpp.md)(const std::filesystem::path &);
 
 >void [recursive_backup_0](coqprocessor_functions.cpp.md)(const std::filesystem::path &);
 

@@ -76,6 +76,8 @@ Record writequeueresult : Type :=
 
 >uint32_t _rlen;
 
+>uint64_t _fpos;
+
 };
 
 # struct ReadQueueResult

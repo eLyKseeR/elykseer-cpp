@@ -206,7 +206,7 @@ End Assembly.
 
 >int blockid;
 
->Key256 bchecksum;
+>Key256 bchecksum{false};
 
 >uint32_t blocksize;
 
@@ -254,8 +254,6 @@ End Assembly.
 
 >virtual std::optional&lt;const std::filesystem::path&gt; [chunk_path](coqassembly_functions.cpp.md)(const uint16_t cnum, const aid_t aid) const final;
 
->virtual std::optional&lt;const std::filesystem::path&gt; [chunk_path](coqassembly_functions.cpp.md)(const uint16_t cnum) const final { return chunk_path(cnum, _assemblyinformation._aid); }
-
 >public:
 
 >virtual int [apos](coqassembly_functions.cpp.md)() const final;
@@ -267,7 +265,7 @@ End Assembly.
 >inline const uint32_t idx2apos (const uint32_t idx, const uint32_t nchunks) const {
     uint32_t cnum = idx % nchunks;
     uint32_t cidx = idx / nchunks;
-    return cnum * CoqAssembly::chunklength + cidx;
+    return cnum * CoqAssembly::chunksize + cidx;
 }
 
 
