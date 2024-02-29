@@ -14,6 +14,16 @@ void CoqAssemblyCache::pimpl::register_fblock_store(std::shared_ptr<CoqFBlockSto
 {
     _fblockstore = st;
 }
+
+std::shared_ptr<CoqFBlockStore> CoqAssemblyCache::get_fblock_store() const
+{
+    return _pimpl->get_fblock_store();
+}
+std::shared_ptr<CoqFBlockStore> CoqAssemblyCache::pimpl::get_fblock_store() const
+{
+    return _fblockstore;
+}
+
 ```
 
 ## Store encryption keys
@@ -30,6 +40,16 @@ void CoqAssemblyCache::pimpl::register_key_store(std::shared_ptr<CoqKeyStore> &s
 {
     _keystore = st;
 }
+
+std::shared_ptr<CoqKeyStore> CoqAssemblyCache::get_key_store() const
+{
+    return _pimpl->get_key_store();
+}
+std::shared_ptr<CoqKeyStore> CoqAssemblyCache::pimpl::get_key_store() const
+{
+    return _keystore;
+}
+
 ```
 
 ## Access blockinformation in writable environment

@@ -39,6 +39,9 @@ public:
     std::optional<std::shared_ptr<CoqEnvironmentReadable>> try_restore_assembly(const CoqAssembly::aid_t & sel_aid);
     std::optional<std::shared_ptr<CoqEnvironmentReadable>> ensure_assembly(const CoqAssembly::aid_t & sel_aid);
 
+    std::shared_ptr<CoqFBlockStore> get_fblock_store() const;
+    std::shared_ptr<CoqKeyStore> get_key_store() const;
+
     void register_key_store(std::shared_ptr<CoqKeyStore> &st);
     void register_fblock_store(std::shared_ptr<CoqFBlockStore> &st);
 
