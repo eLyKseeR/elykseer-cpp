@@ -75,10 +75,6 @@ End Processor.
 
 >static constexpr int block_sz = 32768;
 
->explicit [CoqProcessor](coqprocessor_ctor.cpp.md)(const CoqConfiguration & c);
-
->explicit [CoqProcessor](coqprocessor_ctor.cpp.md)(const CoqConfiguration & c, int cache_size);
-
 >explicit [CoqProcessor](coqprocessor_ctor.cpp.md)(const CoqConfiguration & c, const std::shared_ptr&lt;CoqAssemblyCache&gt; & cache);
 
 >[~CoqProcessor](coqprocessor_ctor.cpp.md)();
