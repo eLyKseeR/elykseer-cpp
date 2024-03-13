@@ -11,16 +11,15 @@
 #include "lxr/filectrl.hpp"
 #include "lxr/fsutils.hpp"
 #include "lxr/gpg.hpp"
-#include "lxr/sha256.hpp"
 #include "lxr/liz.hpp"
-#include "lxr/options.hpp"
-// #include "lxr/os.hpp"
+#include "lxr/os.hpp"
+#include "lxr/sha256.hpp"
 
 #include <chrono>
 #include <iostream>
 #include <fstream>
-#include <string>
 #include <map>
+#include <string>
 #include <getopt.h>
 
 ```
@@ -214,7 +213,7 @@ int main (int argc, char * const argv[]) {
   std::shared_ptr<lxr::CoqFBlockStore> _fblockstore{new lxr::CoqFBlockStore(_config)};
 
   int ch;
-  while ((ch = getopt_long(argc, argv, "hVLCgx:o:p:k:f:d:n:y:", longopts, NULL)) != -1) {
+  while ((ch = getopt_long(argc, argv, "hVLCgx:o:p:k:f:n:y:", longopts, NULL)) != -1) {
     switch (ch) {
       case 'h': output_help(); break;
       case 'V': output_version(); break;

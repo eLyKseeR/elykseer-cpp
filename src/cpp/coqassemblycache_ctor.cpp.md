@@ -16,6 +16,10 @@ Record assemblycache : Type :=
             (* ^ writer queue *)
         ; acreadq : readqueue
             (* ^ reader queue *)
+        ; acfbstore : FBlockListStore.R
+            (* ^ file block store *)
+        ; ackstore : KeyListStore.R
+            (* ^ assembly key store *)
         }.
 
 Definition prepare_assemblycache (c : configuration) (size : positive) : assemblycache :=
@@ -25,6 +29,8 @@ Definition prepare_assemblycache (c : configuration) (size : positive) : assembl
      ; acconfig := c
      ; acwriteq := (mkwritequeue nil qsize)
      ; acreadq := (mkreadqueue nil qsize)
+     ; acfbstore := FBlockListStore.init c
+     ; ackstore := KeyListStore.init c
     |}.
 ```
 

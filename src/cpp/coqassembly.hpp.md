@@ -206,7 +206,7 @@ End Assembly.
 
 >int blockid;
 
->Key256 bchecksum{false};
+>Key256 bchecksum{true};
 
 >uint32_t blocksize;
 

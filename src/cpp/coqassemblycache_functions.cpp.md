@@ -23,7 +23,6 @@ std::shared_ptr<CoqFBlockStore> CoqAssemblyCache::pimpl::get_fblock_store() cons
 {
     return _fblockstore;
 }
-
 ```
 
 ## Store encryption keys
@@ -49,27 +48,6 @@ std::shared_ptr<CoqKeyStore> CoqAssemblyCache::pimpl::get_key_store() const
 {
     return _keystore;
 }
-
-```
-
-## Access blockinformation in writable environment
-
-```off_cpp
-CoqEnvironment::rel_fname_fblocks CoqAssemblyCache::extract_fblocks()
-{
-    if (_pimpl) {
-        return _pimpl->extract_fblocks();
-    }
-    return {};
-}
-
-CoqEnvironment::rel_fname_fblocks CoqAssemblyCache::pimpl::extract_fblocks()
-{
-    if (_writeenv) {
-        return _writeenv->extract_fblocks();
-    }
-    return {};
-}
 ```
 
 ## Restore assembly
@@ -77,20 +55,25 @@ CoqEnvironment::rel_fname_fblocks CoqAssemblyCache::pimpl::extract_fblocks()
 Given its assembly identifier, restore an assembly from chunks, wrap it in a readable environment and place it in front of the list of environments.
 
 ```coq
-Program Definition try_restore_assembly (config : Configuration.configuration) (sel_aid : Assembly.aid_t) : option EnvironmentReadable.E :=
-    EnvironmentReadable.restore_assembly (EnvironmentReadable.initial_environment config) sel_aid.
+Program Definition try_restore_assembly (ac : assemblycache) (sel_aid : Assembly.aid_t) : option EnvironmentReadable.E :=
+    match KeyListStore.find sel_aid ac.(ackstore) with
+    | None => None
+    | Some ki =>
+        EnvironmentReadable.restore_assembly (EnvironmentReadable.initial_environment ac.(acconfig)) sel_aid ki
+    end.
 
 Program Definition set_envs (ac0 : assemblycache) (envs : list EnvironmentReadable.E) : assemblycache :=
     {| acenvs := envs; acsize := ac0.(acsize);
        acwriteenv := ac0.(acwriteenv); acconfig := ac0.(acconfig);
-       acreadq := ac0.(acreadq); acwriteq := ac0.(acwriteq) |}.
+       acreadq := ac0.(acreadq); acwriteq := ac0.(acwriteq);
+       acfbstore := ac0.(acfbstore); ackstore := ac0.(ackstore) |}.
 
 (* ensure that an environment with assembly (by aid) is available
    and that it is in the head position of the list of envs *)
 Program Definition ensure_assembly (ac0 : assemblycache) (sel_aid : Assembly.aid_t) : option (EnvironmentReadable.E * assemblycache) :=
     match ac0.(acenvs) with
     | nil => (* create first env *)
-        match try_restore_assembly ac0.(acconfig) sel_aid with
+        match try_restore_assembly ac0 sel_aid with
         | None => None
         | Some env =>
            Some (env, set_envs ac0 (env :: nil))
@@ -99,7 +82,7 @@ Program Definition ensure_assembly (ac0 : assemblycache) (sel_aid : Assembly.aid
         if String.eqb (aid e1.(cur_assembly AssemblyPlainFull.B)) sel_aid then
             Some (e1, ac0)
         else
-            match try_restore_assembly ac0.(acconfig) sel_aid with
+            match try_restore_assembly ac0 sel_aid with
             | None => None
             | Some env =>
                 if Nat.eqb ac0.(acsize) 1
@@ -118,7 +101,7 @@ Program Definition ensure_assembly (ac0 : assemblycache) (sel_aid : Assembly.aid
                 let r' := List.filter (fun e => negb (String.eqb (aid e.(cur_assembly AssemblyPlainFull.B)) sel_aid)) r in
                 Some (efound, set_envs ac0 (efound :: e1 :: r'))
             | nil =>
-                match try_restore_assembly ac0.(acconfig) sel_aid with
+                match try_restore_assembly ac0 sel_aid with
                 | None => None
                 | Some env =>
                     (* check number of envs <= acsize *)
@@ -439,12 +422,9 @@ void CoqAssemblyCache::pimpl::flush()
 {
     if (_writeenv) {
         ++n_assembly_finalised;
-        _writeenv->finalise_and_recreate_assembly();
-        if (_keystore) {
-            auto keys = _writeenv->extract_keys();
-            for (auto k : keys) {
-                _keystore->add(k.first, k.second);
-            }
+        auto keys = _writeenv->finalise_and_recreate_assembly();
+        if (_keystore && keys) {
+            _keystore->add(keys.value().first, keys.value().second);
         }
     } else {
         _writeenv->recreate_assembly();
@@ -471,10 +451,9 @@ void CoqAssemblyCache::pimpl::close()
 {
     if (_writeenv) {
         ++n_assembly_finalised;
-        _writeenv->finalise_assembly();
-        auto keys = _writeenv->extract_keys();
-        for (auto k : keys) {
-            _keystore->add(k.first, k.second);
+        auto keys = _writeenv->finalise_assembly();
+        if (_keystore && keys) {
+            _keystore->add(keys.value().first, keys.value().second);
         }
     }
 }

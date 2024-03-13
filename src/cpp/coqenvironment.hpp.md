@@ -18,17 +18,22 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+```
 
-#pragma once
+`#pragma once`
 
-#include "lxr/coqassembly.hpp"
-#include "lxr/coqconfiguration.hpp"
-#include "lxr/coqenvironment.hpp"
+`#include <memory>`
 
-#include <memory>
-#include <vector>
+`#include <optional>`
 
-````
+`#include <vector>`
+
+`#include` "[lxr/coqassembly.hpp](coqassembly.hpp.md)"
+
+`#include` "[lxr/coqconfiguration.hpp](coqconfiguration.hpp.md)"
+
+`#include` "[lxr/coqenvironment.hpp](coqenvironment.hpp.md)"
+
 
 namespace [lxr](namespace.list) {
 
@@ -37,32 +42,25 @@ namespace [lxr](namespace.list) {
 ```coq
 Module Export Environment.
 
-Record environment : Type :=
+Definition RecordEnvironment := Type.
+Record environment (AB : Type) : RecordEnvironment :=
     mkenvironment
-        { cur_assembly : AssemblyPlainWritable.H
-        ; cur_buffer : AssemblyPlainWritable.B
-        ; config : configuration
-        ; fblocks : list (string * Assembly.blockinformation)
-        ; keys : list (string * Assembly.keyinformation)
+        { cur_assembly : assemblyinformation
+        ; cur_buffer : AB
+        ; econfig : configuration
         }.
 
 Definition initial_environment (c : configuration) : environment := ...
 
 Definition recreate_assembly (e : environment) : environment := ...
 
-Definition env_add_file_block (fname : string) (e : environment) (bi : Assembly.blockinformation) : environment := ...
+Definition restore_assembly (e0 : environment AB) (aid : aid_t) (ki : keyinformation) : option (environment AB) := ...
 
-Definition env_add_aid_key (aid : string) (e : environment) (ki : keyinformation) : environment := ...
+Definition finalise_assembly (e0 : environment AB) : option (aid_t * keyinformation) := ...
 
-Definition key_for_aid (e : environment) (aid : Assembly.aid_t) : option keyinformation := ...
+Definition finalise_and_recreate_assembly (e0 : environment AB) : option (environment AB * (aid_t * keyinformation)) ...
 
-Definition restore_assembly (e0 : environment) (aid : Assembly.aid_t) : option environment := ...
-
-Definition finalise_assembly (e0 : environment) : environment := ...
-
-Definition finalise_and_recreate_assembly (e0 : environment) : environment := ...
-
-Program Definition backup (e0 : environment) (fp : string) (fpos : N) (content : BufferPlain.buffer_t) : environment := ...
+Program Definition backup (e0 : environment AB) (fp : string) (fpos : N) (content : BufferPlain.buffer_t) : (environment AB * (blockinformation * option (aid_t * keyinformation))) := ...
 
 End Environment.
 ```
@@ -83,8 +81,6 @@ End Environment.
 
 >typedef std::vector&lt;pkpair_t&gt; rel_aid_keys;
 
->virtual rel_aid_keys [extract_keys](coqenvironment_functions.cpp.md)() final;
-
 
 >protected:
 
@@ -95,9 +91,9 @@ End Environment.
 
 >virtual void [recreate_assembly](coqenvironment_functions.cpp.md)() = 0;
 
->virtual void [finalise_assembly](coqenvironment_functions.cpp.md)() = 0;
+>virtual std::optional&lt;std::pair&lt;CoqAssembly::aid_t,CoqAssembly::KeyInformation&gt;&gt; [finalise_assembly](coqenvironment_functions.cpp.md)() = 0;
 
->virtual void [finalise_and_recreate_assembly](coqenvironment_functions.cpp.md)() = 0;
+>virtual std::optional&lt;std::pair&lt;CoqAssembly::aid_t,CoqAssembly::KeyInformation&gt;&gt; [finalise_and_recreate_assembly](coqenvironment_functions.cpp.md)() = 0;
 
 >virtual bool [restore_assembly](coqenvironment_functions.cpp.md)(const CoqAssembly::aid_t &aid, const CoqAssembly::KeyInformation & ki) = 0;
 
@@ -105,8 +101,6 @@ End Environment.
 
 
 >const CoqConfiguration _config;
-
->rel_aid_keys _keys{};
 
 
 >private:
@@ -139,9 +133,9 @@ End Environment.
 
 >virtual void [recreate_assembly](coqenvironment_functions.cpp.md)() override final;
 
->virtual void [finalise_assembly](coqenvironment_functions.cpp.md)() override final;
+>virtual std::optional&lt;std::pair&lt;CoqAssembly::aid_t,CoqAssembly::KeyInformation&gt;&gt; [finalise_assembly](coqenvironment_functions.cpp.md)() override final;
 
->virtual void [finalise_and_recreate_assembly](coqenvironment_functions.cpp.md)() override final;
+>virtual std::optional&lt;std::pair&lt;CoqAssembly::aid_t,CoqAssembly::KeyInformation&gt;&gt; [finalise_and_recreate_assembly](coqenvironment_functions.cpp.md)() override final;
 
 >virtual rel_fname_fblocks [backup](coqenvironment_functions.cpp.md)(const std::string &fname, uint64_t fpos, const CoqBufferPlain &b, const uint32_t dlen) override final;
 
@@ -160,9 +154,9 @@ End Environment.
 
 >virtual void [recreate_assembly](coqenvironment_functions.cpp.md)() override final;
 
->virtual void [finalise_assembly](coqenvironment_functions.cpp.md)() override final;
+>virtual std::optional&lt;std::pair&lt;CoqAssembly::aid_t,CoqAssembly::KeyInformation&gt;&gt; [finalise_assembly](coqenvironment_functions.cpp.md)() override final;
 
->virtual void [finalise_and_recreate_assembly](coqenvironment_functions.cpp.md)() override final;
+>virtual std::optional&lt;std::pair&lt;CoqAssembly::aid_t,CoqAssembly::KeyInformation&gt;&gt; [finalise_and_recreate_assembly](coqenvironment_functions.cpp.md)() override final;
 
 >virtual rel_fname_fblocks [backup](coqenvironment_functions.cpp.md)(const std::string &fname, uint64_t fpos, const CoqBufferPlain &b, const uint32_t dlen) override final;
 
