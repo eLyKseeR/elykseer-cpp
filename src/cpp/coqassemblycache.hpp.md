@@ -42,9 +42,10 @@ Coq defines data structures in module [Configuration](https://github.com/eLyKsee
 ```coq
 Record readqueueentity : Type :=
     mkreadqueueentity
-        { qaid : Assembly.aid_t
-        ; qapos : N
-        ; qrlen : N
+        { rqaid : Assembly.aid_t
+        ; rqapos : N
+        ; rqrlen : N
+        ; rqfpos : N
         }.
 Record readqueueresult : Type :=
     mkreadqueueresult
@@ -77,6 +78,8 @@ Record writequeueresult : Type :=
 >uint32_t _rlen;
 
 >uint64_t _fpos;
+
+>Key256 _chksum{true};
 
 };
 
@@ -148,8 +151,6 @@ Record writequeueresult : Type :=
 >std::shared_ptr&lt;CoqKeyStore&gt; [get_key_store](coqassemblycache_functions.cpp.md)() const;
 
 >std::shared_ptr&lt;CoqFBlockStore&gt; [get_fblock_store](coqassemblycache_functions.cpp.md)() const;
-
->//CoqEnvironment::rel_fname_fblocks [extract_fblocks](coqassemblycache_functions.cpp.md)();
 
 >vmetric_t metrics() const;
 

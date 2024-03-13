@@ -28,9 +28,9 @@ BOOST_AUTO_TEST_CASE( instantiate_CoqEnvironmentWritable )
 {
     lxr::CoqConfiguration _config;
     lxr::CoqEnvironmentWritable _env(_config);
-    _env.finalise_assembly();
+    auto keys = _env.finalise_assembly();
 
-    BOOST_CHECK(_env.extract_keys().empty());
+    BOOST_CHECK(! keys);
 }
 ```
 
@@ -41,9 +41,9 @@ BOOST_AUTO_TEST_CASE( instantiate_CoqEnvironmentReadable )
 {
     lxr::CoqConfiguration _config;
     lxr::CoqEnvironmentReadable _env(_config);
-    // _env.finalise_assembly();
+    // auto keys = _env.finalise_assembly();
 
-    BOOST_CHECK(_env.extract_keys().empty());
+    // BOOST_CHECK(! keys);
 }
 ```
 
@@ -80,14 +80,12 @@ BOOST_AUTO_TEST_CASE( backup_restore_roundtrip )
     }
 
     // finish
-    _wenv.finalise_assembly();
-
-    lxr::CoqEnvironment::rel_aid_keys _keys = _wenv.extract_keys();
-    BOOST_CHECK_EQUAL(_keys.size(), 1);
+    auto _keys = _wenv.finalise_assembly();
+    BOOST_CHECK(_keys);
 
     // recall
     lxr::CoqEnvironmentReadable _renv(_config);
-    _renv.restore_assembly(_keys[0].first, _keys[0].second);
+    _renv.restore_assembly(_keys.value().first, _keys.value().second);
 
     // test restored bytes
     lxr::CoqAssembly::BlockInformation bi = _fblockstore->at(0)->second.front();

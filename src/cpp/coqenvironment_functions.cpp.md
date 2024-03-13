@@ -1,8 +1,10 @@
 
 ```coq
-Definition recreate_assembly (e : environment) : environment :=
-    let (a,b) := AssemblyPlainWritable.create e.(config) in
-    set cur_assembly (const a) (set cur_buffer (const b) e).
+Definition recreate_assembly (e : environment AB) : environment AB :=
+    let (a,b) := AssemblyPlainWritable.create (e.(econfig AB)) in
+    {| cur_assembly := a; cur_buffer := b
+    ;  econfig := e.(econfig AB)
+    |}.
 ```
 ```cpp
 
@@ -16,113 +18,83 @@ void CoqEnvironmentReadable::recreate_assembly()
 ```
 
 ```coq
-Definition finalise_assembly (e0 : environment) : environment :=
-    let a0 := cur_assembly e0 in
-    let apos := apos a0 in
+Definition finalise_assembly (e0 : environment AB)
+ : option (aid_t * keyinformation) :=
+    let a0 := e0.(cur_assembly AB) in
+    let apos := Assembly.apos a0 in
     if N.ltb 0 apos then
-        let (a,b) := Assembly.finish a0 (cur_buffer e0) in
+        let (a,b) := Assembly.finish a0 e0.(cur_buffer AB) in
         let ki := {| pkey := cpp_mk_key256 tt
-                   ; ivec := cpp_mk_key128 tt
-                   ; localnchunks := e0.(config).(Configuration.config_nchunks)
-                   ; localid := e0.(config).(Configuration.my_id) |} in
-        let e1 := env_add_aid_key (aid a) e0 ki in
+                    ; ivec := cpp_mk_key128 tt
+                    ; localnchunks := e0.(econfig AB).(Configuration.config_nchunks)
+                    ; localid := e0.(econfig AB).(Configuration.my_id) |} in
         match Assembly.encrypt a b ki with
-        | None => e0
+        | None => None
         | Some (a',b') =>
-            let n := Assembly.extract (config e1) a' b' in
-            if N.eqb n (Assembly.assemblysize e0.(config).(Configuration.config_nchunks))
-            then e1
-            else e0
+            let n := Assembly.extract e0.(econfig AB) a' b' in
+            if N.ltb 0 n
+            then Some (a.(aid), ki)
+            else None
         end
-    else e0.
+    else None.
 ```
 ```cpp
-void CoqEnvironmentWritable::finalise_assembly()
+std::optional<std::pair<CoqAssembly::aid_t,CoqAssembly::KeyInformation>>  CoqEnvironmentWritable::finalise_assembly()
 {
-    if (! _assembly) { return; }
+    if (! _assembly) { return {}; }
     std::shared_ptr<CoqAssemblyPlainFull> finished_assembly = _assembly->finish();
     _assembly.reset();
     CoqAssembly::KeyInformation ki(_config);
     std::shared_ptr<CoqAssemblyEncrypted> encrypted_assembly = finished_assembly->encrypt(ki);
     if (encrypted_assembly) {
-        _keys.push_back({encrypted_assembly->aid(), std::move(ki)});
+        // _keys.push_back({encrypted_assembly->aid(), std::move(ki)});
         encrypted_assembly->extract();
     }
     std::clog << "CoqEnvironmentWritable::finalise_assembly()" << std::endl;
+    return std::pair(encrypted_assembly->aid(), ki);
 }
 
-void CoqEnvironmentReadable::finalise_assembly()
-{}
+std::optional<std::pair<CoqAssembly::aid_t,CoqAssembly::KeyInformation>> CoqEnvironmentReadable::finalise_assembly()
+{
+    return {};
+}
 ```
 
 ```coq
-Definition finalise_and_recreate_assembly (e0 : environment) : environment :=
-    let e1 := finalise_assembly e0 in
-    recreate_assembly e1.
+Definition finalise_and_recreate_assembly (e0 : environment AB)
+ : option (environment AB * (aid_t * keyinformation)) :=
+    match finalise_assembly e0 with
+    | None => None
+    | Some ki =>
+        Some (EnvironmentWritable.recreate_assembly e0, ki)
+    end.
 ```
 ```cpp
-void CoqEnvironmentWritable::finalise_and_recreate_assembly()
+std::optional<std::pair<CoqAssembly::aid_t,CoqAssembly::KeyInformation>> CoqEnvironmentWritable::finalise_and_recreate_assembly()
 {
-    finalise_assembly();
+    auto res = finalise_assembly();
     recreate_assembly();
-}
-
-void CoqEnvironmentReadable::finalise_and_recreate_assembly()
-{}
-
-```
-
-## Extract relations
-
-extract blockinformation of backuped file content as a relation
-from filename to _CoqAssembly::BlockInformation_ aka. as a pair.
-
-the environments memory of this relation is cleared.
-
-```cpp
-/*
-CoqEnvironment::rel_fname_fblocks CoqEnvironment::extract_fblocks()
-{
-    rel_fname_fblocks res = _fblocks;
-    _fblocks.clear();
-
-    // sort by fname, fpos
-    std::sort(res.begin(), res.end(), [](const bipair_t &a, const bipair_t &b) { return a.first < b.first && a.second.filepos < b.second.filepos; });
-
-    // reset blockid numbers
-    std::string lastfn{";"};
-    int bnum{0};
-    std::for_each(res.begin(), res.end(), [&lastfn,&bnum](bipair_t &v) { if (v.first != lastfn) { bnum=0; }; v.second.blockid = ++bnum; });
-
     return res;
 }
-*/
-```
 
-```cpp
-CoqEnvironment::rel_aid_keys CoqEnvironment::extract_keys()
+std::optional<std::pair<CoqAssembly::aid_t,CoqAssembly::KeyInformation>> CoqEnvironmentReadable::finalise_and_recreate_assembly()
 {
-    rel_aid_keys res = std::move(_keys);
-    _keys.clear(); // TODO already gone; on all platforms?
-    return res;
+    return {};
 }
+
 ```
 
 ## Restore assembly from chunks
 
 ```coq
-Definition restore_assembly (e0 : environment) (aid : Assembly.aid_t) : option environment :=
-    match key_for_aid e0 aid with
+Definition restore_assembly (e0 : environment AB) (aid : aid_t) (ki : keyinformation) : option (environment AB) :=
+    match Assembly.recall e0.(econfig AB) {| nchunks := e0.(econfig AB).(Configuration.config_nchunks); aid := aid; apos := 0 |} with
     | None => None
-    | Some k =>
-        match Assembly.recall e0.(config) {| nchunks := e0.(config).(Configuration.config_nchunks); aid := aid; apos := 0 |} with
+    | Some (a1, b1) =>
+        match Assembly.decrypt a1 b1 ki with
         | None => None
-        | Some (a1, b1) =>
-            match Assembly.decrypt a1 b1 k with
-            | None => None
-            | Some (a2, b2) =>
-                Some {| cur_assembly := a2; cur_buffer := b2; config := e0.(config); fblocks := e0.(fblocks); keys := e0.(keys) |}
-            end
+        | Some (a2, b2) =>
+            Some {| cur_assembly := a2; cur_buffer := b2; econfig := e0.(econfig AB) |}
         end
     end.
 ```
@@ -151,19 +123,21 @@ bool CoqEnvironmentWritable::restore_assembly(const CoqAssembly::aid_t & aid, co
 ## Backup file content
 
 ```coq
-    Program Definition backup (e0 : environment AB) (fp : string) (fpos : N) (content : BufferPlain.buffer_t) : environment AB :=
-        let afree := N.sub (Assembly.assemblysize e0.(config AB).(Configuration.config_nchunks)) e0.(cur_assembly AB).(apos) in
-        let blen := BufferPlain.buffer_len content in
-        let e1 := if N.ltb afree blen then
-                    finalise_and_recreate_assembly e0
-                else e0 in
-        let (a', bi) := Assembly.backup e1.(cur_assembly AB) e1.(cur_buffer AB) fpos content in
-        {| cur_assembly := a'
-        ;  cur_buffer := e1.(cur_buffer AB)
-        ;  config := e1.(config AB)
-        ;  fblocks := (fp,bi) :: e1.(fblocks AB)
-        ;  keys := e1.(keys AB)
-        |}.
+Program Definition backup (e0 : environment AB) (fp : string) (fpos : N) (content : BufferPlain.buffer_t)
+ : (environment AB * (blockinformation * option (aid_t * keyinformation))) :=
+    let afree := N.sub (Assembly.assemblysize e0.(econfig AB).(Configuration.config_nchunks)) e0.(cur_assembly AB).(apos) in
+    let blen := BufferPlain.buffer_len content in
+    let (ki, e1) := if N.ltb afree blen then
+                        match finalise_and_recreate_assembly e0 with
+                        | None => (None, e0)
+                        | Some (e0', ki) => (Some ki, e0')
+                        end
+                        else (None, e0) in
+    let (a', bi) := Assembly.backup e1.(cur_assembly AB) e1.(cur_buffer AB) fpos content in
+    ({| cur_assembly := a'
+        ; cur_buffer := e1.(cur_buffer AB)
+        ; econfig := e1.(econfig AB)
+        |}, (bi, ki)).
 ```
 
 ```cpp
