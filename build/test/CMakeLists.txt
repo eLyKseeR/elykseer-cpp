@@ -21,11 +21,6 @@ include_directories("${CMAKE_HOME_DIRECTORY}/../ext/rapidcheck/extras/boost_test
 set(testlibs "rapidcheck")
 
 set(GENERATED_SRCS
-  utAssembly.cpp
-  utBackupCtrl.cpp
-  utDbBackupJob.cpp
-  utDbFp.cpp
-  utDbKey.cpp
   utFileCtrl.cpp
   utFsUtils.cpp
   utCoqAssembly.cpp
@@ -33,9 +28,7 @@ set(GENERATED_SRCS
   utCoqEnvironment.cpp
   utLiz.cpp
   utMain.cpp
-  utOptions.cpp
-  utOS.cpp
-  utRestoreCtrl.cpp)
+  utOS.cpp)
 set_source_files_properties(${GENERATED_SRCS} GENERATED)
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -79,31 +72,6 @@ set(EXTRACT_CPP_CMD "${CMAKE_CURRENT_SOURCE_DIR}/../../ext/gitalk/utils/extract_
 set(LITERATE_SRC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/cpp")
 
 add_custom_command(
-  COMMAND rm -f utAssembly.cpp
-  COMMAND ${EXTRACT_CPP_CMD} "${LITERATE_SRC_PATH}/utAssembly.cpp.md"  utAssembly.cpp
-  DEPENDS "${LITERATE_SRC_PATH}/utAssembly.cpp.md"
-  OUTPUT utAssembly.cpp)
-add_custom_command(
-  COMMAND rm -f utBackupCtrl.cpp
-  COMMAND ${EXTRACT_CPP_CMD} "${LITERATE_SRC_PATH}/utBackupCtrl.cpp.md"  utBackupCtrl.cpp
-  DEPENDS "${LITERATE_SRC_PATH}/utBackupCtrl.cpp.md"
-  OUTPUT utBackupCtrl.cpp)
-add_custom_command(
-  COMMAND rm -f utDbBackupJob.cpp
-  COMMAND ${EXTRACT_CPP_CMD} "${LITERATE_SRC_PATH}/utDbBackupJob.cpp.md"  utDbBackupJob.cpp
-  DEPENDS "${LITERATE_SRC_PATH}/utDbBackupJob.cpp.md"
-  OUTPUT utDbBackupJob.cpp)
-add_custom_command(
-  COMMAND rm -f utDbFp.cpp
-  COMMAND ${EXTRACT_CPP_CMD} "${LITERATE_SRC_PATH}/utDbFp.cpp.md"  utDbFp.cpp
-  DEPENDS "${LITERATE_SRC_PATH}/utDbFp.cpp.md"
-  OUTPUT utDbFp.cpp)
-add_custom_command(
-  COMMAND rm -f utDbKey.cpp
-  COMMAND ${EXTRACT_CPP_CMD} "${LITERATE_SRC_PATH}/utDbKey.cpp.md"  utDbKey.cpp
-  DEPENDS "${LITERATE_SRC_PATH}/utDbKey.cpp.md"
-  OUTPUT utDbKey.cpp)
-add_custom_command(
   COMMAND rm -f utCoqAssembly.cpp
   COMMAND ${EXTRACT_CPP_CMD} "${LITERATE_SRC_PATH}/utCoqAssembly.cpp.md"  utCoqAssembly.cpp
   DEPENDS "${LITERATE_SRC_PATH}/utCoqAssembly.cpp.md"
@@ -139,17 +107,7 @@ add_custom_command(
   DEPENDS "${LITERATE_SRC_PATH}/utMain.cpp.md"
   OUTPUT utMain.cpp)
 add_custom_command(
-  COMMAND rm -f utOptions.cpp
-  COMMAND ${EXTRACT_CPP_CMD} "${LITERATE_SRC_PATH}/utOptions.cpp.md"  utOptions.cpp
-  DEPENDS "${LITERATE_SRC_PATH}/utOptions.cpp.md"
-  OUTPUT utOptions.cpp)
-add_custom_command(
   COMMAND rm -f utOS.cpp
   COMMAND ${EXTRACT_CPP_CMD} "${LITERATE_SRC_PATH}/utOS.cpp.md"  utOS.cpp
   DEPENDS "${LITERATE_SRC_PATH}/utOS.cpp.md"
   OUTPUT utOS.cpp)
-add_custom_command(
-  COMMAND rm -f utRestoreCtrl.cpp
-  COMMAND ${EXTRACT_CPP_CMD} "${LITERATE_SRC_PATH}/utRestoreCtrl.cpp.md"  utRestoreCtrl.cpp
-  DEPENDS "${LITERATE_SRC_PATH}/utRestoreCtrl.cpp.md"
-  OUTPUT utRestoreCtrl.cpp)
