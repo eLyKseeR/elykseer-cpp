@@ -17,9 +17,6 @@ ENDIF(${CMAKE_CROSSCOMPILING})
 # list of source files to be compiled
 set(GENERATED_SRCS
 	appid.cpp
-	assembly.cpp
-	backupctrl.cpp
-	chunk.cpp
 	coqassembly.cpp
 	coqassemblycache.cpp
 	coqbuffer.cpp
@@ -27,22 +24,14 @@ set(GENERATED_SRCS
 	coqfilesupport.cpp
 	coqprocessor.cpp
 	coqstore.cpp
-	dbbackupjob.cpp
-	dbfp.cpp
-	dbkey.cpp
 	filectrl.cpp
 	fsutils.cpp
 	liz.cpp
 	nchunks.cpp
-	options.cpp
-	os.cpp
-	restorectrl.cpp)
+	os.cpp)
 set_source_files_properties(${GENERATED_SRCS} GENERATED)
 set(GENERATED_HDRS
 	lxr/appid.hpp
-	lxr/assembly.hpp
-	lxr/backupctrl.hpp
-	lxr/chunk.hpp
 	lxr/coqassembly.hpp
 	lxr/coqassemblycache.hpp
 	lxr/coqbuffer.hpp
@@ -51,18 +40,12 @@ set(GENERATED_HDRS
 	lxr/coqfilesupport.hpp
 	lxr/coqprocessor.hpp
 	lxr/coqstore.hpp
-	lxr/dbbackupjob.hpp
-	lxr/dbctrl.hpp
-	lxr/dbfp.hpp
-	lxr/dbkey.hpp
 	lxr/filectrl.hpp
 	lxr/fsutils.hpp
 	lxr/liz.hpp
 	lxr/lxr.hpp
 	lxr/nchunks.hpp
-	lxr/options.hpp
 	lxr/os.hpp
-	lxr/restorectrl.hpp
 	lxr/streamio.hpp)
 set_source_files_properties(${GENERATED_HDRS} GENERATED)
 
@@ -92,48 +75,6 @@ add_custom_command(
   MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/appid.hpp.md"
   DEPENDS "${LITERATE_SRC_PATH}/appid*.md"
   OUTPUT lxr/appid.hpp)
-
-add_custom_command(
-  COMMAND rm -f assembly.cpp
-  COMMAND ${MAKE_CPP_CMD} "${LITERATE_SRC_PATH}/assembly.hpp.md"
-  MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/assembly.hpp.md"
-  DEPENDS "${LITERATE_SRC_PATH}/assembly*.md"
-  OUTPUT assembly.cpp)
-add_custom_command(
-  WORKING_DIRECTORY "lxr"
-  COMMAND rm -f assembly.hpp
-  COMMAND ${MAKE_HPP_CMD} "${LITERATE_SRC_PATH}/assembly.hpp.md"
-  MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/assembly.hpp.md"
-  DEPENDS "${LITERATE_SRC_PATH}/assembly*.md"
-  OUTPUT lxr/assembly.hpp)
-
-add_custom_command(
-  COMMAND rm -f backupctrl.cpp
-  COMMAND ${MAKE_CPP_CMD} "${LITERATE_SRC_PATH}/backupctrl.hpp.md"
-  MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/backupctrl.hpp.md"
-  DEPENDS "${LITERATE_SRC_PATH}/backupctrl*.md"
-  OUTPUT backupctrl.cpp)
-add_custom_command(
-  WORKING_DIRECTORY "lxr"
-  COMMAND rm -f backupctrl.hpp
-  COMMAND ${MAKE_HPP_CMD} "${LITERATE_SRC_PATH}/backupctrl.hpp.md"
-  MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/backupctrl.hpp.md"
-  DEPENDS "${LITERATE_SRC_PATH}/backupctrl*.md"
-  OUTPUT lxr/backupctrl.hpp)
-
-add_custom_command(
-  COMMAND rm -f chunk.cpp
-  COMMAND ${MAKE_CPP_CMD} "${LITERATE_SRC_PATH}/chunk.hpp.md"
-  MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/chunk.hpp.md"
-  DEPENDS "${LITERATE_SRC_PATH}/chunk*.md"
-  OUTPUT chunk.cpp)
-add_custom_command(
-  WORKING_DIRECTORY "lxr"
-  COMMAND rm -f chunk.hpp
-  COMMAND ${MAKE_HPP_CMD} "${LITERATE_SRC_PATH}/chunk.hpp.md"
-  MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/chunk.hpp.md"
-  DEPENDS "${LITERATE_SRC_PATH}/chunk*.md"
-  OUTPUT lxr/chunk.hpp)
 
 add_custom_command(
   COMMAND rm -f coqassembly.cpp
@@ -241,48 +182,6 @@ add_custom_command(
   OUTPUT lxr/coqstore.hpp)
 
 add_custom_command(
-  COMMAND rm -f dbbackupjob.cpp
-  COMMAND ${MAKE_CPP_CMD} "${LITERATE_SRC_PATH}/dbbackupjob.hpp.md"
-  MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/dbbackupjob.hpp.md"
-  DEPENDS "${LITERATE_SRC_PATH}/dbbackupjob*.md"
-  OUTPUT dbbackupjob.cpp)
-add_custom_command(
-  WORKING_DIRECTORY "lxr"
-  COMMAND rm -f dbbackupjob.hpp
-  COMMAND ${MAKE_HPP_CMD} "${LITERATE_SRC_PATH}/dbbackupjob.hpp.md"
-  MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/dbbackupjob.hpp.md"
-  DEPENDS "${LITERATE_SRC_PATH}/dbbackupjob*.md"
-  OUTPUT lxr/dbbackupjob.hpp)
-
-add_custom_command(
-  COMMAND rm -f dbfp.cpp
-  COMMAND ${MAKE_CPP_CMD} "${LITERATE_SRC_PATH}/dbfp.hpp.md"
-  MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/dbfp.hpp.md"
-  DEPENDS "${LITERATE_SRC_PATH}/dbfp*.md"
-  OUTPUT dbfp.cpp)
-add_custom_command(
-  WORKING_DIRECTORY "lxr"
-  COMMAND rm -f dbfp.hpp
-  COMMAND ${MAKE_HPP_CMD} "${LITERATE_SRC_PATH}/dbfp.hpp.md"
-  MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/dbfp.hpp.md"
-  DEPENDS "${LITERATE_SRC_PATH}/dbfp*.md"
-  OUTPUT lxr/dbfp.hpp)
-
-add_custom_command(
-  COMMAND rm -f dbkey.cpp
-  COMMAND ${MAKE_CPP_CMD} "${LITERATE_SRC_PATH}/dbkey.hpp.md"
-  MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/dbkey.hpp.md"
-  DEPENDS "${LITERATE_SRC_PATH}/dbkey*.md"
-  OUTPUT dbkey.cpp)
-add_custom_command(
-  WORKING_DIRECTORY "lxr"
-  COMMAND rm -f dbkey.hpp
-  COMMAND ${MAKE_HPP_CMD} "${LITERATE_SRC_PATH}/dbkey.hpp.md"
-  MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/dbkey.hpp.md"
-  DEPENDS "${LITERATE_SRC_PATH}/dbkey*.md"
-  OUTPUT lxr/dbkey.hpp)
-
-add_custom_command(
   COMMAND rm -f filectrl.cpp
   COMMAND ${MAKE_CPP_CMD} "${LITERATE_SRC_PATH}/filectrl.hpp.md"
   MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/filectrl.hpp.md"
@@ -339,20 +238,6 @@ add_custom_command(
   OUTPUT lxr/nchunks.hpp)
 
 add_custom_command(
-  COMMAND rm -f options.cpp
-  COMMAND ${MAKE_CPP_CMD} "${LITERATE_SRC_PATH}/options.hpp.md"
-  MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/options.hpp.md"
-  DEPENDS "${LITERATE_SRC_PATH}/options*.md"
-  OUTPUT options.cpp)
-add_custom_command(
-  WORKING_DIRECTORY "lxr"
-  COMMAND rm -f options.hpp
-  COMMAND ${MAKE_HPP_CMD} "${LITERATE_SRC_PATH}/options.hpp.md"
-  MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/options.hpp.md"
-  DEPENDS "${LITERATE_SRC_PATH}/options*.md"
-  OUTPUT lxr/options.hpp)
-
-add_custom_command(
   COMMAND rm -f os.cpp
   COMMAND ${MAKE_CPP_CMD} "${LITERATE_SRC_PATH}/os.hpp.md"
   MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/os.hpp.md"
@@ -367,34 +252,12 @@ add_custom_command(
   OUTPUT lxr/os.hpp)
 
 add_custom_command(
-  COMMAND rm -f restorectrl.cpp
-  COMMAND ${MAKE_CPP_CMD} "${LITERATE_SRC_PATH}/restorectrl.hpp.md"
-  MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/restorectrl.hpp.md"
-  DEPENDS "${LITERATE_SRC_PATH}/restorectrl*.md"
-  OUTPUT restorectrl.cpp)
-add_custom_command(
-  WORKING_DIRECTORY "lxr"
-  COMMAND rm -f restorectrl.hpp
-  COMMAND ${MAKE_HPP_CMD} "${LITERATE_SRC_PATH}/restorectrl.hpp.md"
-  MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/restorectrl.hpp.md"
-  DEPENDS "${LITERATE_SRC_PATH}/restorectrl*.md"
-  OUTPUT lxr/restorectrl.hpp)
-
-add_custom_command(
   WORKING_DIRECTORY "lxr"
   COMMAND rm -f streamio.hpp
   COMMAND ${MAKE_HPP_CMD} "${LITERATE_SRC_PATH}/streamio.hpp.md"
   MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/streamio.hpp.md"
   DEPENDS "${LITERATE_SRC_PATH}/streamio*.md"
   OUTPUT lxr/streamio.hpp)
-
-add_custom_command(
-  WORKING_DIRECTORY "lxr"
-  COMMAND rm -f dbctrl.hpp
-  COMMAND ${MAKE_HPP_CMD} "${LITERATE_SRC_PATH}/dbctrl.hpp.md"
-  MAIN_DEPENDENCY "${LITERATE_SRC_PATH}/dbctrl.hpp.md"
-  DEPENDS "${LITERATE_SRC_PATH}/dbctrl*.md"
-  OUTPUT lxr/dbctrl.hpp)
 
 
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
