@@ -11,29 +11,37 @@ std::optional<CoqFilesupport::FileInformation> CoqFilesupport::get_file_informat
     fi.fname = fn;
     fi.fchecksum = lxr::Sha256::hash(fp).toHex();
 
-  #if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
-    struct stat _fst;
-    if (stat(fp.string().c_str(), &_fst) == 0) {
-        fi.fsize = _fst.st_size;
-        char _buf[65];
-        snprintf(_buf, 65, "%d", _fst.st_uid);
-        fi.fowner = std::string(_buf);
-    //   snprintf(_buf, 65, "%d", _fst.st_gid);
-    //   fi.fgroup = _buf;
-  #if defined(__APPLE__) || defined(__FreeBSD__)
-          fi.fmodified = OS::time2string(_fst.st_mtimespec.tv_sec);
-  #elif defined(__linux__)
-          fi.fmodified = OS::time2string(_fst.st_mtim.tv_sec);
-  #endif
-    } else {
-        return {};
+    #if defined(PLATFORM_darwin) || defined(PLATFORM_freebsd)
+    #define ST_SECONDS st_mtimespec.tv_sec
+    #define S_STAT stat
+    #define F_STAT stat
+    #elif defined(PLATFORM_linux)
+    #define ST_SECONDS st_mtim.tv_sec
+    #define S_STAT stat
+    #define F_STAT stat
+    #elif defined(PLATFORM_win64)
+    #define ST_SECONDS st_mtime
+    #define S_STAT _stat64
+    #define F_STAT _wstat64
+    #else
+    #error not yet defined for this platform (PLATFORM)
+    #endif
+    {
+        struct S_STAT _fstats{};
+        if (F_STAT(fp.c_str(), &_fstats) == 0) {
+            fi.fname = fp.string();
+            fi.fchecksum = lxr::Sha256::hash(fp).toHex();
+            std::ostringstream ss;
+            ss << _fstats.st_uid;
+            fi.fowner = ss.str();
+            fi.fsize = (int64_t)_fstats.st_size;
+            fi.fmodified = OS::time2string(_fstats.ST_SECONDS);
+            fi.fpermissions = 100 * ((_fstats.st_mode >> 6) & 0x007) + 10 * ((_fstats.st_mode >> 3)  & 0x007) + (_fstats.st_mode & 0x007);
+        } else {
+            // std::clog << "fstats failed for " << fp << ": " << std::strerror(errno) << std::endl;
+            return {};
+        }
     }
-  #else
-    //#error Such a platform is not yet a good host for this software
-    auto ftm = std::filesystem::last_write_time(fp);
-    fi.fmodified = std::format("{}",ftm);
-  #endif
-
     return std::move(fi);
 }
 

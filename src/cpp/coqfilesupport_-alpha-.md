@@ -10,7 +10,12 @@
 #include "lxr/sha256.hpp"
 
 #include <filesystem>
+#include <sstream>
+
+#if !defined(PLATFORM_win64)
+#include <sys/types.h>
 #include <sys/stat.h>
+#endif
 
 namespace lxr {
 
