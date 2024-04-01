@@ -97,7 +97,7 @@ End Environment.
 
 >virtual bool [restore_assembly](coqenvironment_functions.cpp.md)(const CoqAssembly::aid_t &aid, const CoqAssembly::KeyInformation & ki) = 0;
 
->virtual rel_fname_fblocks [backup](coqenvironment_functions.cpp.md)(const std::string &fname, uint64_t fpos, const CoqBufferPlain &b, const uint32_t dlen) = 0;
+>virtual std::pair&lt;rel_fname_fblocks, rel_aid_keys&gt; [backup](coqenvironment_functions.cpp.md)(const std::string &fname, uint64_t fpos, const CoqBufferPlain &b, const uint32_t dlen) = 0;
 
 
 >const CoqConfiguration _config;
@@ -137,7 +137,7 @@ End Environment.
 
 >virtual std::optional&lt;std::pair&lt;CoqAssembly::aid_t,CoqAssembly::KeyInformation&gt;&gt; [finalise_and_recreate_assembly](coqenvironment_functions.cpp.md)() override final;
 
->virtual rel_fname_fblocks [backup](coqenvironment_functions.cpp.md)(const std::string &fname, uint64_t fpos, const CoqBufferPlain &b, const uint32_t dlen) override final;
+>virtual std::pair&lt;rel_fname_fblocks, rel_aid_keys&gt; [backup](coqenvironment_functions.cpp.md)(const std::string &fname, uint64_t fpos, const CoqBufferPlain &b, const uint32_t dlen) override final;
 
 };
 
@@ -158,7 +158,7 @@ End Environment.
 
 >virtual std::optional&lt;std::pair&lt;CoqAssembly::aid_t,CoqAssembly::KeyInformation&gt;&gt; [finalise_and_recreate_assembly](coqenvironment_functions.cpp.md)() override final;
 
->virtual rel_fname_fblocks [backup](coqenvironment_functions.cpp.md)(const std::string &fname, uint64_t fpos, const CoqBufferPlain &b, const uint32_t dlen) override final;
+>virtual std::pair&lt;rel_fname_fblocks, rel_aid_keys&gt; [backup](coqenvironment_functions.cpp.md)(const std::string &fname, uint64_t fpos, const CoqBufferPlain &b, const uint32_t dlen) override final;
 
 >std::shared_ptr&lt;CoqAssemblyPlainWritable&gt; _assembly{nullptr};
 

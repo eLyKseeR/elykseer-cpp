@@ -73,7 +73,8 @@ BOOST_AUTO_TEST_CASE( backup_restore_roundtrip )
     // backup
     const std::string msg{"good morning and hello world."};
     lxr::CoqBufferPlain buffer(msg.length(), msg.c_str());
-    auto fblocks = _wenv.backup("/data/test/message.txt", 0, buffer, buffer.len());
+    auto backup_results = _wenv.backup("/data/test/message.txt", 0, buffer, buffer.len());
+    auto fblocks = backup_results.first;
     BOOST_CHECK_EQUAL(1, fblocks.size());
     for (auto const & fb : fblocks) {
         _fblockstore->add(fb.first, fb.second);

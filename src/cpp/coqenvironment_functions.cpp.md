@@ -50,7 +50,9 @@ std::optional<std::pair<CoqAssembly::aid_t,CoqAssembly::KeyInformation>>  CoqEnv
         // _keys.push_back({encrypted_assembly->aid(), std::move(ki)});
         encrypted_assembly->extract();
     }
+#ifdef DEBUG
     std::clog << "CoqEnvironmentWritable::finalise_assembly()" << std::endl;
+#endif
     return std::pair(encrypted_assembly->aid(), ki);
 }
 
@@ -142,7 +144,7 @@ Program Definition backup (e0 : environment AB) (fp : string) (fpos : N) (conten
 
 ```cpp
 // TODO argument fname should be fhash
-CoqEnvironment::rel_fname_fblocks CoqEnvironmentWritable::backup(const std::string &fname, uint64_t fpos, const CoqBufferPlain &b, const uint32_t dlen)
+std::pair<CoqEnvironment::rel_fname_fblocks, CoqEnvironment::rel_aid_keys> CoqEnvironmentWritable::backup(const std::string &fname, uint64_t fpos, const CoqBufferPlain &b, const uint32_t dlen)
 {
     if (! _assembly) { return {}; }
     uint32_t blen = b.len();
@@ -150,6 +152,7 @@ CoqEnvironment::rel_fname_fblocks CoqEnvironmentWritable::backup(const std::stri
 
     rel_fname_fblocks _fblocks{};
     uint32_t nwritten{0};
+    rel_aid_keys _kis{};
     while (nwritten < dlen) {
         bool recreate{false};
         int sz = dlen - nwritten;
@@ -158,18 +161,25 @@ CoqEnvironment::rel_fname_fblocks CoqEnvironmentWritable::backup(const std::stri
             sz = afree;
             recreate = true;
         }
+        //std::clog << "CoqEnvironmentWritable::backup dlen = " << dlen << " fpos = " << fpos << " nwritten = " << nwritten << " sz = " << sz << " recreate? " << recreate << std::endl;
         auto bi = _assembly->backup(b, nwritten, sz);
         bi.filepos = fpos;
+        fpos += sz;
         nwritten += sz; // sz > 0 -> we make progress
         _fblocks.push_back({fname, bi});   // TODO pass in fhash
-        if (recreate) { finalise_and_recreate_assembly(); }
+        if (recreate) {
+            auto oki = finalise_and_recreate_assembly();
+            if (oki) {
+                _kis.push_back(oki.value());
+            }
+        }
     }
-    return _fblocks;
+    return std::pair(_fblocks, _kis);
 }
 ```
 
 ```cpp
-CoqEnvironment::rel_fname_fblocks CoqEnvironmentReadable::backup(const std::string &fname, uint64_t fpos, const CoqBufferPlain &b, const uint32_t dlen)
+std::pair<CoqEnvironment::rel_fname_fblocks, CoqEnvironment::rel_aid_keys> CoqEnvironmentReadable::backup(const std::string &fname, uint64_t fpos, const CoqBufferPlain &b, const uint32_t dlen)
 {
     return {};
 }

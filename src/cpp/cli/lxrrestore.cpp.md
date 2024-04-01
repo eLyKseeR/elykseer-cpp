@@ -28,6 +28,7 @@
 ```cpp
     static int dry_run = 0;
     static int verbose_out = 0;
+    static int use_gpg = 1;
     static struct option longopts[] = {
              { "dry-run",   no_argument,        &dry_run,       1   },
              { "verbose",   no_argument,        &verbose_out,   1   },
@@ -37,12 +38,12 @@
              { "copyright", no_argument,        NULL,           'C' },
              { "pChunks",   required_argument,  NULL,           'x' },
              { "pData",     required_argument,  NULL,           'o' },
-             { "pDbFp",     required_argument,  NULL,           'p' },
+             { "pDbFb",     required_argument,  NULL,           'b' },
              { "pKeys",     required_argument,  NULL,           'k' },
              { "file",      required_argument,  NULL,           'f' },
             //  { "dir",       required_argument,  NULL,           'd' },
              { "myid",      required_argument,  NULL,           'y' },
-             { "gpg",       no_argument,        NULL,           'g' },
+             { "nogpg",     no_argument,        &use_gpg,       0 },
              { NULL,         0,                 NULL,           0 }
     };
 
@@ -58,8 +59,6 @@ static int counter_files{0};
 
 static std::string list_files[MAX_RESTORE_FILES];
 // static std::string list_dirs[MAX_RESTORE_DIRS];
-
-static bool use_gpg{false};
 ```
 
 ## parsing cli arguments
@@ -78,10 +77,10 @@ void output_help() {
   std::cout << "--verbose      verbose output" << std::endl;
   std::cout << "--dry-run      just validate arguments" << std::endl;
   std::cout << "-y --myid      sets unique identifier for this local instance" << std::endl;
-  std::cout << "--gpg          decrypt the meta data using GnuPG" << std::endl;
+  std::cout << "--nogpg        turn off decrypion of meta data using GnuPG" << std::endl;
   std::cout << "-x --pChunks   sets path for encrypted chunks" << std::endl;
   std::cout << "-o --pData     sets output path for decrypted data" << std::endl;
-  std::cout << "-p --pDbFp     adds backup meta data dbfp (*)" << std::endl;
+  std::cout << "-b --pDbFb     adds backup meta data dbfb (*)" << std::endl;
   std::cout << "-k --pKeys     adds backup encryption keys dbks (*)" << std::endl;
   std::cout << "-f --file      file to be restored (*)" << std::endl;
   // std::cout << "-d --dir       files in directory to be restored (*)" << std::endl;
@@ -90,14 +89,17 @@ void output_help() {
 
 void output_version() {
   std::cout << lxr::Liz::version() << std::endl;
+  exit(0);
 }
 
 void output_license() {
   std::cout << lxr::Liz::license() << std::endl;
+  exit(0);
 }
 
 void output_copyright() {
   std::cout << lxr::Liz::copyright() << std::endl;
+  exit(0);
 }
 
 void set_chunk_path(std::optional<std::string> & chunkpath, const std::string & p) {
@@ -118,10 +120,10 @@ void set_output_path(std::optional<std::string> & outputpath, const std::string 
   }
 }
 
-void add_dbfp_path(std::shared_ptr<lxr::CoqFBlockStore> & db, const std::string & fp) {
+void add_dbfb_path(std::shared_ptr<lxr::CoqFBlockStore> & db, const std::string & fp) {
   if (lxr::FileCtrl::fileExists(fp)) {
     int sz0 = db->size();
-    if (use_gpg) {
+    if (use_gpg == 1) {
       lxr::Gpg gpg;
       gpg.decrypt_from_file(fp);
       db->inStream(gpg.istream());
@@ -140,7 +142,7 @@ void add_dbfp_path(std::shared_ptr<lxr::CoqFBlockStore> & db, const std::string 
 void add_dbkey_path(std::shared_ptr<lxr::CoqKeyStore> & db, const std::string & fp) {
   if (lxr::FileCtrl::fileExists(fp)) {
     int sz0 = db->size();
-    if (use_gpg) {
+    if (use_gpg == 1) {
       lxr::Gpg gpg;
       gpg.decrypt_from_file(fp);
       db->inStream(gpg.istream());
@@ -211,9 +213,10 @@ int main (int argc, char * const argv[]) {
 
   std::shared_ptr<lxr::CoqKeyStore> _keystore{new lxr::CoqKeyStore(_config)};
   std::shared_ptr<lxr::CoqFBlockStore> _fblockstore{new lxr::CoqFBlockStore(_config)};
+  std::shared_ptr<lxr::CoqFInfoStore> _finfostore{new lxr::CoqFInfoStore(_config)};
 
   int ch;
-  while ((ch = getopt_long(argc, argv, "hVLCgx:o:p:k:f:n:y:", longopts, NULL)) != -1) {
+  while ((ch = getopt_long(argc, argv, "hVLCx:o:b:k:f:n:y:", longopts, NULL)) != -1) {
     switch (ch) {
       case 'h': output_help(); break;
       case 'V': output_version(); break;
@@ -221,13 +224,12 @@ int main (int argc, char * const argv[]) {
       case 'C': output_copyright(); break;
       case 'x': set_chunk_path(chunkpath, optarg); break;
       case 'o': set_output_path(outputpath, optarg); break;
-      case 'p': add_dbfp_path(_fblockstore, optarg); break;
+      case 'b': add_dbfb_path(_fblockstore, optarg); break;
       case 'k': add_dbkey_path(_keystore, optarg); break;
       case 'f': restore_file(optarg); break;
       // case 'd': restore_dir(optarg); break;
       case 'n': set_n_chunks(nchunks, optarg); break;
       case 'y': set_myid(myid, optarg); break;
-      case 'g': use_gpg = true; break;
       default : break;
     }
   }
@@ -254,6 +256,7 @@ int main (int argc, char * const argv[]) {
   std::shared_ptr<lxr::CoqAssemblyCache> qac(new lxr::CoqAssemblyCache(_config, 3, 12));
   qac->register_key_store(_keystore);
   qac->register_fblock_store(_fblockstore);
+  qac->register_finfo_store(_finfostore);
   lxr::CoqProcessor qproc(_config, qac);
 
   // prepare files to restore
@@ -281,13 +284,15 @@ int main (int argc, char * const argv[]) {
   // }
 
   // output count of files
-  std::cout << "going to restore " << (counter_files - corr_files) << " files." << std::endl;
-  {
-    for (int i = 0; i < counter_files; i++) {
-      std::cout << "    " << (i+1) << "  " << list_files[i] << std::endl;
+  if (verbose_out > 0) {
+    std::cout << "going to restore " << (counter_files - corr_files) << " files." << std::endl;
+    {
+      for (int i = 0; i < counter_files; i++) {
+        std::cout << "    " << (i+1) << "  " << list_files[i] << std::endl;
+      }
     }
   }
-
+  
   if (dry_run != 0) {
     std::cout << "bye." << std::endl;
     return 0;
@@ -299,21 +304,31 @@ int main (int argc, char * const argv[]) {
       std::filesystem::path fp{outputpath.value()}; fp /= list_files[i];
       std::filesystem::path dir = fp.parent_path();
       if (! std::filesystem::exists(dir)) {
+#ifdef DEBUG
         std::clog << "make directories " << dir.string() << std::endl;
+#endif
         std::filesystem::create_directories(dir);
       }
       auto const fhash = lxr::Sha256::hash(list_files[i]).toHex();
       if (auto const fbs = _fblockstore->find(fhash); fbs) {
+#ifdef DEBUG
         std::clog << "  open file " << fp.c_str() << std::endl;
+#endif
         FILE *tgt = fopen(fp.c_str(), "wx");
         if (tgt) {
+#ifdef DEBUG
           std::clog << "  file ready." << std::endl;
+#endif
           auto process_read_blocks = [&tgt](const std::vector<lxr::ReadQueueResult> & rqrs) {
             for (auto const &rqr : rqrs) {
               if (rqr._rresult) {
+#ifdef DEBUG
                 std::clog << "     fseek to " << rqr._readrequest._fpos << std::endl;
+#endif
                 fseek(tgt, rqr._readrequest._fpos, SEEK_SET);
+#ifdef DEBUG
                 std::clog << "     writing " << rqr._rresult->len() << " bytes" << std::endl;
+#endif
                 rqr._rresult->fileout_sz_pos(0, rqr._rresult->len(), tgt);
               }
             }
@@ -322,7 +337,9 @@ int main (int argc, char * const argv[]) {
             lxr::ReadQueueEntity rqe;
             rqe._aid = bi.blockaid; rqe._apos = bi.blockapos;
             rqe._rlen = bi.blocksize; rqe._fpos = bi.filepos;
+#ifdef DEBUG
             std::clog << "   read request @" << bi.filepos << " in aid = " << bi.blockaid << std::endl;
+#endif
             if (! qac->enqueue_read_request(rqe)) {
               process_read_blocks(qac->iterate_read_queue());
               qac->enqueue_read_request(rqe);

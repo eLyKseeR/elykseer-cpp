@@ -205,7 +205,7 @@ template &lt;typename V, typename K = std::string&gt;
 
 >private:
 
->CoqFInfoStore & operator=(CoqFBlockStore const &) = delete;
+>CoqFInfoStore & operator=(CoqFInfoStore const &) = delete;
 
 };
 ```cpp

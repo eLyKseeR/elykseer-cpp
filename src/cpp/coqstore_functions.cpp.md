@@ -158,6 +158,14 @@ bool CoqFBlockStore::add(const std::string &k, const CoqAssembly::BlockInformati
 }
 ```
 
+```cpp
+bool CoqFInfoStore::add(const std::string &k, const CoqFilesupport::FileInformation &v)
+{
+    if (_entries.contains(k)) { return false; }
+    return CoqStore::add(k, v);
+}
+```
+
 ## Stream input/output functions
 
 ```cpp
@@ -237,6 +245,28 @@ void CoqFInfoStore::inStream(std::istream & ins)
     boost::property_tree::xml_parser::read_xml(ins, pt,
       boost::property_tree::xml_parser::no_comments |
       boost::property_tree::xml_parser::trim_whitespace);
+
+    for (auto root = pt.begin(); root != pt.end(); root++) {
+        if (root->first == "DbFInfo") {
+            for (auto entry = root->second.begin(); entry != root->second.end(); entry++) {
+                if (entry->first == "FInfo") {
+                    lxr::CoqFilesupport::FileInformation fi;
+                    std::string _fhash = entry->second.data();
+                    for (auto attr = entry->second.begin(); attr != entry->second.end(); attr++) {
+                        if (attr->first == "<xmlattr>") {
+                            fi.fname = attr->second.get<std::string>("fname");
+                            fi.fsize = attr->second.get<uint64_t>("fsize");
+                            fi.fowner = attr->second.get<std::string>("fowner");
+                            fi.fpermissions = attr->second.get<int>("fpermissions");
+                            fi.fmodified = attr->second.get<std::string>("fmodified");
+                            fi.fchecksum = attr->second.get<std::string>("fchecksum");
+                        }
+                    }
+                    add(_fhash, fi);
+                }
+            }
+        }
+    }
 }
 
 ```
