@@ -243,7 +243,9 @@ uint32_t CoqAssemblyEncrypted::extract()
             const std::filesystem::path cfpath = cfpathopt.value();
             if (! std::filesystem::exists(cfpath)) {
                 if (FILE * fstr = fopen(cfpath.string().c_str(), "wb"); fstr) {
+#ifdef DEBUG
                     std::clog << "    extract chunk " << cid << " to path " << cfpath << std::endl;
+#endif
                     if (int n = _buffer->fileout_sz_pos(CoqAssembly::chunksize * (cid - 1), CoqAssembly::chunksize, fstr); n == CoqAssembly::chunksize) {
                         nwritten += n;
                     } else {
@@ -302,7 +304,9 @@ std::shared_ptr<CoqAssemblyEncrypted> CoqAssemblyEncrypted::recall(const CoqConf
             const std::filesystem::path cfpath = cfpathopt.value();
             if (std::filesystem::exists(cfpath)) {
                 if (FILE * fstr = fopen(cfpath.string().c_str(), "rb"); fstr) {
-                    // std::clog << "    recall chunk " << cid << " from path " << cfpath << std::endl;
+#ifdef DEBUG
+                    std::clog << "    recall chunk " << cid << " from path " << cfpath << std::endl;
+#endif
                     if (int n = newassembly->_buffer->filein_sz_pos(CoqAssembly::chunksize * (cid - 1), CoqAssembly::chunksize, fstr); n == CoqAssembly::chunksize) {
                         nread += n;
                     } else {

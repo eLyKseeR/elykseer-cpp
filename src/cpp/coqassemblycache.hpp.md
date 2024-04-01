@@ -148,9 +148,13 @@ Record writequeueresult : Type :=
 
 >void [register_fblock_store](coqassemblycache_functions.cpp.md)(std::shared_ptr&lt;CoqFBlockStore&gt; &);
 
+>void [register_finfo_store](coqassemblycache_functions.cpp.md)(std::shared_ptr&lt;CoqFInfoStore&gt; &);
+
 >std::shared_ptr&lt;CoqKeyStore&gt; [get_key_store](coqassemblycache_functions.cpp.md)() const;
 
 >std::shared_ptr&lt;CoqFBlockStore&gt; [get_fblock_store](coqassemblycache_functions.cpp.md)() const;
+
+>std::shared_ptr&lt;CoqFInfoStore&gt; [get_finfo_store](coqassemblycache_functions.cpp.md)() const;
 
 >vmetric_t metrics() const;
 

@@ -55,11 +55,9 @@ Definition prepare_processor (c : configuration) : processor
 
 Program Definition file_backup (this : processor) (fp : Filesystem.path) : (fileinformation * processor)
 
-Program Definition directory_backup (this : processor) (fp : Filesystem.path) : (list fileinformation * processor)
-Program Definition directory_backup_0 (this : processor) (fp : Filesystem.path) : processor
+Program Definition directory_backup (this : processor) (fp : Filesystem.path) : processor
 
-Program Definition recursive_backup (this : processor) (maxdepth : N) (fp : Filesystem.path) : (list fileinformation * processor)
-Program Definition recursive_backup_0 (this : processor) (maxdepth : N) (fp : Filesystem.path) : processor
+Program Definition recursive_backup (this : processor) (maxdepth : N) (fp : Filesystem.path) : processor
 
 Program Definition close (this : processor) : processor
 
@@ -83,13 +81,9 @@ End Processor.
 
 >std::optional&lt;CoqFilesupport::FileInformation&gt; [file_backup](coqprocessor_functions.cpp.md)(const std::filesystem::path &);
 
->std::vector&lt;CoqFilesupport::FileInformation&gt; [directory_backup](coqprocessor_functions.cpp.md)(const std::filesystem::path &);
+>void [directory_backup](coqprocessor_functions.cpp.md)(const std::filesystem::path &);
 
->void [directory_backup_0](coqprocessor_functions.cpp.md)(const std::filesystem::path &);
-
->std::vector&lt;CoqFilesupport::FileInformation&gt; [recursive_backup](coqprocessor_functions.cpp.md)(const std::filesystem::path &);
-
->void [recursive_backup_0](coqprocessor_functions.cpp.md)(const std::filesystem::path &);
+>void [recursive_backup](coqprocessor_functions.cpp.md)(const std::filesystem::path &);
 
 >private:
 

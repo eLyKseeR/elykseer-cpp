@@ -28,6 +28,7 @@
 ```cpp
     static int dry_run = 0;
     static int verbose_out = 0;
+    static int use_gpg = 1;
     static struct option longopts[] = {
              { "dry-run",   no_argument,        &dry_run,       1   },
              { "verbose",   no_argument,        &verbose_out,   1   },
@@ -36,12 +37,12 @@
              { "license",   no_argument,        NULL,           'L' },
              { "copyright", no_argument,        NULL,           'C' },
              { "pChunks",   required_argument,  NULL,           'x' },
-             { "pDbFp",     required_argument,  NULL,           'p' },
+             { "pDbFb",     required_argument,  NULL,           'b' },
              { "pKeys",     required_argument,  NULL,           'k' },
              { "file",      required_argument,  NULL,           'f' },
             //  { "dir",       required_argument,  NULL,           'd' },
              { "myid",      required_argument,  NULL,           'y' },
-             { "gpg",       no_argument,        NULL,           'g' },
+             { "nogpg",     no_argument,        &use_gpg,       0 },
              { NULL,         0,                 NULL,           0 }
     };
 
@@ -57,8 +58,6 @@ static int counter_files = 0;
 
 static std::string list_files[MAX_RESTORE_FILES];
 // static std::string list_dirs[MAX_RESTORE_DIRS];
-
-static bool use_gpg{false};
 ```
 
 ## parsing cli arguments
@@ -76,10 +75,11 @@ void output_help() {
   std::cout << "-C --copyright shows copyright" << std::endl;
   std::cout << "--verbose      verbose output" << std::endl;
   std::cout << "--dry-run      just validate arguments" << std::endl;
-  std::cout << "--gpg          decrypt the meta data using GnuPG" << std::endl;
+  std::cout << "--nogpg        turn off decrypion of meta data using GnuPG" << std::endl;
   std::cout << "-x --pChunks   sets path for encrypted chunks" << std::endl;
-  std::cout << "-p --pDbFp     adds backup meta data dbfp (*)" << std::endl;
+  std::cout << "-b --pDbFb     adds backup meta data dbfb (*)" << std::endl;
   std::cout << "-k --pKeys     adds backup encryption keys dbks (*)" << std::endl;
+  std::cout << "-y --myid      sets unique identifier for this local instance" << std::endl;
   std::cout << "-f --file      file to be restored (*)" << std::endl;
   std::cout << "-d --dir       files in directory to be restored (*)" << std::endl;
   std::cout << "options labelled with (*) can be provided multiple times on the command line." << std::endl;
@@ -106,10 +106,10 @@ void set_chunk_path(std::optional<std::string> & chunkpath, const std::string & 
   }
 }
 
-void add_dbfp_path(std::shared_ptr<lxr::CoqFBlockStore> & db, const std::string & fp) {
+void add_dbfb_path(std::shared_ptr<lxr::CoqFBlockStore> & db, const std::string & fp) {
   if (lxr::FileCtrl::fileExists(fp)) {
     int sz0 = db->size();
-    if (use_gpg) {
+    if (use_gpg == 1) {
       lxr::Gpg gpg;
       gpg.decrypt_from_file(fp);
       db->inStream(gpg.istream());
@@ -128,7 +128,7 @@ void add_dbfp_path(std::shared_ptr<lxr::CoqFBlockStore> & db, const std::string 
 void add_dbkey_path(std::shared_ptr<lxr::CoqKeyStore> & db, const std::string & fp) {
   if (lxr::FileCtrl::fileExists(fp)) {
     int sz0 = db->size();
-    if (use_gpg) {
+    if (use_gpg == 1) {
       lxr::Gpg gpg;
       gpg.decrypt_from_file(fp);
       db->inStream(gpg.istream());
@@ -182,7 +182,6 @@ void set_myid(std::optional<std::string> &myid, std::string const p) {
 int main (int argc, char * const argv[]) {
   std::optional<int> nchunks{16};
   std::optional<std::string> myid{};
-  std::optional<std::string> outputpath{};
   std::optional<std::string> chunkpath{};
 
   lxr::CoqConfiguration _config;
@@ -190,9 +189,10 @@ int main (int argc, char * const argv[]) {
 
   std::shared_ptr<lxr::CoqKeyStore> _keystore{new lxr::CoqKeyStore(_config)};
   std::shared_ptr<lxr::CoqFBlockStore> _fblockstore{new lxr::CoqFBlockStore(_config)};
+  std::shared_ptr<lxr::CoqFInfoStore> _finfostore{new lxr::CoqFInfoStore(_config)};
 
   int ch;
-  while ((ch = getopt_long(argc, argv, "hVLCgx:o:p:k:f:y:", longopts, NULL)) != -1) {
+  while ((ch = getopt_long(argc, argv, "hVLCx:b:k:f:y:", longopts, NULL)) != -1) {
     //std::cout << "argument '" << ch << "'" << std::endl;
     switch (ch) {
       case 'h': output_help(); break;
@@ -200,12 +200,11 @@ int main (int argc, char * const argv[]) {
       case 'L': output_license(); break;
       case 'C': output_copyright(); break;
       case 'x': set_chunk_path(chunkpath, optarg); break;
-      case 'p': add_dbfp_path(_fblockstore, optarg); break;
+      case 'b': add_dbfb_path(_fblockstore, optarg); break;
       case 'k': add_dbkey_path(_keystore, optarg); break;
       case 'f': restore_file(optarg); break;
       // case 'd': restore_dir(optarg); break;
       case 'y': set_myid(myid, optarg); break;
-      case 'g': use_gpg = true; break;
       default : break; //output_error(); return 1;
     }
   }
@@ -218,7 +217,6 @@ int main (int argc, char * const argv[]) {
 
   // check arguments
   if (! myid) { std::clog << "missing: myid" << std::endl; output_error(); }
-  if (! outputpath) { std::clog << "missing: output path" << std::endl; output_error(); }
   if (! chunkpath) { std::clog << "missing: chunk path" << std::endl; output_error(); }
 
   {
@@ -232,6 +230,7 @@ int main (int argc, char * const argv[]) {
   std::shared_ptr<lxr::CoqAssemblyCache> qac(new lxr::CoqAssemblyCache(_config, 3, 12));
   qac->register_key_store(_keystore);
   qac->register_fblock_store(_fblockstore);
+  qac->register_finfo_store(_finfostore);
   lxr::CoqProcessor qproc(_config, qac);
 
   // prepare files to restore

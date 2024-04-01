@@ -22,14 +22,18 @@ endif()
 project(elykseer-cpp)
 
 # The version number.
-set (${PROJECT_NAME}_VERSION_MAJOR 2)
+set (${PROJECT_NAME}_VERSION_MAJOR 3)
 set (${PROJECT_NAME}_VERSION_MINOR 0)
-set (${PROJECT_NAME}_VERSION_PATCH 0)
+set (${PROJECT_NAME}_VERSION_PATCH 1)
 set (${PROJECT_NAME}_VERSION_STRING ${elykseer-cpp_VERSION_MAJOR}.${elykseer-cpp_VERSION_MINOR}.${elykseer-cpp_VERSION_PATCH})
 
 # set to '-DDEBUG' to turn on debugging output
 # set to '-UDEBUG' to disable debugging output
-add_definitions( -UDEBUG )
+IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  add_definitions( -DDEBUG )
+ELSE()
+  add_definitions( -UDEBUG )
+ENDIF()
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -50,7 +54,7 @@ ELSE()
   INCLUDE_DIRECTORIES (${Boost_INCLUDE_DIRS})
 
   # boost/contract
-  if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+  IF(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
     # only check preconditions and class invariants (on entry)
     ##add_definitions(-DBOOST_CONTRACT_NO_PRECONDITIONS)
     add_definitions(-DBOOST_CONTRACT_NO_POSTCONDITIONS)
@@ -58,7 +62,7 @@ ELSE()
     ##add_definitions(-DBOOST_CONTRACT_NO_ENTRY_INVARIANTS)
     add_definitions(-DBOOST_CONTRACT_NO_EXIT_INVARIANTS)
     add_definitions(-DBOOST_CONTRACT_NO_CHECKS)
-  endif()
+  ENDIF()
 
   find_package(ZLIB REQUIRED)
   LINK_DIRECTORIES (${ZLIB_LIBRARY_DIRS})

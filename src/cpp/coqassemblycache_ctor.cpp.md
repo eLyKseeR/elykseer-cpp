@@ -47,9 +47,11 @@ public:
 
     std::shared_ptr<CoqFBlockStore> get_fblock_store() const;
     std::shared_ptr<CoqKeyStore> get_key_store() const;
+    std::shared_ptr<CoqFInfoStore> get_finfo_store() const;
 
     void register_key_store(std::shared_ptr<CoqKeyStore> &st);
     void register_fblock_store(std::shared_ptr<CoqFBlockStore> &st);
+    void register_finfo_store(std::shared_ptr<CoqFInfoStore> &st);
 
     bool enqueue_read_request(const ReadQueueEntity &);
     bool enqueue_write_request(const WriteQueueEntity &);
@@ -72,6 +74,7 @@ private:
 
     std::shared_ptr<CoqKeyStore> _keystore{nullptr};
     std::shared_ptr<CoqFBlockStore> _fblockstore{nullptr};
+    std::shared_ptr<CoqFInfoStore> _finfostore{nullptr};
 
     std::mutex _write_mutex;
     std::mutex _read_mutex;

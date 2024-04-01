@@ -25,6 +25,31 @@ std::shared_ptr<CoqFBlockStore> CoqAssemblyCache::pimpl::get_fblock_store() cons
 }
 ```
 
+## Store file information
+
+```cpp
+void CoqAssemblyCache::register_finfo_store(std::shared_ptr<CoqFInfoStore> &st)
+{
+    if (_pimpl) {
+        _pimpl->register_finfo_store(st);
+    }
+}
+
+void CoqAssemblyCache::pimpl::register_finfo_store(std::shared_ptr<CoqFInfoStore> &st)
+{
+    _finfostore = st;
+}
+
+std::shared_ptr<CoqFInfoStore> CoqAssemblyCache::get_finfo_store() const
+{
+    return _pimpl->get_finfo_store();
+}
+std::shared_ptr<CoqFInfoStore> CoqAssemblyCache::pimpl::get_finfo_store() const
+{
+    return _finfostore;
+}
+```
+
 ## Store encryption keys
 
 ```cpp
@@ -188,6 +213,7 @@ Program Fixpoint run_read_requests (ac0 : assemblycache) (reqs : list readqueuee
 std::vector<ReadQueueResult> CoqAssemblyCache::pimpl::run_read_requests(const std::vector<ReadQueueEntity> & rreqs)
 {
     std::vector<ReadQueueResult> results{};
+    // TODO parallelise
     for (auto const & rreq : rreqs) {
         auto const &_aid = rreq._aid;
         ensure_assembly(rreq._aid);
@@ -199,8 +225,10 @@ std::vector<ReadQueueResult> CoqAssemblyCache::pimpl::run_read_requests(const st
             lxr::ReadQueueResult rres;
             rres._readrequest = rreq;
             rres._rresult = restored_block;
-            results.push_back(rres);
-            ++n_read_requests;
+            { // protected:
+                results.push_back(rres);
+                ++n_read_requests;
+            }
         }
     }
     return results;
@@ -235,26 +263,9 @@ std::vector<ReadQueueResult> CoqAssemblyCache::pimpl::iterate_read_queue()
     if (! _readqueue.empty()) {
         ++n_iterate_reads;
         std::clog << "CoqAssemblyCache::iterate_read_queue  size of queue: " << _readqueue.size() << std::endl;
-        // get first item
-        auto const & aid1st = _readqueue.front()._aid;
-        if (aid1st.size() == 256/8*2) {
-            // extract all with the same aid from the read queue
-            std::vector<lxr::ReadQueueEntity> rmatches;
-            std::vector<lxr::ReadQueueEntity> rqnew;
-            for (auto const & rq : _readqueue) {
-                if (rq._aid == aid1st) {
-                    rmatches.push_back(rq);
-                } else {
-                    rqnew.push_back(rq);
-                }
-            }
-            _readqueue = rqnew;
-            return run_read_requests(rmatches);
-        } else {
-            std::clog << "unknown type of aid = '" << aid1st << "'. Clearing queue." << std::endl;
-            _readqueue.clear();
-            return {};
-        }
+        std::vector<lxr::ReadQueueEntity> rmatches = _readqueue;
+        _readqueue.clear();
+        return run_read_requests(rmatches);
     } else {
         return {};
     }
@@ -320,9 +331,12 @@ std::vector<WriteQueueResult> CoqAssemblyCache::pimpl::run_write_requests(const 
             _writeenv->recreate_assembly();
         }
         if (wreq._buffer) {
-            CoqEnvironment::rel_fname_fblocks fblocks = _writeenv->backup(wreq._fhash.toHex(), wreq._fpos, *wreq._buffer, wreq._buffer->len());
-            for (auto const & fb : fblocks) {
+            std::pair<CoqEnvironment::rel_fname_fblocks, CoqEnvironment::rel_aid_keys> backup_result = _writeenv->backup(wreq._fhash.toHex(), wreq._fpos, *wreq._buffer, wreq._buffer->len());
+            for (auto const & fb : backup_result.first) {
                 _fblockstore->add(fb.first, fb.second);
+            }
+            for (auto const & ki : backup_result.second) {
+                _keystore->add(ki.first, ki.second);
             }
             backup_bytes += wreq._buffer->len();
         }
@@ -405,9 +419,14 @@ bool CoqAssemblyCache::pimpl::enqueue_write_request(const WriteQueueEntity &wqe)
 
 ```coq
 Program Definition flush (ac0 : assemblycache) : assemblycache :=
-    let env := EnvironmentWritable.finalise_and_recreate_assembly ac0.(acwriteenv) in
-    {| acenvs := nil; acsize := ac0.(acsize); acwriteenv := env; acconfig := ac0.(acconfig);
-       acreadq := ac0.(acreadq); acwriteq := ac0.(acwriteq) |}.
+    match EnvironmentWritable.finalise_and_recreate_assembly ac0.(acwriteenv) with
+    | None => ac0
+    | Some (env', (aid, ki)) =>
+        let ackstore' := KeyListStore.add aid ki ac0.(ackstore) in
+        {| acenvs := nil; acsize := ac0.(acsize); acwriteenv := env'; acconfig := ac0.(acconfig);
+        acreadq := ac0.(acreadq); acwriteq := ac0.(acwriteq);
+        acfbstore := ac0.(acfbstore); ackstore := ackstore'; acfistore := ac0.(acfistore) |}
+    end.
 ```
 
 ```cpp
@@ -422,9 +441,9 @@ void CoqAssemblyCache::pimpl::flush()
 {
     if (_writeenv) {
         ++n_assembly_finalised;
-        auto keys = _writeenv->finalise_and_recreate_assembly();
-        if (_keystore && keys) {
-            _keystore->add(keys.value().first, keys.value().second);
+        auto okey = _writeenv->finalise_and_recreate_assembly();
+        if (_keystore && okey) {
+            _keystore->add(okey.value().first, okey.value().second);
         }
     } else {
         _writeenv->recreate_assembly();
@@ -451,9 +470,9 @@ void CoqAssemblyCache::pimpl::close()
 {
     if (_writeenv) {
         ++n_assembly_finalised;
-        auto keys = _writeenv->finalise_assembly();
-        if (_keystore && keys) {
-            _keystore->add(keys.value().first, keys.value().second);
+        auto okey = _writeenv->finalise_assembly();
+        if (_keystore && okey) {
+            _keystore->add(okey.value().first, okey.value().second);
         }
     }
 }

@@ -27,6 +27,7 @@
 ```cpp
     static int dry_run = 0;
     static int verbose_out = 0;
+    static int use_gpg = 1;
     static struct option longopts[] = {
              { "dry-run",   no_argument,        &dry_run,       1   },
              { "verbose",   no_argument,        &verbose_out,   1   },
@@ -37,7 +38,8 @@
              { "pX",        required_argument,  NULL,           'x' },
              { "pD",        required_argument,  NULL,           'o' },
              { "pR",        required_argument,  NULL,           'r' },
-            //  { "ref",       required_argument,  NULL,           'r' },
+             { "refdbfi",   required_argument,  NULL,           'r' },
+            //  { "refdbfb",   required_argument,  NULL,           's' },
              { "f",         required_argument,  NULL,           'f' },
              { "d1",        required_argument,  NULL,           'd' },
              { "dr",        required_argument,  NULL,           'D' },
@@ -46,6 +48,7 @@
              { "owner-key", required_argument,  NULL,           'k' },
             //  { "compression", required_argument, NULL,          'c' },
             //  { "deduplication", required_argument, NULL,        'u' },
+             { "nogpg",     no_argument,        &use_gpg,       0 },
              { NULL,         0,                 NULL,           0 }
     };
 
@@ -84,12 +87,14 @@ void output_help() {
   std::cout << "-n --nchunks   sets number of chunks (16-256) per assembly" << std::endl;
   // std::cout << "-c --compression  sets compression (0 or 1)" << std::endl;
   // std::cout << "-u --deduplication sets duplication mode (0, 1 or 2)" << std::endl;
-  // std::cout << "-r --ref       adds reference dbfp for deduplication (*)" << std::endl;
+  std::cout << "--refdbfi      adds reference dbfi for deduplication (*)" << std::endl;
+  // std::cout << "--refdbfb      adds reference dbfb for deduplication (*)" << std::endl;
   std::cout << "-f             backups a file (*)" << std::endl;
   std::cout << "-d --d1        backups files in a directory (*)" << std::endl;
   std::cout << "-D --dr        recursively backups a directory and all its content (*)" << std::endl;
   std::cout << "-y --myid      sets unique identifier for this local instance" << std::endl;
   std::cout << "-k --owner-key looks up the PGP key and encrypts meta data with it" << std::endl;
+  std::cout << "--nogpg        turn off decrypion of reference meta data using GnuPG" << std::endl;
   std::cout << "options labelled with (*) can be provided multiple times on the command line." << std::endl;
 }
 
@@ -122,18 +127,6 @@ void set_meta_path(std::optional<std::string> &metapath, std::string const p) {
     output_error();
   }
 }
-
-// void add_ref_path(lxr::BackupCtrl & ctrl, std::string const p) {
-//   if (lxr::FileCtrl::fileExists(p)) {
-//     lxr::DbFp _dbfp;
-//     { std::ifstream _if; _if.open(p);
-//       _dbfp.inStream(_if); _if.close(); }
-//     ctrl.addReference(_dbfp);
-//   } else {
-//     std::clog << "reference DbFp does not exist: " << p << std::endl;
-//     output_error();
-//   }
-// }
 
 void set_backup_file(std::string const fp) {
   if (counter_files >= MAX_BACKUP_FILES -1 ) {
@@ -225,6 +218,27 @@ void set_ownerkey(std::optional<std::string> &okey, std::string const p) {
     output_error();
   }
 }
+
+void add_ref_dbfi(std::shared_ptr<lxr::CoqFInfoStore> &store, std::string const p) {
+  if (store && lxr::FileCtrl::fileExists(p)) {
+    int sz0 = store->size();
+    if (use_gpg == 1) {
+      lxr::Gpg gpg;
+      gpg.decrypt_from_file(p);
+      store->inStream(gpg.istream());
+    } else {
+      std::ifstream _if; _if.open(p, std::ios::binary);
+      store->inStream(_if);
+      _if.close();
+    }
+    int sz1 = store->size();
+    std::clog << "       ### read " << sz1 - sz0 << " file infos into FInfoStore" << std::endl;
+  } else {
+    std::clog << "reference DbFi does not exist: " << p << std::endl;
+    output_error();
+  }
+}
+
 ```
 
 ## main
@@ -235,8 +249,14 @@ int main (int argc, char * const argv[]) {
   std::optional<std::string> okey{};
   std::optional<std::string> metapath{};
   std::optional<std::string> chunkpath{};
+  lxr::CoqConfiguration _config;
+  _config.nchunks(16);
+  std::shared_ptr<lxr::CoqKeyStore> _keystore{new lxr::CoqKeyStore(_config)};
+  std::shared_ptr<lxr::CoqFBlockStore> _fblockstore{new lxr::CoqFBlockStore(_config)};
+  std::shared_ptr<lxr::CoqFInfoStore> _finfostore{new lxr::CoqFInfoStore(_config)};
+
   int ch;
-  while ((ch = getopt_long(argc, argv, "hVLCx:o:f:d:D:n:k:y:", longopts, NULL)) != -1) {
+  while ((ch = getopt_long(argc, argv, "hVLCx:o:f:d:D:n:k:y:r:", longopts, NULL)) != -1) {
     switch (ch) {
       case 'h': output_help(); break;
       case 'V': output_version(); break;
@@ -244,7 +264,8 @@ int main (int argc, char * const argv[]) {
       case 'C': output_copyright(); break;
       case 'x': set_chunk_path(chunkpath, optarg); break;
       case 'o': set_meta_path(metapath, optarg); break;
-      // case 'r': add_ref_path(ctrl, optarg); break;
+      case 'r': add_ref_dbfi(_finfostore, optarg); break;
+      // case 's': add_ref_dbfb(_fblockstore, optarg); break;
       case 'f': set_backup_file(optarg); break;
       case 'd': set_backup_dir1(optarg); break;
       case 'D': set_backup_dir_rec(optarg); break;
@@ -265,7 +286,6 @@ int main (int argc, char * const argv[]) {
   if (! metapath) { std::clog << "missing: metapath" << std::endl; output_error(); }
   if (! chunkpath) { std::clog << "missing: chunkpath" << std::endl; output_error(); }
 
-  lxr::CoqConfiguration _config;
   {
       _config.my_id = myid.value();
       _config.nchunks(nchunks.value());
@@ -288,20 +308,19 @@ int main (int argc, char * const argv[]) {
     return 0;
   }
 
-  // run program
-  std::shared_ptr<lxr::CoqKeyStore> _keystore{new lxr::CoqKeyStore(_config)};
-  std::shared_ptr<lxr::CoqFBlockStore> _fblockstore{new lxr::CoqFBlockStore(_config)};
+  // run program  
   std::shared_ptr<lxr::CoqAssemblyCache> qac(new lxr::CoqAssemblyCache(_config, 1, 12));
   qac->register_key_store(_keystore);
   qac->register_fblock_store(_fblockstore);
+  qac->register_finfo_store(_finfostore);
   lxr::CoqProcessor qproc(_config, qac);
 
   for (int i = 0; i < counter_dir1; i++) {
-    qproc.directory_backup_0(list_dir1[i]);
+    qproc.directory_backup(list_dir1[i]);
   }
 
   for (int i = 0; i < counter_dirs; i++) {
-    qproc.recursive_backup_0(list_dir[i]);
+    qproc.recursive_backup(list_dir[i]);
   }
 
   for (int i = 0; i < counter_files; i++) {
@@ -315,8 +334,10 @@ int main (int argc, char * const argv[]) {
   std::string _frp = okey.value();
   auto const fp_dbk = pdb / ("LXRbackup-" + timestamp + "-dbks.xml");
   _keystore->encrypted_output(fp_dbk, _frp);
-  auto const fp_dbfp = pdb / ("LXRbackup-" + timestamp + "-dbfp.xml");
-  _fblockstore->encrypted_output(fp_dbfp, _frp);
+  auto const fp_dbfb = pdb / ("LXRbackup-" + timestamp + "-dbfb.xml");
+  _fblockstore->encrypted_output(fp_dbfb, _frp);
+  auto const fp_dbfi = pdb / ("LXRbackup-" + timestamp + "-dbfi.xml");
+  _finfostore->encrypted_output(fp_dbfi, _frp);
 
   // show statistics
   if (verbose_out > 0) {

@@ -73,6 +73,7 @@ BOOST_AUTO_TEST_CASE( backup_restore_roundtrip )
 
     std::shared_ptr<lxr::CoqKeyStore> _keystore{new lxr::CoqKeyStore(_config)};
     std::shared_ptr<lxr::CoqFBlockStore> _fblockstore{new lxr::CoqFBlockStore(_config)};
+    std::shared_ptr<lxr::CoqFInfoStore> _finfostore{new lxr::CoqFInfoStore(_config)};
     std::map<std::string, lxr::CoqAssemblyCache::mvalue_t> map_metrics1{};
 
     std::string msg{"abcdef012345789"};
@@ -83,6 +84,7 @@ BOOST_AUTO_TEST_CASE( backup_restore_roundtrip )
         lxr::CoqAssemblyCache qac(_config, 3, 12);
         qac.register_key_store(_keystore);
         qac.register_fblock_store(_fblockstore);
+        qac.register_finfo_store(_finfostore);
 
         lxr::WriteQueueEntity wqe;
         wqe._fhash = _fhash;
@@ -131,6 +133,7 @@ BOOST_AUTO_TEST_CASE( backup_restore_roundtrip )
         lxr::CoqAssemblyCache qac(_config, 3, 12);
         qac.register_key_store(_keystore);
         qac.register_fblock_store(_fblockstore);
+        qac.register_finfo_store(_finfostore);
 
         lxr::ReadQueueEntity rqe;
         rqe._aid = _aid;

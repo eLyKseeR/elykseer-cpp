@@ -91,13 +91,13 @@ std::string decodeb64(std::string const & _enc)
 
 const std::string Liz::copyright() noexcept
 {
-    static std::string _enc = "Q29weXJpZ2h0IChjKSAyMDIwIEFsZXhhbmRlciBEaWVtYW5kCg==";
+    static std::string _enc = "Q29weXJpZ2h0IChjKSAyMDE4LTIwMjQgQWxleGFuZGVyIERpZW1hbmQ=";
     return decodeb64(_enc);
 }
 
 const std::string Liz::version() noexcept
 {
-    static std::string _enc = "VmVyc2lvbiAzLjAuMCBiZXRhIC0gZG8gbm90IHVzZSBmb3IgcHJvZHVjdGlvbgo=";
+    static std::string _enc = "VmVyc2lvbiAzLjAuMSBiZXRhIC0gZG8gbm90IHVzZSBmb3IgcHJvZHVjdGlvbg==";
     return decodeb64(_enc);
 }
 
