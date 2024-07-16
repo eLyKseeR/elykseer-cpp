@@ -82,7 +82,7 @@ std::optional<CoqFilesupport::FileInformation> CoqProcessor::file_backup(const s
         CoqFilesupport::FileInformation fi = mayfi.value();
         // deduplication level 1: compare file checksums
         bool found = false;
-        Key256 fhash = Sha256::hash(fp.string());
+        Key256 fhash = Sha3_256::hash(fp.string());
         std::optional<CoqFilesupport::FileInformation> ofi = _cache->get_finfo_store()->find(fhash.toHex());
         if (ofi) {
             CoqFilesupport::FileInformation prevfi = ofi.value();

@@ -46,7 +46,7 @@ uint32_t CoqBuffer::pimpl::len() const
 std::optional<const Key256> CoqBuffer::pimpl::calc_checksum(int offset, int dlen) const
 {
     if (_buffer && dlen + offset <= _len) {
-        return Sha256::hash(_buffer + offset, dlen);
+        return Sha3_256::hash(_buffer + offset, dlen);
     } else {
         return {};
     }

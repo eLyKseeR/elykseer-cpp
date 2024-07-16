@@ -13,7 +13,7 @@
 #include "lxr/gpg.hpp"
 #include "lxr/liz.hpp"
 #include "lxr/os.hpp"
-#include "lxr/sha256.hpp"
+#include "lxr/sha3.hpp"
 
 #include <chrono>
 #include <iostream>
@@ -237,7 +237,7 @@ int main (int argc, char * const argv[]) {
   int corr_files = 0;
   for (int i = 0; i < counter_files; i++) {
     //std::cout << "checking " << i << "  " << list_files[i] << std::endl;
-    auto const fhash = lxr::Sha256::hash(list_files[i]).toHex();
+    auto const fhash = lxr::Sha3_256::hash(list_files[i]).toHex();
     if (! _fblockstore->contains(fhash)) {
       list_files[i] = "";
       corr_files++;
@@ -277,7 +277,7 @@ int main (int argc, char * const argv[]) {
   bool res = true;
   for (int i = 0; i < counter_files; i++) {
     if (list_files[i] != "") {
-      auto const fhash = lxr::Sha256::hash(list_files[i]).toHex();
+      auto const fhash = lxr::Sha3_256::hash(list_files[i]).toHex();
       if (auto const fbs = _fblockstore->find(fhash); fbs) {
           auto process_read_blocks = [&res](const std::vector<lxr::ReadQueueResult> & rqrs) {
             for (auto const &rqr : rqrs) {

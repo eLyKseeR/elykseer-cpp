@@ -6,7 +6,7 @@
 */
 
 #include "lxr/coqprocessor.hpp"
-#include "lxr/sha256.hpp"
+#include "lxr/sha3.hpp"
 
 namespace lxr {
 

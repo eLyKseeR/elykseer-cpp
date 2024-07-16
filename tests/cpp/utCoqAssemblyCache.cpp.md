@@ -8,7 +8,7 @@
 #include "lxr/coqassemblycache.hpp"
 #include "lxr/coqstore.hpp"
 #include "lxr/key256.hpp"
-#include "lxr/sha256.hpp"
+#include "lxr/sha3.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_CASE( backup_restore_roundtrip )
     std::map<std::string, lxr::CoqAssemblyCache::mvalue_t> map_metrics1{};
 
     std::string msg{"abcdef012345789"};
-    lxr::Key256 _fhash = lxr::Sha256::hash(std::string("/etc/motd"));
+    lxr::Key256 _fhash = lxr::Sha3_256::hash(std::string("/etc/motd"));
 
     // create CoqAssemblyCache and store a string
     {

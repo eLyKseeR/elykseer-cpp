@@ -7,7 +7,7 @@
 
 #include "lxr/coqfilesupport.hpp"
 #include "lxr/os.hpp"
-#include "lxr/sha256.hpp"
+#include "lxr/sha3.hpp"
 
 #include <filesystem>
 #include <sstream>

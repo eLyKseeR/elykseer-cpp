@@ -18,36 +18,44 @@ void CoqEnvironmentReadable::recreate_assembly()
 ```
 
 ```coq
-Definition finalise_assembly (e0 : environment AB)
- : option (aid_t * keyinformation) :=
-    let a0 := e0.(cur_assembly AB) in
-    let apos := Assembly.apos a0 in
-    if N.ltb 0 apos then
-        let (a,b) := Assembly.finish a0 e0.(cur_buffer AB) in
-        let ki := {| pkey := cpp_mk_key256 tt
-                    ; ivec := cpp_mk_key128 tt
-                    ; localnchunks := e0.(econfig AB).(Configuration.config_nchunks)
-                    ; localid := e0.(econfig AB).(Configuration.my_id) |} in
-        match Assembly.encrypt a b ki with
-        | None => None
-        | Some (a',b') =>
-            let n := Assembly.extract e0.(econfig AB) a' b' in
-            if N.ltb 0 n
-            then Some (a.(aid), ki)
-            else None
-        end
-    else None.
+    Definition finalise_assembly (e0 : environment AB) : option (aid_t * keyinformation) :=
+        let a0 := e0.(cur_assembly AB) in
+        let apos := Assembly.apos a0 in
+        conditionalTrace e0.(econfig AB).(trace) (N.ltb 16 apos) (* apos > 16 *)
+        (Tracer.info) (Some ("finalising assembly " ++ a0.(aid) ++ " with apos = " ++ i2s (n2i apos))%string)
+        (fun _ =>
+            let (a,b) := Assembly.finish a0 e0.(cur_buffer AB) in
+            let ki := {| pkey := cpp_mk_key256 tt
+                       ; ivec := cpp_mk_key128 tt
+                       ; localnchunks := e0.(econfig AB).(Configuration.config_nchunks)
+                       ; localid := e0.(econfig AB).(Configuration.my_id) |} in
+            optionalTrace e0.(econfig AB).(trace) (Assembly.encrypt a b ki)
+            (Tracer.warning) (Some ("failed to encrypt assembly: " ++ a.(aid))%string)
+            (fun _ => None)
+            (Tracer.info) (Some ("encrypted assembly: " ++ a.(aid))%string)
+            (fun '(a',b') =>
+                let n := Assembly.extract e0.(econfig AB) a' b' in
+                if N.ltb 0 n
+                then Some (a.(aid), ki)
+                else None
+            )
+        )
+        (Tracer.info) (Some ("not finalising empty assembly " ++ a0.(aid) ++ " with apos = "  ++ i2s (n2i apos))%string)
+        (fun _ => None).
 ```
 ```cpp
 std::optional<std::pair<CoqAssembly::aid_t,CoqAssembly::KeyInformation>>  CoqEnvironmentWritable::finalise_assembly()
 {
     if (! _assembly) { return {}; }
+    if (_assembly->apos() <= 16) {
+        _assembly.reset();
+        return {};
+    }
     std::shared_ptr<CoqAssemblyPlainFull> finished_assembly = _assembly->finish();
     _assembly.reset();
     CoqAssembly::KeyInformation ki(_config);
     std::shared_ptr<CoqAssemblyEncrypted> encrypted_assembly = finished_assembly->encrypt(ki);
     if (encrypted_assembly) {
-        // _keys.push_back({encrypted_assembly->aid(), std::move(ki)});
         encrypted_assembly->extract();
     }
 #ifdef DEBUG
