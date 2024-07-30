@@ -10,7 +10,7 @@
 #include "lxr/key128.hpp"
 #include "lxr/os.hpp"
 #include "lxr/random.hpp"
-#include "lxr/sha256.hpp"
+#include "lxr/sha3.hpp"
 
 #include <algorithm>
 #include <chrono>

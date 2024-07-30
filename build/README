@@ -1,9 +1,9 @@
 compilation
 ===========
 
-1. generate Makefile using: `cmake .`
+1. generate Makefile using: `cmake --fresh -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=../dist .`
 
-2. extract and build sources: `make -j 4`
+2. extract and build sources: `make && make install`
 
 3. run unit tests: `./ut.sh`
 

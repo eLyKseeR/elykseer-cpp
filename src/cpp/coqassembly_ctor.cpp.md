@@ -2,7 +2,7 @@ declared in [CoqAssembly](coqassembly.hpp.md)
 
 ```cpp
 CoqAssembly::KeyInformation::KeyInformation(const CoqConfiguration & c)
-  : _localid(c.my_id), _localnchunks(c.nchunks())
+  : _localnchunks(c.nchunks())
 {}
 ```
 
@@ -47,7 +47,7 @@ CoqAssembly::~CoqAssembly() = default;
    x -> Elykseer_crypto.Random.with_rng (fun rng -> Elykseer_crypto.Random.random32 rng) |> string_of_int |>
      String.cat x |>
      String.cat (Unix.gethostname ()) |> String.cat (Unix.gettimeofday () |> string_of_float) |>
-     Elykseer_crypto.Sha256.string
+     Elykseer_crypto.Sha3_256.string
 ```
 ```cpp
 void CoqAssembly::mk_assembly_id()
@@ -58,7 +58,7 @@ void CoqAssembly::mk_assembly_id()
   lxr::Random r;
   ss << r.random() << _config.my_id << OS::hostname() << tstamp;
   const std::string v{ss.str()};
-  const auto h = Sha256::hash(v).toHex();
+  const auto h = Sha3_256::hash(v).toHex();
   // std::clog << "  mk_assembly_id: " << v << " => " << h << std::endl;
   _assemblyinformation._aid = h;
 }

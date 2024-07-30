@@ -232,7 +232,7 @@ void add_ref_dbfi(std::shared_ptr<lxr::CoqFInfoStore> &store, std::string const 
       _if.close();
     }
     int sz1 = store->size();
-    std::clog << "       ### read " << sz1 - sz0 << " file infos into FInfoStore" << std::endl;
+    std::clog << "       ### read " << sz1 - sz0 << " file infos from FInfoStore" << std::endl;
   } else {
     std::clog << "reference DbFi does not exist: " << p << std::endl;
     output_error();

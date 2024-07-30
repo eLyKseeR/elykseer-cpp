@@ -23,6 +23,8 @@ BOOST_AUTO_TEST_SUITE( utCoqEnvironment )
 
 ## Test case: create a _CoqEnvironmentWritable_
 
+an empty assembly is not encrypted and extracted.
+
 ```cpp
 BOOST_AUTO_TEST_CASE( instantiate_CoqEnvironmentWritable )
 {

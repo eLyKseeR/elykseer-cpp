@@ -9,10 +9,10 @@
 std::optional<const std::filesystem::path> CoqAssembly::chunk_path(const uint16_t cnum, const aid_t aid) const {
     std::stringstream ss;
     ss << _config.my_id << aid << cnum;
-    const auto h = Sha256::hash(ss.str()).toHex();
+    const auto h = Sha3_256::hash(ss.str()).toHex();
     const int len = h.length();
     if (len != 64) {
-        std::clog << "chunk_path |sha256| != 64 chars" << std::endl;
+        std::clog << "chunk_path |sha3_256| != 64 chars" << std::endl;
         return {};
     }
     std::filesystem::path fp = _config.path_chunks;

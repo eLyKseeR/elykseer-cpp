@@ -9,7 +9,7 @@ std::optional<CoqFilesupport::FileInformation> CoqFilesupport::get_file_informat
     if (! std::filesystem::exists(fp)) { return {}; }
 
     fi.fname = fn;
-    fi.fchecksum = lxr::Sha256::hash(fp).toHex();
+    fi.fchecksum = lxr::Sha3_256::hash(fp).toHex();
 
     #if defined(PLATFORM_darwin) || defined(PLATFORM_freebsd)
     #define ST_SECONDS st_mtimespec.tv_sec
@@ -30,7 +30,7 @@ std::optional<CoqFilesupport::FileInformation> CoqFilesupport::get_file_informat
         struct S_STAT _fstats{};
         if (F_STAT(fp.c_str(), &_fstats) == 0) {
             fi.fname = fp.string();
-            fi.fchecksum = lxr::Sha256::hash(fp).toHex();
+            fi.fchecksum = lxr::Sha3_256::hash(fp).toHex();
             std::ostringstream ss;
             ss << _fstats.st_uid;
             fi.fowner = ss.str();
