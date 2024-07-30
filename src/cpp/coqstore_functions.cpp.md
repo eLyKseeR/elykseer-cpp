@@ -185,7 +185,6 @@ void CoqKeyStore::inStream(std::istream & ins)
                     for (auto attr = k->second.begin(); attr != k->second.end(); attr++) {
                         if (attr->first == "<xmlattr>") {
                             ki._localnchunks = attr->second.get<int>("n");
-                            ki._localid = attr->second.get<std::string>("id");
                             ki._ivec.fromHex(attr->second.get<std::string>("iv"));
                             ki._pkey.fromHex(attr->second.get<std::string>("pk"));
                         }
@@ -287,7 +286,7 @@ void CoqKeyStore::outStream(std::ostream & os) const
     outputHeader(os, "DbKey");
 
     iterate([&os](const std::pair<std::string, lxr::CoqAssembly::KeyInformation> &p) {
-        os << "  <Key n=\\"" << p.second._localnchunks << "\\" iv=\\"" << p.second._ivec.toHex() << "\\" pk=\\"" << p.second._pkey.toHex() << "\\" id=\\"" << p.second._localid << "\\">" << p.first << "</Key>" << std::endl;
+        os << "  <Key n=\\"" << p.second._localnchunks << "\\" iv=\\"" << p.second._ivec.toHex() << "\\" pk=\\"" << p.second._pkey.toHex() << "\\">" << p.first << "</Key>" << std::endl;
     });
     os << "</DbKey>" << std::endl;
 }

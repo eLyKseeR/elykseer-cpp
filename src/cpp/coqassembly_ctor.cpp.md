@@ -2,7 +2,7 @@ declared in [CoqAssembly](coqassembly.hpp.md)
 
 ```cpp
 CoqAssembly::KeyInformation::KeyInformation(const CoqConfiguration & c)
-  : _localid(c.my_id), _localnchunks(c.nchunks())
+  : _localnchunks(c.nchunks())
 {}
 ```
 

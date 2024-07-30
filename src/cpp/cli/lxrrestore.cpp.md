@@ -132,7 +132,7 @@ void add_dbfb_path(std::shared_ptr<lxr::CoqFBlockStore> & db, const std::string 
       db->inStream(_if); _if.close();
     }
     int sz1 = db->size();
-    std::clog << "       ### read " << sz1 - sz0 << " blocks into FBlockStore" << std::endl;
+    std::clog << "       ### read " << sz1 - sz0 << " blocks from FBlockStore" << std::endl;
   } else {
     std::clog << "blocks database file does not exist: " << fp << std::endl;
     output_error();
@@ -151,7 +151,7 @@ void add_dbkey_path(std::shared_ptr<lxr::CoqKeyStore> & db, const std::string & 
       db->inStream(_if); _if.close();
     }
     int sz1 = db->size();
-    std::clog << "       ### read " << sz1 - sz0 << " keys into KeyStore" << std::endl;
+    std::clog << "       ### read " << sz1 - sz0 << " keys from KeyStore" << std::endl;
   } else {
     std::clog << "encryption keys database file does not exist: " << fp << std::endl;
     output_error();

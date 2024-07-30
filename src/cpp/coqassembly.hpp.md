@@ -60,7 +60,6 @@ Record keyinformation : RecordKeyInformation :=
     mkkeyinformation
         { ivec : string
         ; pkey : string
-        ; localid : string
         ; localnchunks : positive
         }.
 
@@ -229,8 +228,6 @@ End Assembly.
 >Key128 _ivec{false};
 
 >Key256 _pkey{false};
-
->std::string _localid;
 
 >int _localnchunks;
 
