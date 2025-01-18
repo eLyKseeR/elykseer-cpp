@@ -104,7 +104,7 @@ template &lt;typename V, typename K = std::string&gt;
 
 >protected:
 
->explicit [CoqStore](coqstore_ctor.cpp.md)(const CoqConfiguration &c);
+>explicit [CoqStore](coqstore_ctor.cpp.md)();
 
 >public:
 
@@ -130,8 +130,6 @@ template &lt;typename V, typename K = std::string&gt;
 
 >protected:
 
->const CoqConfiguration _config;
-
 >std::unordered_map&lt;K,V&gt; _entries{};
 
 >private:
@@ -149,7 +147,7 @@ template &lt;typename V, typename K = std::string&gt;
 
 >public:
 
->explicit CoqKeyStore(const CoqConfiguration &c) : CoqStore(c) {}
+>explicit CoqKeyStore() : CoqStore() {}
 
 >virtual bool [add](coqstore_functions.cpp.md)(const std::string &, const CoqAssembly::KeyInformation &) override final;
 
@@ -170,7 +168,7 @@ template &lt;typename V, typename K = std::string&gt;
 
 >public:
 
->explicit CoqFBlockStore(const CoqConfiguration &c) : CoqStore(c) {}
+>explicit CoqFBlockStore() : CoqStore() {}
 
 >bool [add](coqstore_functions.cpp.md)(const std::string &, const CoqAssembly::BlockInformation &);
 
@@ -195,7 +193,7 @@ template &lt;typename V, typename K = std::string&gt;
 
 >public:
 
->explicit CoqFInfoStore(const CoqConfiguration &c) : CoqStore(c) {}
+>explicit CoqFInfoStore() : CoqStore() {}
 
 >virtual bool [add](coqstore_functions.cpp.md)(const std::string &, const CoqFilesupport::FileInformation &) override final;
 
@@ -208,6 +206,7 @@ template &lt;typename V, typename K = std::string&gt;
 >CoqFInfoStore & operator=(CoqFInfoStore const &) = delete;
 
 };
+
 ```cpp
 } // namespace
 ```

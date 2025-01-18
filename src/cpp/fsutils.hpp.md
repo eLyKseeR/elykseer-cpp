@@ -49,6 +49,10 @@ module FsUtils =
 
 >static const std::string [fstem](fsutils_functions.cpp.md)() noexcept;
 
+>static const filepath [tempdir](fsutils_functions.cpp.md)() noexcept;
+
+>static const filepath [tempfile](fsutils_functions.cpp.md)() noexcept;
+
 >protected:
 
 >FsUtils() {}
@@ -65,8 +69,6 @@ module FsUtils =
 >const filepath [operator/](fsutils_functions.cpp.md)(std::string const &a, std::string const &b) noexcept;
 
 >const filepath [operator/](fsutils_functions.cpp.md)(filepath const &a, std::string const &b) noexcept;
-
->const filepath [operator/](fsutils_functions.cpp.md)(filepath const &a, filepath const &b) noexcept;
 
 
 ```cpp

@@ -31,6 +31,19 @@ const std::string FsUtils::fstem() noexcept
     return "lxr_" + _machine + "_" + _user + "_" + _ts;
 }
 
+const filepath FsUtils::tempdir() noexcept
+{
+    return std::filesystem::temp_directory_path();
+}
+
+const filepath FsUtils::tempfile() noexcept
+{
+    const filepath td = std::filesystem::temp_directory_path();
+    const auto now = time(NULL);
+    const filepath fname = filepath(std::string("_") + std::to_string(now) + ".temporary");
+    return td / fname;
+}
+
 std::pair<const std::string, const std::string> FsUtils::osusrgrp(filepath const & fp)
 {
 #ifdef _WIN32
@@ -93,12 +106,6 @@ const filepath operator/(std::string const &a, std::string const &b) noexcept
 }
 
 const filepath operator/(filepath const &a, std::string const &b) noexcept
-{
-    filepath fp{a};
-    return fp /= b;
-}
-
-const filepath operator/(filepath const &a, filepath const &b) noexcept
 {
     filepath fp{a};
     return fp /= b;

@@ -9,6 +9,7 @@
 #include "lxr/os.hpp"
 
 #include <iostream>
+#include <sstream>
 
 #ifndef _WIN32
 #include <pwd.h>
