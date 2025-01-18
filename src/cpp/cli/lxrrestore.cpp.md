@@ -211,9 +211,9 @@ int main (int argc, char * const argv[]) {
   lxr::CoqConfiguration _config;
   _config.nchunks(16);
 
-  std::shared_ptr<lxr::CoqKeyStore> _keystore{new lxr::CoqKeyStore(_config)};
-  std::shared_ptr<lxr::CoqFBlockStore> _fblockstore{new lxr::CoqFBlockStore(_config)};
-  std::shared_ptr<lxr::CoqFInfoStore> _finfostore{new lxr::CoqFInfoStore(_config)};
+  std::shared_ptr<lxr::CoqKeyStore> _keystore{new lxr::CoqKeyStore()};
+  std::shared_ptr<lxr::CoqFBlockStore> _fblockstore{new lxr::CoqFBlockStore()};
+  std::shared_ptr<lxr::CoqFInfoStore> _finfostore{new lxr::CoqFInfoStore()};
 
   int ch;
   while ((ch = getopt_long(argc, argv, "hVLCx:o:b:k:f:n:y:", longopts, NULL)) != -1) {

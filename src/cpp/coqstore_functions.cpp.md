@@ -102,6 +102,7 @@ instantiate template classes with the used types.
 template class CoqStore<std::vector<CoqAssembly::BlockInformation>, std::string>;
 template class CoqStore<CoqAssembly::KeyInformation, std::string>;
 template class CoqStore<CoqFilesupport::FileInformation, std::string>;
+template class CoqStore<std::string, std::string>;
 ```
 
 ## Output encrypted

@@ -340,12 +340,29 @@ endif()
 
 add_subdirectory( cli )
 
+set(ELYKSEER_CRYPTO_HDRS
+  ../../ext/${EXT_PATH}/include/lxr/aes.hpp
+  ../../ext/${EXT_PATH}/include/lxr/base64.hpp
+  ../../ext/${EXT_PATH}/include/lxr/gpg.hpp
+  ../../ext/${EXT_PATH}/include/lxr/hmac.hpp
+  ../../ext/${EXT_PATH}/include/lxr/key.hpp
+  ../../ext/${EXT_PATH}/include/lxr/key128.hpp
+  ../../ext/${EXT_PATH}/include/lxr/key160.hpp
+  ../../ext/${EXT_PATH}/include/lxr/key256.hpp
+  ../../ext/${EXT_PATH}/include/lxr/lxr-cbindings.hpp
+  ../../ext/${EXT_PATH}/include/lxr/md5.hpp
+  ../../ext/${EXT_PATH}/include/lxr/randlist.hpp
+  ../../ext/${EXT_PATH}/include/lxr/random.hpp
+  ../../ext/${EXT_PATH}/include/lxr/sha256.hpp
+  ../../ext/${EXT_PATH}/include/lxr/sha3.hpp
+)
 set(CPACK_PACKAGE_VERSION ${${PROJECT_NAME}_VERSION_STRING})
 set(CPACK_PACKAGE_VERSION_MAJOR ${${PROJECT_NAME}_VERSION_MAJOR})
 set(CPACK_PACKAGE_VERSION_MINOR ${${PROJECT_NAME}_VERSION_MINOR})
 set(CPACK_PACKAGE_VERSION_PATCH ${${PROJECT_NAME}_VERSION_PATCH})
 install(FILES ${LIBRARY_NAME} DESTINATION lib)
 install(FILES ${GENERATED_HDRS} DESTINATION include/lxr)
+install(FILES ${ELYKSEER_CRYPTO_HDRS} DESTINATION include/lxr)
 include(CPack)
 
 set(CPACK_BINARY_STGZ "OFF")
