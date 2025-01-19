@@ -1,14 +1,26 @@
-```cpp
+module;
 /*
-````
-<fpaste ../../src/copyright.md>
-```cpp
+    eLyKseeR or LXR - cryptographic data archiving software
+    https://github.com/eLyKseeR/elykseer-cpp
+    Copyright (C) 2018-2025 Alexander Diemand
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "lxr/os.hpp"
 #include "date/date.h"
 
-//#include <format>
+#include <filesystem>
 
 #ifndef _WIN32
 #include <cstring>
@@ -20,12 +32,11 @@
 #include <sysinfoapi.h>
 #endif
 
+
+module lxr_os;
+
+
 namespace lxr {
-
-````
-declared in [OS](os.hpp.md)
-
-```cpp
 
 const std::string OS::hostname() noexcept
 {
@@ -105,17 +116,12 @@ const std::string OS::time2string(std::filesystem::file_time_type ts) noexcept
     return time2string(std::chrono::system_clock::to_time_t(syst));
 
 }
-```
 
-```cpp
 } // namespace
-```
 
-## formatted output of std::chrono::microseconds
-```cpp
+// formatted output of std::chrono::microseconds
 std::ostream&
 operator<<(std::ostream& os, std::chrono::microseconds const &us) {
     os << us.count() << " µs";
     return os;
 }
-```

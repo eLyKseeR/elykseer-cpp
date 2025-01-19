@@ -1,17 +1,30 @@
-```cpp
-
 /*
-<fpaste ../../../src/copyright.md>
+    eLyKseeR or LXR - cryptographic data archiving software
+    https://github.com/eLyKseeR/elykseer-cpp
+    Copyright (C) 2018-2025 Alexander Diemand
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "lxr/coqassemblycache.hpp"
-#include "lxr/coqconfiguration.hpp"
-#include "lxr/coqprocessor.hpp"
-#include "lxr/filectrl.hpp"
-#include "lxr/fsutils.hpp"
+import lxr_coqassemblycache;
+import lxr_coqconfiguration;
+import lxr_coqprocessor;
+import lxr_filectrl;
+import lxr_fsutils;
+import lxr_liz;
+import lxr_os;
 #include "lxr/gpg.hpp"
-#include "lxr/liz.hpp"
-#include "lxr/os.hpp"
 
 #include <ctime>
 #include <fstream>
@@ -21,40 +34,36 @@
 #include <unordered_map>
 #include <vector>
 
-```
 
-## options
-```cpp
-    static int dry_run = 0;
-    static int verbose_out = 0;
-    static int use_gpg = 1;
-    static struct option longopts[] = {
-             { "dry-run",   no_argument,        &dry_run,       1   },
-             { "verbose",   no_argument,        &verbose_out,   1   },
-             { "help",      no_argument,        NULL,           'h' },
-             { "version",   no_argument,        NULL,           'V' },
-             { "license",   no_argument,        NULL,           'L' },
-             { "copyright", no_argument,        NULL,           'C' },
-             { "pX",        required_argument,  NULL,           'x' },
-             { "pD",        required_argument,  NULL,           'o' },
-             { "pR",        required_argument,  NULL,           'r' },
-             { "refdbfi",   required_argument,  NULL,           'r' },
-            //  { "refdbfb",   required_argument,  NULL,           's' },
-             { "f",         required_argument,  NULL,           'f' },
-             { "d1",        required_argument,  NULL,           'd' },
-             { "dr",        required_argument,  NULL,           'D' },
-             { "nchunks",   required_argument,  NULL,           'n' },
-             { "myid",      required_argument,  NULL,           'y' },
-             { "owner-key", required_argument,  NULL,           'k' },
-            //  { "compression", required_argument, NULL,          'c' },
-            //  { "deduplication", required_argument, NULL,        'u' },
-             { "nogpg",     no_argument,        &use_gpg,       0 },
-             { NULL,         0,                 NULL,           0 }
-    };
+// options
+static int dry_run = 0;
+static int verbose_out = 0;
+static int use_gpg = 1;
+static struct option longopts[] = {
+          { "dry-run",   no_argument,        &dry_run,       1   },
+          { "verbose",   no_argument,        &verbose_out,   1   },
+          { "help",      no_argument,        NULL,           'h' },
+          { "version",   no_argument,        NULL,           'V' },
+          { "license",   no_argument,        NULL,           'L' },
+          { "copyright", no_argument,        NULL,           'C' },
+          { "pX",        required_argument,  NULL,           'x' },
+          { "pD",        required_argument,  NULL,           'o' },
+          { "pR",        required_argument,  NULL,           'r' },
+          { "refdbfi",   required_argument,  NULL,           'r' },
+        //  { "refdbfb",   required_argument,  NULL,           's' },
+          { "f",         required_argument,  NULL,           'f' },
+          { "d1",        required_argument,  NULL,           'd' },
+          { "dr",        required_argument,  NULL,           'D' },
+          { "nchunks",   required_argument,  NULL,           'n' },
+          { "myid",      required_argument,  NULL,           'y' },
+          { "owner-key", required_argument,  NULL,           'k' },
+        //  { "compression", required_argument, NULL,          'c' },
+        //  { "deduplication", required_argument, NULL,        'u' },
+          { "nogpg",     no_argument,        &use_gpg,       0 },
+          { NULL,         0,                 NULL,           0 }
+};
 
-```
-keep lists of files and directories to backup:
-```cpp
+// keep lists of files and directories to backup:
 constexpr int MAX_BACKUP_FILES = 8192;
 constexpr int MAX_BACKUP_DIRS = 128;
 
@@ -65,10 +74,8 @@ static int counter_dirs = 0;
 static std::string list_files[MAX_BACKUP_FILES];
 static std::string list_dir1[MAX_BACKUP_DIRS];
 static std::string list_dir[MAX_BACKUP_DIRS];
-```
 
-## parsing cli arguments
-```cpp
+// parsing cli arguments
 void output_error() {
   std::clog << "error!" << std::endl;
   exit(1);
@@ -232,17 +239,15 @@ void add_ref_dbfi(std::shared_ptr<lxr::CoqFInfoStore> &store, std::string const 
       _if.close();
     }
     int sz1 = store->size();
-    std::clog << "       ### read " << sz1 - sz0 << " file infos from FInfoStore" << std::endl;
+    std::clog << "       //# read " << sz1 - sz0 << " file infos from FInfoStore" << std::endl;
   } else {
     std::clog << "reference DbFi does not exist: " << p << std::endl;
     output_error();
   }
 }
 
-```
 
-## main
-```cpp
+// main
 int main (int argc, char * const argv[]) {
   std::optional<int> nchunks{16};
   std::optional<std::string> myid{};
@@ -356,4 +361,3 @@ int main (int argc, char * const argv[]) {
 
   return 0;
 }
-```

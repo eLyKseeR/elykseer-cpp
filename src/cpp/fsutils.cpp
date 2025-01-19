@@ -1,8 +1,45 @@
-declared in [FsUtils](fsutils.hpp.md)
+module;
+/*
+    eLyKseeR or LXR - cryptographic data archiving software
+    https://github.com/eLyKseeR/elykseer-cpp
+    Copyright (C) 2018-2025 Alexander Diemand
 
-## implementations
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-```cpp
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#include <filesystem>
+typedef std::filesystem::path filepath;
+#include <iostream>
+#include <sstream>
+
+#ifndef _WIN32
+#include <pwd.h>
+#include <grp.h>
+#include <sys/stat.h>
+#else
+#include <windows.h>
+#include "aclapi.h"
+#pragma comment(lib, "advapi32.lib")
+#endif
+
+import lxr_os;
+
+module lxr_fsutils;
+
+
+namespace lxr {
+
 std::string FsUtils::sep() noexcept
 {
 #ifdef _WIN32
@@ -94,11 +131,9 @@ std::pair<const std::string, const std::string> FsUtils::osusrgrp(filepath const
     return std::make_pair(_osusr, _osgrp);
 #endif
 }
-```
 
-## operators to concat file paths
+// operators to concat file paths
 
-```cpp
 const filepath operator/(std::string const &a, std::string const &b) noexcept
 {
     filepath fp{a};
@@ -111,4 +146,4 @@ const filepath operator/(filepath const &a, std::string const &b) noexcept
     return fp /= b;
 }
 
-```
+} // namespace
