@@ -18,9 +18,6 @@ module;
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "lxr/sha3.hpp"
-
-import lxr_os;
 
 #include <filesystem>
 #include <sstream>
@@ -30,11 +27,16 @@ import lxr_os;
 #include <sys/stat.h>
 #endif
 
+import lxr_sha3;
+
+import lxr_os;
 
 module lxr_coqfilesupport;
 
 
 namespace lxr {
+
+typedef std::string filename;
 
 std::optional<CoqFilesupport::FileInformation> CoqFilesupport::get_file_information(const filename &fn) noexcept
 {

@@ -18,21 +18,22 @@ module;
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "lxr/gpg.hpp"
-#include "lxr/key256.hpp"
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <string>
+
+#include "boost/property_tree/ptree.hpp"
+#include "boost/property_tree/xml_parser.hpp"
+
+import lxr_key256;
+import lxr_gpg;
 
 import lxr_coqassembly;
 import lxr_coqconfiguration;
 import lxr_coqfilesupport;
 import lxr_liz;
 import lxr_os;
-
-#include "boost/property_tree/ptree.hpp"
-#include "boost/property_tree/xml_parser.hpp"
-
-#include <filesystem>
-#include <iostream>
-#include <string>
 
 
 module lxr_coqstore;
@@ -314,7 +315,7 @@ void CoqFBlockStore::outStream(std::ostream & os) const
     iterate([&os](const std::pair<std::string, std::vector<lxr::CoqAssembly::BlockInformation>> &p) {
         os << "  <File fhash=\"" << p.first << "\">" << std::endl;
         for (const auto & bi : p.second) {
-            os << "    <FBlock idx=\"" << bi.blockid << "\" apos=\"" << bi.blockapos << "\" fpos=\"" << bi.filepos << "\" blen=\"" << bi.blocksize << "\" clen=\"" << 0 << "\" compressed=\"" << 0 << "\" chksum=\"" << bi.bchecksum << "\">" << bi.blockaid << "</FBlock>" << std::endl;
+            os << "    <FBlock idx=\"" << bi.blockid << "\" apos=\"" << bi.blockapos << "\" fpos=\"" << bi.filepos << "\" blen=\"" << bi.blocksize << "\" clen=\"" << 0 << "\" compressed=\"" << 0 << "\" chksum=\"" << bi.bchecksum.toHex() << "\">" << bi.blockaid << "</FBlock>" << std::endl;
         }
         os << "  </File>" << std::endl;
     });

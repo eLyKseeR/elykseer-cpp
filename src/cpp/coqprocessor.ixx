@@ -21,7 +21,6 @@ module;
 #include <filesystem>
 #include <memory>
 #include <optional>
-#include <variant>
 
 import lxr_coqconfiguration;
 import lxr_coqfilesupport;

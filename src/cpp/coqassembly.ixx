@@ -25,8 +25,9 @@ module;
 
 import lxr_coqbuffer;
 import lxr_coqconfiguration;
-#include "lxr/key256.hpp"
-#include "lxr/key128.hpp"
+
+import lxr_key256;
+import lxr_key128;
 
 
 export module lxr_coqassembly;

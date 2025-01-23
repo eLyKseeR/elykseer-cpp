@@ -18,16 +18,16 @@ module;
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "lxr/aes.hpp"
-#include "lxr/key128.hpp"
-#include "lxr/key256.hpp"
-#include "lxr/sha3.hpp"
+#include <algorithm>
+#include <iostream>
 
 #include "sizebounded/sizebounded.hpp"
 #include "sizebounded/sizebounded.ipp"
 
-#include <algorithm>
-#include <iostream>
+import lxr_sha3;
+import lxr_aes;
+import lxr_key128;
+import lxr_key256;
 
 
 module lxr_coqbuffer;

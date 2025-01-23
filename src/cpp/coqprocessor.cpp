@@ -19,8 +19,12 @@ module;
 */
 
 #include <filesystem>
+#include <memory>
 #include <iostream>
-#include "lxr/sha3.hpp"
+#include <string>
+
+import lxr_sha3;
+import lxr_key256;
 
 import lxr_coqconfiguration;
 import lxr_coqbuffer;

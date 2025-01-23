@@ -18,11 +18,12 @@ module;
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "lxr/key128.hpp"
-#include "lxr/key256.hpp"
-
+#include <stdio.h>
 #include <memory>
 #include <optional>
+
+import lxr_key256;
+import lxr_key128;
 
 
 export module lxr_coqbuffer;

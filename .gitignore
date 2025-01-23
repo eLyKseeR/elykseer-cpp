@@ -1,11 +1,6 @@
-cpp/src/lxr
-cpp/src/*.hpp
-cpp/src/*.cpp
-cpp/tests/*.hpp
-cpp/tests/*.cpp
-
 ._*
 .DS_Store
+build
 
 build/CMakeCache.txt
 build/CMakeFiles/
@@ -35,6 +30,7 @@ dist/
 
 ext/xWindows_x86_64
 ext/Windows_x86_64
+ext/Linux_x86_64
 ext/Darwin_arm64
 ext/_ccache
 ext/boost_*

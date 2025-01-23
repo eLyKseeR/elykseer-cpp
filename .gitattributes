@@ -1,7 +1,8 @@
 
+*.ixx linguist-language=C++
+
 *.hpp.md linguist-language=C++
 *.cpp.md linguist-language=C++
 
 *-alpha-.md linguist-language=C++
 *-omega-.md linguist-language=C++
-

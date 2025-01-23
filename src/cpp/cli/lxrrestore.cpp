@@ -1,19 +1,21 @@
-```cpp
-
 /*
-<fpaste ../../../src/copyright.md>
-*/
+    eLyKseeR or LXR - cryptographic data archiving software
+    https://github.com/eLyKseeR/elykseer-cpp
+    Copyright (C) 2018-2025 Alexander Diemand
 
-#include "lxr/coqassemblycache.hpp"
-#include "lxr/coqconfiguration.hpp"
-#include "lxr/coqprocessor.hpp"
-#include "lxr/coqstore.hpp"
-#include "lxr/filectrl.hpp"
-#include "lxr/fsutils.hpp"
-#include "lxr/gpg.hpp"
-#include "lxr/liz.hpp"
-#include "lxr/os.hpp"
-#include "lxr/sha3.hpp"
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 #include <chrono>
 #include <iostream>
@@ -22,35 +24,43 @@
 #include <string>
 #include <getopt.h>
 
-```
+import lxr_coqassemblycache;
+import lxr_coqconfiguration;
+import lxr_coqprocessor;
+import lxr_coqstore;
+import lxr_filectrl;
+import lxr_fsutils;
+import lxr_liz;
+import lxr_os;
 
-## options
-```cpp
-    static int dry_run = 0;
-    static int verbose_out = 0;
-    static int use_gpg = 1;
-    static struct option longopts[] = {
-             { "dry-run",   no_argument,        &dry_run,       1   },
-             { "verbose",   no_argument,        &verbose_out,   1   },
-             { "help",      no_argument,        NULL,           'h' },
-             { "version",   no_argument,        NULL,           'V' },
-             { "license",   no_argument,        NULL,           'L' },
-             { "copyright", no_argument,        NULL,           'C' },
-             { "pChunks",   required_argument,  NULL,           'x' },
-             { "pData",     required_argument,  NULL,           'o' },
-             { "pDbFb",     required_argument,  NULL,           'b' },
-             { "pKeys",     required_argument,  NULL,           'k' },
-             { "file",      required_argument,  NULL,           'f' },
-            //  { "dir",       required_argument,  NULL,           'd' },
-             { "myid",      required_argument,  NULL,           'y' },
-             { "nogpg",     no_argument,        &use_gpg,       0 },
-             { NULL,         0,                 NULL,           0 }
-    };
+import lxr_gpg;
+import lxr_sha3;
 
-```
 
-keep lists of files and directories to restore:
-```cpp
+// options
+static int dry_run = 0;
+static int verbose_out = 0;
+static int use_gpg = 1;
+static struct option longopts[] = {
+          { "dry-run",   no_argument,        &dry_run,       1   },
+          { "verbose",   no_argument,        &verbose_out,   1   },
+          { "help",      no_argument,        NULL,           'h' },
+          { "version",   no_argument,        NULL,           'V' },
+          { "license",   no_argument,        NULL,           'L' },
+          { "copyright", no_argument,        NULL,           'C' },
+          { "pChunks",   required_argument,  NULL,           'x' },
+          { "pData",     required_argument,  NULL,           'o' },
+          { "pDbFb",     required_argument,  NULL,           'b' },
+          { "pKeys",     required_argument,  NULL,           'k' },
+          { "file",      required_argument,  NULL,           'f' },
+        //  { "dir",       required_argument,  NULL,           'd' },
+          { "myid",      required_argument,  NULL,           'y' },
+          { "nogpg",     no_argument,        &use_gpg,       0 },
+          { NULL,         0,                 NULL,           0 }
+};
+
+
+//keep lists of files and directories to restore:
 constexpr int MAX_RESTORE_FILES = 8192;
 // constexpr int MAX_RESTORE_DIRS = 128;
 
@@ -59,10 +69,8 @@ static int counter_files{0};
 
 static std::string list_files[MAX_RESTORE_FILES];
 // static std::string list_dirs[MAX_RESTORE_DIRS];
-```
 
-## parsing cli arguments
-```cpp
+// parsing cli arguments
 void output_error() {
   std::clog << "error!" << std::endl;
   exit(1);
@@ -198,10 +206,8 @@ void set_n_chunks(std::optional<int> &nchunks, std::string const p) {
 // bool hasPrefix(std::string_view prefix, std::string_view str) {
 //     return prefix == str.substr(0, prefix.size());
 // }
-```
 
-## main
-```cpp
+// main
 int main (int argc, char * const argv[]) {
   std::optional<int> nchunks{16};
   std::optional<std::string> myid{};
@@ -375,4 +381,3 @@ int main (int argc, char * const argv[]) {
 
   return 0;
 }
-```

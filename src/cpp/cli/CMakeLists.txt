@@ -36,8 +36,8 @@ add_executable (LXRrestore
   lxrrestore.cpp
 )
 target_link_libraries (LXRrestore PUBLIC
-  # elykseer-cpp_s
   ${PROJECT_NAME}_${CMAKE_BUILD_TYPE}_s
+  elykseer-crypto_s
   ${libs}
   ${Boost_LIBRARIES}
   ${STATIC_BUILD}
@@ -51,6 +51,7 @@ add_executable (LXRverify
 )
 target_link_libraries (LXRverify PUBLIC
   ${PROJECT_NAME}_${CMAKE_BUILD_TYPE}_s
+  elykseer-crypto_s
   ${libs}
   ${Boost_LIBRARIES}
   ${STATIC_BUILD}

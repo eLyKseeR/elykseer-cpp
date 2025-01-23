@@ -121,13 +121,13 @@ $(fset_elykseer_crypto):
 	git submodule update --init; \
 	if [ -z "$(CROSS_COMPILATION)" ]; then \
 	$(MAKE) -C ext; \
-	cd build; \
-	cmake --fresh -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} --install-prefix "${TARGETDIR}" -G "${CMAKE_GENERATOR}" . ; \
+	mkdir -vp build; cd build; \
+	cmake --fresh -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} --install-prefix "${TARGETDIR}" -G Ninja .. ; \
 	else \
 	$(MAKE) -C ext xWin64; \
 	cd build; \
 	cmake --fresh -DCMAKE_TOOLCHAIN_FILE=${XCOMPILE_TOOLCHAIN} -DCMAKE_BUILD_TYPE=Release --install-prefix "${TARGETDIR}" -G "${CMAKE_GENERATOR}" . ; \
 	fi; \
-	$(MAKE); \
-	$(MAKE) install;
+	ninja; \
+	ninja install;
 

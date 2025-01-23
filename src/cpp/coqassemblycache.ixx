@@ -21,7 +21,7 @@ module;
 #include <memory>
 #include <variant>
 
-#include "lxr/key256.hpp"
+import lxr_key256;
 
 import lxr_coqassembly;
 import lxr_coqbuffer;

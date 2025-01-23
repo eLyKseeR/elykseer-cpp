@@ -17,23 +17,23 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import lxr_coqassemblycache;
-import lxr_coqconfiguration;
-import lxr_coqprocessor;
-import lxr_filectrl;
-import lxr_fsutils;
-import lxr_liz;
-import lxr_os;
-#include "lxr/gpg.hpp"
-
 #include <ctime>
 #include <fstream>
 #include <getopt.h>
 #include <iostream>
 #include <string>
 #include <unordered_map>
-#include <vector>
 
+import lxr_coqassemblycache;
+import lxr_coqconfiguration;
+import lxr_coqprocessor;
+import lxr_coqstore;
+import lxr_filectrl;
+import lxr_fsutils;
+import lxr_liz;
+import lxr_os;
+
+import lxr_gpg;
 
 // options
 static int dry_run = 0;

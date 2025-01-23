@@ -20,7 +20,7 @@ module;
 
 #include <string>
 
-#include "lxr/key256.hpp"
+import lxr_key256;
 
 
 export module lxr_appid;

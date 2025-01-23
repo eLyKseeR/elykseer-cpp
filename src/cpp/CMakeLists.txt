@@ -4,14 +4,38 @@ cmake_minimum_required(VERSION 3.30)
 # include_directories(".")
 include_directories("${CMAKE_HOME_DIRECTORY}/ext/date/include")
 
+file(GLOB MODULE_INTERFACE_FILES "${CMAKE_HOME_DIRECTORY}/ext/${EXT_PATH}/include/lxr/*.ixx")
+
+IF(CMAKE_BUILD_TYPE STREQUAL "Release")
+  set(LIB_ELYKSEER_CRYPTO "libelykseer-crypto.a")
+ELSE()
+  set(LIB_ELYKSEER_CRYPTO "libelykseer-crypto_d.a")
+ENDIF()
+
 # link external libraries
 add_library(elykseer-crypto_s STATIC IMPORTED)
-SET_TARGET_PROPERTIES(elykseer-crypto_s PROPERTIES IMPORTED_LOCATION "${CMAKE_HOME_DIRECTORY}/ext/${EXT_PATH}/lib/libelykseer-crypto.a")
+set_target_properties(elykseer-crypto_s PROPERTIES
+  IMPORTED_LOCATION "${CMAKE_HOME_DIRECTORY}/ext/${EXT_PATH}/lib/${LIB_ELYKSEER_CRYPTO}"
+)
+target_sources(elykseer-crypto_s
+    INTERFACE
+      FILE_SET HEADERS
+      BASE_DIRS "${CMAKE_HOME_DIRECTORY}/ext/${EXT_PATH}/include/"
+      FILES
+      ${CMAKE_HOME_DIRECTORY}/ext/${EXT_PATH}/include/lxr/lxr-cbindings.hpp
+      ${CMAKE_HOME_DIRECTORY}/ext/${EXT_PATH}/include/sizebounded/sizebounded.hpp
+      FILE_SET CXX_MODULES
+      BASE_DIRS "${CMAKE_HOME_DIRECTORY}/ext/${EXT_PATH}/include/lxr/"
+      FILES
+      ${MODULE_INTERFACE_FILES}
+)
+target_include_directories(elykseer-crypto_s INTERFACE "${CMAKE_HOME_DIRECTORY}/ext/${EXT_PATH}/include/lxr/")
+target_compile_features(elykseer-crypto_s INTERFACE cxx_std_20)
 
-IF(${CMAKE_CROSSCOMPILING})
-add_library(z STATIC IMPORTED)
-SET_TARGET_PROPERTIES(z PROPERTIES IMPORTED_LOCATION "${CMAKE_HOME_DIRECTORY}/ext/${EXT_PATH}/lib/libzlibstatic.a")
-ENDIF(${CMAKE_CROSSCOMPILING})
+# IF(${CMAKE_CROSSCOMPILING})
+# add_library(z STATIC IMPORTED)
+# SET_TARGET_PROPERTIES(z PROPERTIES IMPORTED_LOCATION "${CMAKE_HOME_DIRECTORY}/ext/${EXT_PATH}/lib/libzlibstatic.a")
+# ENDIF(${CMAKE_CROSSCOMPILING})
 
 set(LIB_PRIVATE_SRCS
     appid.cpp
@@ -50,33 +74,33 @@ set(LIB_HDRS
     coqprocessor.ixx
 )
 
-IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-	message("not building dynamic library on ${CMAKE_SYSTEM_NAME}")
-ELSE()
-  add_library (${PROJECT_NAME}_${CMAKE_BUILD_TYPE} SHARED)
-  target_sources(${PROJECT_NAME}_${CMAKE_BUILD_TYPE}
-      PRIVATE
-        ${LIB_PRIVATE_SRCS}
-      PUBLIC
-      FILE_SET CXX_MODULES FILES
-        ${LIB_HDRS}
-        ${LIB_SRCS}
-  )
-
-  set_target_properties(${PROJECT_NAME}_${CMAKE_BUILD_TYPE} PROPERTIES
-                        VERSION ${elykseer-cpp_VERSION_STRING}
-                        SOVERSION ${elykseer-cpp_VERSION_MAJOR})
-
-  target_link_libraries (${PROJECT_NAME}_${CMAKE_BUILD_TYPE} PUBLIC
-      ${libs}
-	    elykseer-crypto_s
-  )
-  if(OpenMP_CXX_FOUND)
-    target_link_libraries (${PROJECT_NAME}_${CMAKE_BUILD_TYPE} PUBLIC
-	    OpenMP::OpenMP_CXX)
-  endif()
-
-ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+# IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+# 	message("not building dynamic library on ${CMAKE_SYSTEM_NAME}")
+# ELSE()
+#   add_library (${PROJECT_NAME}_${CMAKE_BUILD_TYPE} SHARED)
+#   target_sources(${PROJECT_NAME}_${CMAKE_BUILD_TYPE}
+#       PRIVATE
+#         ${LIB_PRIVATE_SRCS}
+#       PUBLIC
+#       FILE_SET CXX_MODULES FILES
+#         ${LIB_HDRS}
+#         ${LIB_SRCS}
+#   )
+#
+#   set_target_properties(${PROJECT_NAME}_${CMAKE_BUILD_TYPE} PROPERTIES
+#                         VERSION ${elykseer-cpp_VERSION_STRING}
+#                         SOVERSION ${elykseer-cpp_VERSION_MAJOR})
+#
+#   target_link_libraries (${PROJECT_NAME}_${CMAKE_BUILD_TYPE} PUBLIC
+#       ${libs}
+# 	    elykseer-crypto_s
+#   )
+#   if(OpenMP_CXX_FOUND)
+#     target_link_libraries (${PROJECT_NAME}_${CMAKE_BUILD_TYPE} PUBLIC
+# 	    OpenMP::OpenMP_CXX)
+#   endif()
+#
+# ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
 
 add_library (${PROJECT_NAME}_${CMAKE_BUILD_TYPE}_s STATIC)
@@ -88,9 +112,13 @@ target_sources(${PROJECT_NAME}_${CMAKE_BUILD_TYPE}_s
         ${LIB_HDRS}
         ${LIB_SRCS}
 )
-target_link_libraries(${PROJECT_NAME}_${CMAKE_BUILD_TYPE}_s PUBLIC
-  ${libs}
+target_link_libraries(${PROJECT_NAME}_${CMAKE_BUILD_TYPE}_s
+      PRIVATE
+        elykseer-crypto_s
+      PUBLIC
+        ${libs}
 )
+# target_compile_options(${PROJECT_NAME}_${CMAKE_BUILD_TYPE}_s PRIVATE -fmodules)
 if(OpenMP_CXX_FOUND)
   target_link_libraries (${PROJECT_NAME}_${CMAKE_BUILD_TYPE}_s PUBLIC
 	    OpenMP::OpenMP_CXX)
@@ -105,7 +133,7 @@ ENDIF()
 
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   add_custom_command(OUTPUT ${LIBRARY_NAME}
-        COMMAND libtool -static -o ${LIBRARY_NAME} ${LIB_PREFIX}${PROJECT_NAME}_${CMAKE_BUILD_TYPE}_s.a ../../../ext/${EXT_PATH}/lib/libelykseer-crypto.a
+        COMMAND libtool -static -o ${LIBRARY_NAME} ${LIB_PREFIX}${PROJECT_NAME}_${CMAKE_BUILD_TYPE}_s.a ../../../ext/${EXT_PATH}/lib/${LIB_ELYKSEER_CRYPTO}
         DEPENDS ${PROJECT_NAME}_${CMAKE_BUILD_TYPE}_s 
         COMMENT "combining static libraries into ${LIBRARY_NAME}"
   )
@@ -114,7 +142,7 @@ ELSE()
   file(WRITE "lib_${CMAKE_BUILD_TYPE}.mri"
 "create ${LIBRARY_NAME}\n\
 addlib ${LIB_PREFIX}${PROJECT_NAME}_${CMAKE_BUILD_TYPE}_s.a\n\
-addlib ../../../ext/${EXT_PATH}/lib/libelykseer-crypto.a\n\
+addlib ../../../ext/${EXT_PATH}/lib/${LIB_ELYKSEER_CRYPTO}\n\
 save\n\
 end")
 
@@ -151,20 +179,19 @@ endif()
 add_subdirectory( cli )
 
 set(ELYKSEER_CRYPTO_HDRS
-  ../../ext/${EXT_PATH}/include/lxr/aes.hpp
-  ../../ext/${EXT_PATH}/include/lxr/base64.hpp
-  ../../ext/${EXT_PATH}/include/lxr/gpg.hpp
-  ../../ext/${EXT_PATH}/include/lxr/hmac.hpp
-  ../../ext/${EXT_PATH}/include/lxr/key.hpp
-  ../../ext/${EXT_PATH}/include/lxr/key128.hpp
-  ../../ext/${EXT_PATH}/include/lxr/key160.hpp
-  ../../ext/${EXT_PATH}/include/lxr/key256.hpp
-  ../../ext/${EXT_PATH}/include/lxr/lxr-cbindings.hpp
-  ../../ext/${EXT_PATH}/include/lxr/md5.hpp
-  ../../ext/${EXT_PATH}/include/lxr/randlist.hpp
-  ../../ext/${EXT_PATH}/include/lxr/random.hpp
-  ../../ext/${EXT_PATH}/include/lxr/sha256.hpp
-  ../../ext/${EXT_PATH}/include/lxr/sha3.hpp
+  ../../ext/${EXT_PATH}/include/lxr/aes.ixx
+  ../../ext/${EXT_PATH}/include/lxr/base64.ixx
+  ../../ext/${EXT_PATH}/include/lxr/gpg.ixx
+  ../../ext/${EXT_PATH}/include/lxr/hmac.ixx
+  ../../ext/${EXT_PATH}/include/lxr/key.ixx
+  ../../ext/${EXT_PATH}/include/lxr/key128.ixx
+  ../../ext/${EXT_PATH}/include/lxr/key160.ixx
+  ../../ext/${EXT_PATH}/include/lxr/key256.ixx
+  ../../ext/${EXT_PATH}/include/lxr/md5.ixx
+  ../../ext/${EXT_PATH}/include/lxr/randlist.ixx
+  ../../ext/${EXT_PATH}/include/lxr/random.ixx
+  # ../../ext/${EXT_PATH}/include/lxr/sha256.ixx
+  ../../ext/${EXT_PATH}/include/lxr/sha3.ixx
 )
 set(CPACK_PACKAGE_VERSION ${${PROJECT_NAME}_VERSION_STRING})
 set(CPACK_PACKAGE_VERSION_MAJOR ${${PROJECT_NAME}_VERSION_MAJOR})

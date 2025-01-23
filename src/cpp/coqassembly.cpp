@@ -24,9 +24,10 @@ module;
 #include <iostream>
 #include <sstream>
 
-#include "lxr/key128.hpp"
-#include "lxr/random.hpp"
-#include "lxr/sha3.hpp"
+import lxr_key128;
+import lxr_key256;
+import lxr_random;
+import lxr_sha3;
 
 import lxr_os;
 import lxr_coqbuffer;
@@ -87,8 +88,7 @@ void CoqAssembly::mk_assembly_id()
   auto now = std::chrono::system_clock::now();
   auto tstamp = std::chrono::system_clock::to_time_t(now);
   std::stringstream ss;
-  lxr::Random r;
-  ss << r.random() << _config.my_id << OS::hostname() << tstamp;
+  ss << lxr::Random::rng().random() << _config.my_id << OS::hostname() << tstamp;
   const std::string v{ss.str()};
   const auto h = Sha3_256::hash(v).toHex();
   // std::clog << "  mk_assembly_id: " << v << " => " << h << std::endl;
