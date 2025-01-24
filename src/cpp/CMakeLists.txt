@@ -4,34 +4,6 @@ cmake_minimum_required(VERSION 3.30)
 # include_directories(".")
 include_directories("${CMAKE_HOME_DIRECTORY}/ext/date/include")
 
-file(GLOB MODULE_INTERFACE_FILES "${CMAKE_HOME_DIRECTORY}/ext/${EXT_PATH}/include/lxr/*.ixx")
-
-IF(CMAKE_BUILD_TYPE STREQUAL "Release")
-  set(LIB_ELYKSEER_CRYPTO "libelykseer-crypto.a")
-ELSE()
-  set(LIB_ELYKSEER_CRYPTO "libelykseer-crypto_d.a")
-ENDIF()
-
-# link external libraries
-add_library(elykseer-crypto_s STATIC IMPORTED)
-set_target_properties(elykseer-crypto_s PROPERTIES
-  IMPORTED_LOCATION "${CMAKE_HOME_DIRECTORY}/ext/${EXT_PATH}/lib/${LIB_ELYKSEER_CRYPTO}"
-)
-target_sources(elykseer-crypto_s
-    INTERFACE
-      FILE_SET HEADERS
-      BASE_DIRS "${CMAKE_HOME_DIRECTORY}/ext/${EXT_PATH}/include/"
-      FILES
-      ${CMAKE_HOME_DIRECTORY}/ext/${EXT_PATH}/include/lxr/lxr-cbindings.hpp
-      ${CMAKE_HOME_DIRECTORY}/ext/${EXT_PATH}/include/sizebounded/sizebounded.hpp
-      FILE_SET CXX_MODULES
-      BASE_DIRS "${CMAKE_HOME_DIRECTORY}/ext/${EXT_PATH}/include/lxr/"
-      FILES
-      ${MODULE_INTERFACE_FILES}
-)
-target_include_directories(elykseer-crypto_s INTERFACE "${CMAKE_HOME_DIRECTORY}/ext/${EXT_PATH}/include/lxr/")
-target_compile_features(elykseer-crypto_s INTERFACE cxx_std_20)
-
 # IF(${CMAKE_CROSSCOMPILING})
 # add_library(z STATIC IMPORTED)
 # SET_TARGET_PROPERTIES(z PROPERTIES IMPORTED_LOCATION "${CMAKE_HOME_DIRECTORY}/ext/${EXT_PATH}/lib/libzlibstatic.a")
@@ -125,11 +97,12 @@ if(OpenMP_CXX_FOUND)
 endif()
 
 # combine all static libs into one
-IF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
-  set(LIBRARY_NAME "lib${PROJECT_NAME}_d.a")
-ELSE()
-  set(LIBRARY_NAME "lib${PROJECT_NAME}.a")
-ENDIF()
+set(LIBRARY_NAME "lib${PROJECT_NAME}.a")
+# IF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+#   set(LIBRARY_NAME "lib${PROJECT_NAME}_d.a")
+# ELSE()
+#   set(LIBRARY_NAME "lib${PROJECT_NAME}.a")
+# ENDIF()
 
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   add_custom_command(OUTPUT ${LIBRARY_NAME}
@@ -139,7 +112,7 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   )
   set(CUSTOM_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${LIBRARY_NAME}")
 ELSE()
-  file(WRITE "lib_${CMAKE_BUILD_TYPE}.mri"
+  file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/lib_${CMAKE_BUILD_TYPE}.mri"
 "create ${LIBRARY_NAME}\n\
 addlib ${LIB_PREFIX}${PROJECT_NAME}_${CMAKE_BUILD_TYPE}_s.a\n\
 addlib ../../../ext/${EXT_PATH}/lib/${LIB_ELYKSEER_CRYPTO}\n\

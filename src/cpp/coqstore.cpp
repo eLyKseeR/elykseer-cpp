@@ -21,6 +21,7 @@ module;
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <optional>
 #include <string>
 
 #include "boost/property_tree/ptree.hpp"

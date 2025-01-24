@@ -22,6 +22,7 @@ module;
 typedef std::filesystem::path filepath;
 
 #include <optional>
+#include <vector>
 
 module lxr_filectrl;
 

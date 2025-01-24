@@ -1,4 +1,3 @@
-module;
 /*
     eLyKseeR or LXR - cryptographic data archiving software
     https://github.com/eLyKseeR/elykseer-cpp
@@ -18,45 +17,41 @@ module;
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <algorithm>
-#include <string>
-#include <cstdint>
+#ifndef BOOST_ALL_DYN_LINK
+#define BOOST_ALL_DYN_LINK
+#endif
+
+#include <iostream>
+
+#include "boost/test/unit_test.hpp"
+
+import lxr_os;
 
 
-export module lxr_coqconfiguration;
-
-
-export namespace lxr {
-
-/*
-
-```coq
-Module Export Configuration.
-
-Record configuration : Type :=
-    mkconfiguration
-        { config_nchunks : Nchunks.t
-        ; path_chunks : string
-        ; path_db : string
-        ; my_id : N
-        }.
-
-End Configuration.
-```
-
-*/
-
-struct CoqConfiguration
+BOOST_AUTO_TEST_SUITE( utOS )
+// Test case: show hostname
+BOOST_AUTO_TEST_CASE( get_hostname )
 {
-    public:
-        inline void nchunks(const int _nch) { _nchunks = std::min(256, std::max(16,_nch)); }
-        inline uint16_t nchunks() const { return _nchunks; }
-        std::string path_chunks;
-        std::string path_db;
-        std::string my_id;
-        CoqConfiguration & operator=(CoqConfiguration const &) = default;
-    private:
-        uint16_t _nchunks{16};
-};
+	std::string msg = lxr::OS::hostname();
+	//std::clog << std::endl << msg << std::endl;
+	BOOST_CHECK(! msg.empty());
+}
 
-} // namespace
+// Test case: show username
+BOOST_AUTO_TEST_CASE( get_username )
+{
+	std::string msg = lxr::OS::username();
+	//std::clog << std::endl << msg << std::endl;
+	BOOST_CHECK(! msg.empty());
+	BOOST_CHECK_NE(msg, "unknown");
+}
+
+// Test case: show timestamp
+BOOST_AUTO_TEST_CASE( get_timestamp )
+{
+	std::string msg = lxr::OS::timestamp();
+	//std::clog << std::endl << msg << std::endl;
+	BOOST_CHECK(! msg.empty());
+}
+
+BOOST_AUTO_TEST_SUITE_END()

@@ -154,10 +154,40 @@ include_directories(ext/${EXT_PATH}/include)
 link_directories("ext/${EXT_PATH}/lib")
 
 
+# link external library elykseer-crypto
+file(GLOB MODULE_INTERFACE_FILES "${CMAKE_HOME_DIRECTORY}/ext/${EXT_PATH}/include/lxr/*.ixx")
+
+set(LIB_ELYKSEER_CRYPTO "libelykseer-crypto.a")
+# IF(CMAKE_BUILD_TYPE STREQUAL "Release")
+#   set(LIB_ELYKSEER_CRYPTO "libelykseer-crypto.a")
+# ELSE()
+#   set(LIB_ELYKSEER_CRYPTO "libelykseer-crypto_d.a")
+# ENDIF()
+
+add_library(elykseer-crypto_s STATIC IMPORTED)
+set_target_properties(elykseer-crypto_s PROPERTIES
+  IMPORTED_LOCATION "${CMAKE_HOME_DIRECTORY}/ext/${EXT_PATH}/lib/${LIB_ELYKSEER_CRYPTO}"
+)
+target_sources(elykseer-crypto_s
+    INTERFACE
+      FILE_SET HEADERS
+      BASE_DIRS "${CMAKE_HOME_DIRECTORY}/ext"
+      FILES
+      ${CMAKE_HOME_DIRECTORY}/ext/${EXT_PATH}/include/lxr/lxr-cbindings.hpp
+      ${CMAKE_HOME_DIRECTORY}/ext/sizebounded/sizebounded.hpp
+      FILE_SET CXX_MODULES
+      BASE_DIRS "${CMAKE_HOME_DIRECTORY}/ext/${EXT_PATH}/include/lxr/"
+      FILES
+      ${MODULE_INTERFACE_FILES}
+)
+target_include_directories(elykseer-crypto_s INTERFACE "${CMAKE_HOME_DIRECTORY}/ext/${EXT_PATH}/include/lxr/")
+target_compile_features(elykseer-crypto_s INTERFACE cxx_std_20)
+
+
 add_subdirectory( src/cpp )
 
 
-# if(NOT CMAKE_CROSSCOMPILING)
-# enable_testing()
-# add_subdirectory( test )
-# endif()
+if(NOT CMAKE_CROSSCOMPILING)
+enable_testing()
+add_subdirectory( tests/cpp )
+endif()

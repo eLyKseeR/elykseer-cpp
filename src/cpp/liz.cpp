@@ -19,6 +19,7 @@ module;
 */
 
 #include <iostream>
+#include <cstdint>
 
 
 module lxr_liz;

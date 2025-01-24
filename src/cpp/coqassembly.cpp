@@ -20,8 +20,10 @@ module;
 
 #include <algorithm>
 #include <chrono>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <optional>
 #include <sstream>
 
 import lxr_key128;

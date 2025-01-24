@@ -1,31 +1,48 @@
-```cpp
+/*
+    eLyKseeR or LXR - cryptographic data archiving software
+    https://github.com/eLyKseeR/elykseer-cpp
+    Copyright (C) 2018-2025 Alexander Diemand
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #ifndef BOOST_ALL_DYN_LINK
 #define BOOST_ALL_DYN_LINK
 #endif
 
 #include "boost/test/unit_test.hpp"
 
-#include "lxr/coqassemblycache.hpp"
-#include "lxr/coqstore.hpp"
-#include "lxr/key256.hpp"
-#include "lxr/sha3.hpp"
-
 #include <iostream>
 #include <fstream>
+#include <filesystem>
 #include <sstream>
-````
+#include <variant>
 
-# Test suite: utCoqAssemblyCache
+import lxr_coqassembly;
+import lxr_coqassemblycache;
+import lxr_coqconfiguration;
+import lxr_coqbuffer;
+import lxr_coqstore;
+import lxr_key256;
+import lxr_key128;
+import lxr_sha3;
 
-on class [CoqAssemblyCache](../src/coqassemblycache.hpp.md)
 
-```cpp
 BOOST_AUTO_TEST_SUITE( utCoqAssemblyCache )
-```
 
-## Test case: empty metrics on new _CoqAssemblyCache_
+// Test case: empty metrics on new _CoqAssemblyCache_
 
-```cpp
 BOOST_AUTO_TEST_CASE( metrics_empty_for_new_CoqAssemblyCache )
 {
     lxr::CoqConfiguration _config;
@@ -50,11 +67,9 @@ BOOST_AUTO_TEST_CASE( metrics_empty_for_new_CoqAssemblyCache )
     BOOST_CHECK_EQUAL(0UL, std::get<uint32_t>(map_metrics["len_read_queue"]));
     BOOST_CHECK_EQUAL(0UL, std::get<uint32_t>(map_metrics["len_write_queue"]));
 }
-```
 
-## Test case: backup some data
+// Test case: backup some data
 
-```cpp
 BOOST_AUTO_TEST_CASE( backup_restore_roundtrip )
 {
     lxr::CoqConfiguration _config;
@@ -71,9 +86,9 @@ BOOST_AUTO_TEST_CASE( backup_restore_roundtrip )
         _config.path_db = (chunk_path /= "meta").string();
     }
 
-    std::shared_ptr<lxr::CoqKeyStore> _keystore{new lxr::CoqKeyStore(_config)};
-    std::shared_ptr<lxr::CoqFBlockStore> _fblockstore{new lxr::CoqFBlockStore(_config)};
-    std::shared_ptr<lxr::CoqFInfoStore> _finfostore{new lxr::CoqFInfoStore(_config)};
+    std::shared_ptr<lxr::CoqKeyStore> _keystore{new lxr::CoqKeyStore()};
+    std::shared_ptr<lxr::CoqFBlockStore> _fblockstore{new lxr::CoqFBlockStore()};
+    std::shared_ptr<lxr::CoqFInfoStore> _finfostore{new lxr::CoqFInfoStore()};
     std::map<std::string, lxr::CoqAssemblyCache::mvalue_t> map_metrics1{};
 
     std::string msg{"abcdef012345789"};
@@ -151,9 +166,5 @@ BOOST_AUTO_TEST_CASE( backup_restore_roundtrip )
         BOOST_CHECK_EQUAL(std::string(restored_buffer, bi.blocksize), msg);
     }
 }
-```
 
-
-```cpp
 BOOST_AUTO_TEST_SUITE_END()
-```

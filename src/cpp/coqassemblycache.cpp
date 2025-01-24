@@ -21,7 +21,9 @@ module;
 #include <algorithm>
 #include <deque>
 #include <functional>
+#include <memory>
 #include <iostream>
+#include <optional>
 #include <sstream>
 #include <vector>
 

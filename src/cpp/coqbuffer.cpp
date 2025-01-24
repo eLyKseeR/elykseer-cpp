@@ -20,6 +20,9 @@ module;
 
 #include <algorithm>
 #include <iostream>
+#include <memory>
+#include <optional>
+#include <stdint.h>
 
 #include "sizebounded/sizebounded.hpp"
 #include "sizebounded/sizebounded.ipp"

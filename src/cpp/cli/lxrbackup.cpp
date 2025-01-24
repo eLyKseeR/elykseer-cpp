@@ -18,12 +18,16 @@
 */
 
 #include <ctime>
+#include <filesystem>
 #include <fstream>
 #include <getopt.h>
 #include <iostream>
+#include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
-
+#include <variant>
+ 
 import lxr_coqassemblycache;
 import lxr_coqconfiguration;
 import lxr_coqprocessor;

@@ -20,6 +20,8 @@ module;
 
 #include <algorithm>
 #include <iostream>
+#include <memory>
+#include <optional>
 
 import lxr_coqassembly;
 import lxr_coqbuffer;

@@ -1,31 +1,46 @@
-```cpp
+/*
+    eLyKseeR or LXR - cryptographic data archiving software
+    https://github.com/eLyKseeR/elykseer-cpp
+    Copyright (C) 2018-2025 Alexander Diemand
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #ifndef BOOST_ALL_DYN_LINK
 #define BOOST_ALL_DYN_LINK
 #endif
 
-#include "boost/test/unit_test.hpp"
-
-#include "lxr/coqassembly.hpp"
-
 #include <iostream>
+#include <filesystem>
 #include <fstream>
 #include <sstream>
-````
 
-# Test suite: utCoqAssembly
+#include "boost/test/unit_test.hpp"
 
-on class [CoqAssembly](../src/coqassembly.hpp.md)
+import lxr_coqassembly;
+import lxr_coqbuffer;
+import lxr_coqconfiguration;
+import lxr_key128;
 
-```cpp
+
 BOOST_AUTO_TEST_SUITE( utCoqAssembly )
-```
 
-## Test case: cannot directly instantiate CoqAssembly
+// Test case: cannot directly instantiate CoqAssembly
 
-because _CoqAssembly_ is an abstract class we cannot create an instance of it.
-expect this test to fail if the _#ifdef_ is commented out.
+// because _CoqAssembly_ is an abstract class we cannot create an instance of it.
+// expect this test to fail if the _#ifdef_ is commented out.
 
-```cpp
 #ifdef CHECK_EXPECTED_COMPILER_ERRORS
 BOOST_AUTO_TEST_CASE( cannot_instantiate_CoqAssembly_directly )
 {
@@ -35,11 +50,9 @@ BOOST_AUTO_TEST_CASE( cannot_instantiate_CoqAssembly_directly )
     BOOST_CHECK(_assembly.assemblysize(16) > 0);
 }
 #endif
-```
 
-## Test case: create a _CoqAssemblyPlainWritable_
+// Test case: create a _CoqAssemblyPlainWritable_
 
-```cpp
 BOOST_AUTO_TEST_CASE( instantiate_CoqAssemblyPlainWritable )
 {
     lxr::CoqConfiguration _config;
@@ -48,11 +61,9 @@ BOOST_AUTO_TEST_CASE( instantiate_CoqAssemblyPlainWritable )
     BOOST_CHECK_EQUAL(_assembly.buffer_len(), 16 * lxr::CoqAssembly::chunksize);
     BOOST_CHECK_EQUAL(16, _assembly.apos());
 }
-```
 
-## Test case: create a _CoqAssemblyPlainFull_
+// Test case: create a _CoqAssemblyPlainFull_
 
-```cpp
 BOOST_AUTO_TEST_CASE( instantiate_CoqAssemblyPlainFull )
 {
     lxr::CoqConfiguration _config;
@@ -61,11 +72,9 @@ BOOST_AUTO_TEST_CASE( instantiate_CoqAssemblyPlainFull )
     BOOST_CHECK_EQUAL(_assembly.buffer_len(), 16 * lxr::CoqAssembly::chunksize);
     BOOST_CHECK_EQUAL(0, _assembly.apos());
 }
-```
 
-## Test case: create a _CoqAssemblyEncrypted_
+// Test case: create a _CoqAssemblyEncrypted_
 
-```cpp
 BOOST_AUTO_TEST_CASE( instantiate_CoqAssemblyEncrypted )
 {
     lxr::CoqConfiguration _config;
@@ -74,11 +83,9 @@ BOOST_AUTO_TEST_CASE( instantiate_CoqAssemblyEncrypted )
     BOOST_CHECK_EQUAL(_assembly.buffer_len(), 16 * lxr::CoqAssembly::chunksize);
     BOOST_CHECK_EQUAL(0, _assembly.apos());
 }
-```
 
-## Test case: roundtrip of backup, finish, encrypt, extract, recall, decrypt, restore
+// Test case: roundtrip of backup, finish, encrypt, extract, recall, decrypt, restore
 
-```cpp
 BOOST_AUTO_TEST_CASE( backup_restore_roundtrip )
 {
     lxr::CoqConfiguration _config;
@@ -136,8 +143,5 @@ BOOST_AUTO_TEST_CASE( backup_restore_roundtrip )
     restored_block->to_buffer(bi.blocksize, restored_buffer);
     BOOST_CHECK_EQUAL(std::string(restored_buffer, bi.blocksize), msg);
 }
-```
 
-```cpp
 BOOST_AUTO_TEST_SUITE_END()
-```

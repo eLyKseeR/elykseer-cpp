@@ -18,6 +18,7 @@ module;
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <stdint.h>
 #include <optional>
 #include <string>
 

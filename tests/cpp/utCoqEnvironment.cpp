@@ -1,31 +1,47 @@
-```cpp
+/*
+    eLyKseeR or LXR - cryptographic data archiving software
+    https://github.com/eLyKseeR/elykseer-cpp
+    Copyright (C) 2018-2025 Alexander Diemand
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #ifndef BOOST_ALL_DYN_LINK
 #define BOOST_ALL_DYN_LINK
 #endif
 
-#include "boost/test/unit_test.hpp"
-
-#include "lxr/coqenvironment.hpp"
-#include "lxr/coqstore.hpp"
-
 #include <iostream>
+#include <filesystem>
 #include <fstream>
 #include <sstream>
-````
 
-# Test suite: utEnvironment
+#include "boost/test/unit_test.hpp"
 
-on class [CoqEnvironment](../src/coqenvironment.hpp.md)
+import lxr_coqassembly;
+import lxr_coqconfiguration;
+import lxr_coqbuffer;
+import lxr_coqenvironment;
+import lxr_key128;
+import lxr_coqstore;
 
-```cpp
+
 BOOST_AUTO_TEST_SUITE( utCoqEnvironment )
-```
 
-## Test case: create a _CoqEnvironmentWritable_
+// Test case: create a _CoqEnvironmentWritable_
 
-an empty assembly is not encrypted and extracted.
+// an empty assembly is not encrypted and extracted.
 
-```cpp
 BOOST_AUTO_TEST_CASE( instantiate_CoqEnvironmentWritable )
 {
     lxr::CoqConfiguration _config;
@@ -34,11 +50,9 @@ BOOST_AUTO_TEST_CASE( instantiate_CoqEnvironmentWritable )
 
     BOOST_CHECK(! keys);
 }
-```
 
-## Test case: create a _CoqEnvironmentReadable_
+// Test case: create a _CoqEnvironmentReadable_
 
-```cpp
 BOOST_AUTO_TEST_CASE( instantiate_CoqEnvironmentReadable )
 {
     lxr::CoqConfiguration _config;
@@ -47,11 +61,9 @@ BOOST_AUTO_TEST_CASE( instantiate_CoqEnvironmentReadable )
 
     // BOOST_CHECK(! keys);
 }
-```
 
-## Test case: roundtrip of backup, finish, encrypt, extract, recall, decrypt, restore
+// Test case: roundtrip of backup, finish, encrypt, extract, recall, decrypt, restore
 
-```cpp
 BOOST_AUTO_TEST_CASE( backup_restore_roundtrip )
 {
     lxr::CoqConfiguration _config;
@@ -68,7 +80,7 @@ BOOST_AUTO_TEST_CASE( backup_restore_roundtrip )
         _config.path_db = (chunk_path /= "meta").string();
     }
 
-    std::shared_ptr<lxr::CoqFBlockStore> _fblockstore{new lxr::CoqFBlockStore(_config)};
+    std::shared_ptr<lxr::CoqFBlockStore> _fblockstore{new lxr::CoqFBlockStore()};
     lxr::CoqEnvironmentWritable _wenv(_config);
     _wenv.recreate_assembly();
 
@@ -98,8 +110,5 @@ BOOST_AUTO_TEST_CASE( backup_restore_roundtrip )
     restored_block->to_buffer(bi.blocksize, restored_buffer);
     BOOST_CHECK_EQUAL(std::string(restored_buffer, bi.blocksize), msg);
 }
-```
 
-```cpp
 BOOST_AUTO_TEST_SUITE_END()
-```

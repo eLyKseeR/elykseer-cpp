@@ -20,6 +20,7 @@ module;
 
 
 #include <filesystem>
+#include <optional>
 #include <sstream>
 
 #if !defined(PLATFORM_win64)

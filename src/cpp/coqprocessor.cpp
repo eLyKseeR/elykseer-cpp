@@ -20,8 +20,10 @@ module;
 
 #include <filesystem>
 #include <memory>
+#include <optional>
 #include <iostream>
 #include <string>
+#include <vector>
 
 import lxr_sha3;
 import lxr_key256;

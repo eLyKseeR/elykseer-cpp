@@ -1,4 +1,3 @@
-module;
 /*
     eLyKseeR or LXR - cryptographic data archiving software
     https://github.com/eLyKseeR/elykseer-cpp
@@ -18,45 +17,20 @@ module;
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <algorithm>
-#include <string>
-#include <cstdint>
+// Boost link dynamically
 
+//#ifndef BOOST_ALL_DYN_LINK
+//#define BOOST_ALL_DYN_LINK
+//#endif
 
-export module lxr_coqconfiguration;
+// Boost test main entry point
 
+#define BOOST_TEST_MAIN
 
-export namespace lxr {
+// Boost test module
 
-/*
+#define BOOST_TEST_MODULE UnitTests
 
-```coq
-Module Export Configuration.
+// Boost test includes
 
-Record configuration : Type :=
-    mkconfiguration
-        { config_nchunks : Nchunks.t
-        ; path_chunks : string
-        ; path_db : string
-        ; my_id : N
-        }.
-
-End Configuration.
-```
-
-*/
-
-struct CoqConfiguration
-{
-    public:
-        inline void nchunks(const int _nch) { _nchunks = std::min(256, std::max(16,_nch)); }
-        inline uint16_t nchunks() const { return _nchunks; }
-        std::string path_chunks;
-        std::string path_db;
-        std::string my_id;
-        CoqConfiguration & operator=(CoqConfiguration const &) = default;
-    private:
-        uint16_t _nchunks{16};
-};
-
-} // namespace
+#include "boost/test/unit_test.hpp"
