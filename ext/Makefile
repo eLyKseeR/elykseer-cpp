@@ -69,18 +69,8 @@ check_ranlib:
 	@[ -n "$(RANLIB)" ] && type $(RANLIB) 2> /dev/null
 
 
-make_exts: makedirs make_gitalk make_osmetrics make_rapidcheck make_elykseer_crypto
+make_exts: makedirs make_osmetrics make_rapidcheck make_elykseer_crypto
 	echo "all done."
-
-fset_gitalk := $(TARGETDIR)/bin/html2text
-make_gitalk: $(fset_gitalk)
-$(fset_gitalk):
-	if [ -z "$(CROSS_COMPILATION)" ]; then \
-	echo "making gitalk"; \
-	cd ./gitalk; \
-	git submodule update --init; \
-	$(MAKE) -C ext; \
-	fi
 
 fset_os_metrics := $(TARGETDIR)/include/os-metrics.h $(TARGETDIR)/lib/libos-metrics_$(CMAKE_BUILD_TYPE)_1_0_0.a
 make_osmetrics: $(fset_os_metrics)
@@ -90,7 +80,11 @@ $(fset_os_metrics):
 	if [ -e build ]; then rm -rf build; fi; \
 	mkdir -vp build; \
 	cd build; \
+	if [ -z "$(CROSS_COMPILATION)" ]; then \
+	cmake --fresh -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} --install-prefix "${TARGETDIR}" -G "${CMAKE_GENERATOR}" .. ; \
+	else \
 	cmake --fresh -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_TOOLCHAIN_FILE=${XCOMPILE_TOOLCHAIN} --install-prefix "${TARGETDIR}" -G "${CMAKE_GENERATOR}" .. ; \
+	fi; \
 	$(MAKE); \
 	$(MAKE) install
 
@@ -121,13 +115,12 @@ $(fset_elykseer_crypto):
 	git submodule update --init; \
 	if [ -z "$(CROSS_COMPILATION)" ]; then \
 	$(MAKE) -C ext; \
-	cd build; \
-	cmake --fresh -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} --install-prefix "${TARGETDIR}" -G "${CMAKE_GENERATOR}" . ; \
+	mkdir -vp build; cd build; \
+	cmake --fresh -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} --install-prefix "${TARGETDIR}" -G Ninja .. ; \
 	else \
 	$(MAKE) -C ext xWin64; \
 	cd build; \
 	cmake --fresh -DCMAKE_TOOLCHAIN_FILE=${XCOMPILE_TOOLCHAIN} -DCMAKE_BUILD_TYPE=Release --install-prefix "${TARGETDIR}" -G "${CMAKE_GENERATOR}" . ; \
 	fi; \
-	$(MAKE); \
-	$(MAKE) install;
-
+	ninja; \
+	ninja install;

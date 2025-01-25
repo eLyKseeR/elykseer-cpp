@@ -33,7 +33,7 @@ make && make install/strip
 
 # copyright
 
-Copyright 2018-2024 by Alexander Diemand
+Copyright 2018-2025 by Alexander Diemand
 
 # license
 

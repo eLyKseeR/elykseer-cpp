@@ -1,0 +1,385 @@
+/*
+    eLyKseeR or LXR - cryptographic data archiving software
+    https://github.com/eLyKseeR/elykseer-cpp
+    Copyright (C) 2018-2025 Alexander Diemand
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#include <chrono>
+#include <iostream>
+#include <filesystem>
+#include <fstream>
+#include <map>
+#include <memory>
+#include <string>
+#include <getopt.h>
+
+import lxr_coqassemblycache;
+import lxr_coqconfiguration;
+import lxr_coqprocessor;
+import lxr_coqstore;
+import lxr_filectrl;
+import lxr_fsutils;
+import lxr_liz;
+import lxr_os;
+
+import lxr_gpg;
+import lxr_sha3;
+
+
+// options
+static int dry_run = 0;
+static int verbose_out = 0;
+static int use_gpg = 1;
+static struct option longopts[] = {
+          { "dry-run",   no_argument,        &dry_run,       1   },
+          { "verbose",   no_argument,        &verbose_out,   1   },
+          { "help",      no_argument,        NULL,           'h' },
+          { "version",   no_argument,        NULL,           'V' },
+          { "license",   no_argument,        NULL,           'L' },
+          { "copyright", no_argument,        NULL,           'C' },
+          { "pChunks",   required_argument,  NULL,           'x' },
+          { "pData",     required_argument,  NULL,           'o' },
+          { "pDbFb",     required_argument,  NULL,           'b' },
+          { "pKeys",     required_argument,  NULL,           'k' },
+          { "file",      required_argument,  NULL,           'f' },
+        //  { "dir",       required_argument,  NULL,           'd' },
+          { "myid",      required_argument,  NULL,           'y' },
+          { "nogpg",     no_argument,        &use_gpg,       0 },
+          { NULL,         0,                 NULL,           0 }
+};
+
+
+//keep lists of files and directories to restore:
+constexpr int MAX_RESTORE_FILES = 8192;
+// constexpr int MAX_RESTORE_DIRS = 128;
+
+static int counter_files{0};
+// static int counter_dirs{0};
+
+static std::string list_files[MAX_RESTORE_FILES];
+// static std::string list_dirs[MAX_RESTORE_DIRS];
+
+// parsing cli arguments
+void output_error() {
+  std::clog << "error!" << std::endl;
+  exit(1);
+}
+
+void output_help() {
+  std::cout << "usage: " << std::endl;
+  std::cout << "-h --help      shows this help" << std::endl;
+  std::cout << "-V --version   shows version information" << std::endl;
+  std::cout << "-L --license   shows license" << std::endl;
+  std::cout << "-C --copyright shows copyright" << std::endl;
+  std::cout << "--verbose      verbose output" << std::endl;
+  std::cout << "--dry-run      just validate arguments" << std::endl;
+  std::cout << "-y --myid      sets unique identifier for this local instance" << std::endl;
+  std::cout << "--nogpg        turn off decrypion of meta data using GnuPG" << std::endl;
+  std::cout << "-x --pChunks   sets path for encrypted chunks" << std::endl;
+  std::cout << "-o --pData     sets output path for decrypted data" << std::endl;
+  std::cout << "-b --pDbFb     adds backup meta data dbfb (*)" << std::endl;
+  std::cout << "-k --pKeys     adds backup encryption keys dbks (*)" << std::endl;
+  std::cout << "-f --file      file to be restored (*)" << std::endl;
+  // std::cout << "-d --dir       files in directory to be restored (*)" << std::endl;
+  std::cout << "options labelled with (*) can be provided multiple times on the command line." << std::endl;
+}
+
+void output_version() {
+  std::cout << lxr::Liz::version() << std::endl;
+  exit(0);
+}
+
+void output_license() {
+  std::cout << lxr::Liz::license() << std::endl;
+  exit(0);
+}
+
+void output_copyright() {
+  std::cout << lxr::Liz::copyright() << std::endl;
+  exit(0);
+}
+
+void set_chunk_path(std::optional<std::string> & chunkpath, const std::string & p) {
+  if (lxr::FileCtrl::dirExists(p)) {
+    chunkpath = p;
+  } else {
+    std::clog << "chunk directory does not exist: " << p << std::endl;
+    output_error();
+  }
+}
+
+void set_output_path(std::optional<std::string> & outputpath, const std::string & p) {
+  if (lxr::FileCtrl::dirExists(p)) {
+    outputpath = p;
+  } else {
+    std::clog << "data output directory does not exist: " << p << std::endl;
+    output_error();
+  }
+}
+
+void add_dbfb_path(std::shared_ptr<lxr::CoqFBlockStore> & db, const std::string & fp) {
+  if (lxr::FileCtrl::fileExists(fp)) {
+    int sz0 = db->size();
+    if (use_gpg == 1) {
+      lxr::Gpg gpg;
+      gpg.decrypt_from_file(fp);
+      db->inStream(gpg.istream());
+    } else {
+      std::ifstream _if; _if.open(fp, std::ios::binary);
+      db->inStream(_if); _if.close();
+    }
+    int sz1 = db->size();
+    std::clog << "       ### read " << sz1 - sz0 << " blocks from FBlockStore" << std::endl;
+  } else {
+    std::clog << "blocks database file does not exist: " << fp << std::endl;
+    output_error();
+  }
+}
+
+void add_dbkey_path(std::shared_ptr<lxr::CoqKeyStore> & db, const std::string & fp) {
+  if (lxr::FileCtrl::fileExists(fp)) {
+    int sz0 = db->size();
+    if (use_gpg == 1) {
+      lxr::Gpg gpg;
+      gpg.decrypt_from_file(fp);
+      db->inStream(gpg.istream());
+    } else {
+      std::ifstream _if; _if.open(fp, std::ios::binary);
+      db->inStream(_if); _if.close();
+    }
+    int sz1 = db->size();
+    std::clog << "       ### read " << sz1 - sz0 << " keys from KeyStore" << std::endl;
+  } else {
+    std::clog << "encryption keys database file does not exist: " << fp << std::endl;
+    output_error();
+  }
+}
+
+void restore_file(std::string const p) {
+  if (counter_files >= MAX_RESTORE_FILES -1 ) {
+    std::clog << "maximum number of files reached: " << MAX_RESTORE_FILES << std::endl;
+    output_error();
+  }
+
+  list_files[counter_files++] = p;
+}
+
+void set_myid(std::optional<std::string> &myid, std::string const p) {
+  if (p.length() > 5) {
+    myid = p;
+  } else {
+    std::clog << "myid needs to be at least 6 characters: " << p << std::endl;
+    output_error();
+  }
+}
+
+void set_n_chunks(std::optional<int> &nchunks, std::string const p) {
+  int n = atoi(p.c_str());
+  if (n >= 16 && n <= 256) {
+    nchunks = n;
+  } else {
+    std::clog << "number of chunks, out of range (16-256): " << p << std::endl;
+    output_error();
+  }
+}
+
+// void restore_dir(std::string const p) {
+//   if (counter_dirs >= MAX_RESTORE_DIRS -1 ) {
+//     std::clog << "maximum number of directories reached: " << MAX_RESTORE_DIRS << std::endl;
+//     output_error();
+//   }
+
+//   list_dirs[counter_dirs++] = p;
+// }
+
+// bool hasPrefix(std::string_view prefix, std::string_view str) {
+//     return prefix == str.substr(0, prefix.size());
+// }
+
+// main
+int main (int argc, char * const argv[]) {
+  std::optional<int> nchunks{16};
+  std::optional<std::string> myid{};
+  std::optional<std::string> outputpath{};
+  std::optional<std::string> chunkpath{};
+
+  lxr::CoqConfiguration _config;
+  _config.nchunks(16);
+
+  std::shared_ptr<lxr::CoqKeyStore> _keystore{new lxr::CoqKeyStore()};
+  std::shared_ptr<lxr::CoqFBlockStore> _fblockstore{new lxr::CoqFBlockStore()};
+  std::shared_ptr<lxr::CoqFInfoStore> _finfostore{new lxr::CoqFInfoStore()};
+
+  int ch;
+  while ((ch = getopt_long(argc, argv, "hVLCx:o:b:k:f:n:y:", longopts, NULL)) != -1) {
+    switch (ch) {
+      case 'h': output_help(); break;
+      case 'V': output_version(); break;
+      case 'L': output_license(); break;
+      case 'C': output_copyright(); break;
+      case 'x': set_chunk_path(chunkpath, optarg); break;
+      case 'o': set_output_path(outputpath, optarg); break;
+      case 'b': add_dbfb_path(_fblockstore, optarg); break;
+      case 'k': add_dbkey_path(_keystore, optarg); break;
+      case 'f': restore_file(optarg); break;
+      // case 'd': restore_dir(optarg); break;
+      case 'n': set_n_chunks(nchunks, optarg); break;
+      case 'y': set_myid(myid, optarg); break;
+      default : break;
+    }
+  }
+  argc -= optind;
+  argv += optind;
+  if (optind < 2) {
+    std::clog << "no arguments; use '-h' for help" << std::endl;
+    output_error(); return 1;
+  }
+
+  // check arguments
+  if (! myid) { std::clog << "missing: myid" << std::endl; output_error(); }
+  if (! outputpath) { std::clog << "missing: output path" << std::endl; output_error(); }
+  if (! chunkpath) { std::clog << "missing: chunk path" << std::endl; output_error(); }
+
+  {
+    _config.nchunks(nchunks.value());
+    _config.my_id = myid.value();
+    _config.path_chunks = chunkpath.value();
+  }
+
+  auto t0 = std::chrono::system_clock::now();
+
+  std::shared_ptr<lxr::CoqAssemblyCache> qac(new lxr::CoqAssemblyCache(_config, 3, 12));
+  qac->register_key_store(_keystore);
+  qac->register_fblock_store(_fblockstore);
+  qac->register_finfo_store(_finfostore);
+  lxr::CoqProcessor qproc(_config, qac);
+
+  // prepare files to restore
+  int corr_files = 0;
+  for (int i = 0; i < counter_files; i++) {
+    //std::cout << "checking " << i << "  " << list_files[i] << std::endl;
+    auto const fhash = lxr::Sha3_256::hash(list_files[i]).toHex();
+    if (! _fblockstore->contains(fhash)) {
+      list_files[i] = "";
+      corr_files++;
+    }
+  }
+  // for (int i = 0; i < counter_dirs; i++) {
+  //   db_fp.appKeys([i](std::string const & fp) {
+  //     //std::cout << fp << std::endl;
+  //     if (hasPrefix(list_dirs[i], fp)) {
+  //       if (counter_files >= MAX_RESTORE_FILES - 1) {
+  //         std::clog << "maximum number of files reached: " << MAX_RESTORE_FILES << std::endl;
+  //         output_error();
+  //       } else {
+  //         list_files[counter_files++] = fp;
+  //       }
+  //     }
+  //   });
+  // }
+
+  // output count of files
+  if (verbose_out > 0) {
+    std::cout << "going to restore " << (counter_files - corr_files) << " files." << std::endl;
+    {
+      for (int i = 0; i < counter_files; i++) {
+        std::cout << "    " << (i+1) << "  " << list_files[i] << std::endl;
+      }
+    }
+  }
+  
+  if (dry_run != 0) {
+    std::cout << "bye." << std::endl;
+    return 0;
+  }
+
+  // run program
+  for (int i = 0; i < counter_files; i++) {
+    if (list_files[i] != "") {
+      std::filesystem::path fp{outputpath.value()}; fp /= list_files[i];
+      std::filesystem::path dir = fp.parent_path();
+      if (! std::filesystem::exists(dir)) {
+#ifdef DEBUG
+        std::clog << "make directories " << dir.string() << std::endl;
+#endif
+        std::filesystem::create_directories(dir);
+      }
+      auto const fhash = lxr::Sha3_256::hash(list_files[i]).toHex();
+      if (auto const fbs = _fblockstore->find(fhash); fbs) {
+#ifdef DEBUG
+        std::clog << "  open file " << fp.c_str() << std::endl;
+#endif
+        FILE *tgt = fopen(fp.c_str(), "wx");
+        if (tgt) {
+#ifdef DEBUG
+          std::clog << "  file ready." << std::endl;
+#endif
+          auto process_read_blocks = [&tgt](const std::vector<lxr::ReadQueueResult> & rqrs) {
+            for (auto const &rqr : rqrs) {
+              if (rqr._rresult) {
+#ifdef DEBUG
+                std::clog << "     fseek to " << rqr._readrequest._fpos << std::endl;
+#endif
+                fseek(tgt, rqr._readrequest._fpos, SEEK_SET);
+#ifdef DEBUG
+                std::clog << "     writing " << rqr._rresult->len() << " bytes" << std::endl;
+#endif
+                rqr._rresult->fileout_sz_pos(0, rqr._rresult->len(), tgt);
+              }
+            }
+          };
+          for (auto const bi : fbs.value()) {
+            lxr::ReadQueueEntity rqe;
+            rqe._aid = bi.blockaid; rqe._apos = bi.blockapos;
+            rqe._rlen = bi.blocksize; rqe._fpos = bi.filepos;
+#ifdef DEBUG
+            std::clog << "   read request @" << bi.filepos << " in aid = " << bi.blockaid << std::endl;
+#endif
+            if (! qac->enqueue_read_request(rqe)) {
+              process_read_blocks(qac->iterate_read_queue());
+              qac->enqueue_read_request(rqe);
+            }
+          }
+          process_read_blocks(qac->iterate_read_queue());
+          fclose(tgt);
+        }
+      }
+    }
+  }
+
+  auto t1 = std::chrono::system_clock::now();
+  auto tdiff = std::chrono::round<std::chrono::microseconds>(t1 - t0).count();
+
+  // show statistics
+  if (verbose_out > 0) {
+    auto metrics = qac->metrics();
+    std::map<std::string, lxr::CoqAssemblyCache::mvalue_t> map_metrics{};
+    map_metrics.insert(metrics.begin(), metrics.end());
+    for (auto const &m : metrics) {
+        std::clog << "  " << m.first << ": ";
+        if (std::holds_alternative<std::string>(m.second))
+            std::clog << std::get<std::string>(m.second) << std::endl;
+        if (std::holds_alternative<uint32_t>(m.second))
+            std::clog << std::get<uint32_t>(m.second) << std::endl;
+        if (std::holds_alternative<uint64_t>(m.second))
+            std::clog << std::get<uint64_t>(m.second) << std::endl;
+    }
+    auto bytes_read = std::get<uint64_t>(map_metrics["restored_bytes"]);
+    std::clog << "bps: " << bytes_read * 1e6 / tdiff << std::endl;
+  }
+
+  return 0;
+}
