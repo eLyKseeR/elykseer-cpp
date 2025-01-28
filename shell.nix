@@ -1,32 +1,35 @@
-{ pkgs ? import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/9ede5d5b569bb9c5c0e7ed4d89cbc926f9f905d4.tar.gz") {} }:
+with import <nixpkgs> {};
 
-pkgs.mkShell {
-
+stdenv.mkDerivation rec {
     name = "env";
 
     #src = ./.;
 
     # Customizable development requirements
     nativeBuildInputs = [
-        pkgs.cmake
-        pkgs.ccache
-        #pkgs.clang
-        pkgs.gnused
-        pkgs.git
-        pkgs.pandoc
-        pkgs.cppcheck
-        pkgs.html2text
-        pkgs.pkg-config
-        pkgs.autoconf pkgs.automake pkgs.libtool pkgs.m4
-        pkgs.libassuan pkgs.libgpgerror
-        pkgs.gnupg
-        pkgs.perl534Packages.DigestSHA3
+        cmake
+        git
+        gnused
+        pandoc
+        html2text
+        swig
+        #gcc
+        clang
+        opam m4
+        #global
+        cppcheck
+        #busybox
+        perl538Packages.DigestSHA3
+        pkg-config
+        autoconf automake libtool
+        libassuan libgpg-error
+        gnupg
     ];
 
     buildInputs = [
-        pkgs.openssl
-        pkgs.zlib
-        pkgs.boost
+        openssl
+        zlib
+        boost
     ];
 
     shellHook = ''
@@ -36,6 +39,9 @@ pkgs.mkShell {
       else
         export SED=sed
       fi
+      export SED=sed
+      export CC=clang
+      export CXX=clang++
     '';
-}
 
+}
