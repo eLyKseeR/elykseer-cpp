@@ -165,6 +165,7 @@ set(ELYKSEER_CRYPTO_HDRS
   ../../ext/${EXT_PATH}/include/lxr/random.ixx
   # ../../ext/${EXT_PATH}/include/lxr/sha256.ixx
   ../../ext/${EXT_PATH}/include/lxr/sha3.ixx
+  ../../ext/${EXT_PATH}/include/lxr/lxr-cbindings.hpp
 )
 set(CPACK_PACKAGE_VERSION ${${PROJECT_NAME}_VERSION_STRING})
 set(CPACK_PACKAGE_VERSION_MAJOR ${${PROJECT_NAME}_VERSION_MAJOR})
