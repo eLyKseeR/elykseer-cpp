@@ -18,6 +18,8 @@ module;
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "generator.hpp"
+
 #include <filesystem>
 #include <memory>
 #include <optional>
@@ -192,24 +194,20 @@ Local Program Definition internal_directory_entries (fp : Filesystem.path) : (li
         ).
 ```
 */
-std::vector<std::filesystem::path> directory_files(const std::filesystem::path &fp) {
-    std::vector<std::filesystem::path> _res{};
+std::generator<std::filesystem::path> directory_files(const std::filesystem::path &fp) {
     for (const auto& de : std::filesystem::directory_iterator(fp)) {
         if (de.is_regular_file()) {
-            _res.push_back(de);
+            co_yield de;
         }
     }
-    return _res;
 }
 
-std::vector<std::filesystem::path> directory_subdirs(const std::filesystem::path &fp) {
-    std::vector<std::filesystem::path> _res{};
+std::generator<std::filesystem::path> directory_subdirs(const std::filesystem::path &fp) {
     for (const auto& de : std::filesystem::directory_iterator(fp)) {
         if (de.is_directory()) {
-            _res.push_back(de);
+            co_yield de;
         }
     }
-    return _res;
 }
 
 /*
@@ -222,8 +220,7 @@ Program Definition directory_backup (this : processor) (fp : Filesystem.path) : 
 
 void CoqProcessor::directory_backup(const std::filesystem::path &fp) {
     if (std::filesystem::is_directory(fp)) {
-        auto lfiles = directory_files(fp);
-        for (auto const &p : lfiles) {
+        for (auto const &p : directory_files(fp)) {
             file_backup(p);
         }
     }
@@ -257,8 +254,7 @@ Program Definition recursive_backup (this : processor) (maxdepth : N) (fp : File
 void CoqProcessor::recursive_backup(const std::filesystem::path &fp) {
     if (std::filesystem::is_directory(fp)) {
         directory_backup(fp);
-        auto ldirs = directory_subdirs(fp);
-        for (auto const &p : ldirs) {
+        for (auto const &p : directory_subdirs(fp)) {
             recursive_backup(p);
         }
     }

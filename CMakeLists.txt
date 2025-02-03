@@ -32,7 +32,9 @@ set (${PROJECT_NAME}_VERSION_STRING ${elykseer-cpp_VERSION_MAJOR}.${elykseer-cpp
 # set to '-UDEBUG' to disable debugging output
 IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
   add_definitions( -DDEBUG )
+  add_compile_options(-glldb)
   set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
+  set(LLDB_EXPORT_ALL_SYMBOLS 1)
 ELSE()
   add_definitions( -UDEBUG )
 ENDIF()
@@ -43,6 +45,13 @@ set(CMAKE_CXX_EXTENSIONS ON)
 set(CMAKE_CXX_SCAN_FOR_MODULES ON)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+IF(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++ -lc++abi")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+ELSEIF (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    link_libraries(-static-libgcc -static-libstdc++)
+ENDIF()
 
 IF(${CMAKE_CROSSCOMPILING})
   message(STATUS "make sure dependencies have been cross compiled and are available.")

@@ -18,25 +18,35 @@ module;
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "generator.hpp"
+
 
 export module lxr_nchunks;
 
 
 export namespace lxr {
 
-class Nchunks
+class ChunkRange
 {
     public:
         static constexpr int min_n { 16 };
         static constexpr int max_n { 256 };
-        explicit Nchunks(int n);
-        Nchunks(Nchunks const &) = default;
-        Nchunks & operator=(Nchunks const &) = default;
-        ~Nchunks() = default;
-        int nchunks() const;
+};
+
+class Nchunks 
+{
+    public:
+        Nchunks(int n) noexcept;
+        Nchunks(Nchunks const &) noexcept = default;
+        Nchunks & operator=(Nchunks const &) noexcept = default;
+        ~Nchunks() noexcept = default;
+        int i() const noexcept;
+        unsigned int u() const noexcept;
+        // enumerate the cid starting with 1 .. n
+        std::generator<int> sequence() const;
     private:
         Nchunks();
-        int _n {min_n};
+        unsigned int _n {ChunkRange::min_n};
 };
 
 } // namespace

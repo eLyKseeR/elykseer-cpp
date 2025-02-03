@@ -25,6 +25,7 @@ module;
 
 import lxr_coqbuffer;
 import lxr_coqconfiguration;
+import lxr_nchunks;
 
 import lxr_key256;
 import lxr_key128;
@@ -42,14 +43,14 @@ class CoqAssembly
         static constexpr uint32_t chunkwidth = 256;
         static constexpr uint32_t chunklength = 1024;
         static constexpr uint32_t chunksize = chunkwidth * chunklength;
-        static const uint32_t assemblysize (int nchunks) { return chunksize * nchunks; }
+        static const uint32_t assemblysize (const Nchunks & nchunks) { return chunksize * nchunks.u(); }
 
         struct AssemblyInformation
         {
             AssemblyInformation();
             AssemblyInformation(const CoqConfiguration & c);
             AssemblyInformation(const CoqConfiguration & c, const std::string & aid);
-            uint16_t _nchunks{16};
+            Nchunks _nchunks{ChunkRange::min_n};
             uint32_t _apos{0};
             aid_t _aid{""};
         };
@@ -70,7 +71,7 @@ class CoqAssembly
             KeyInformation(const CoqConfiguration & c);
             Key128 _ivec{false};
             Key256 _pkey{false};
-            int _localnchunks;
+            Nchunks _localnchunks{ChunkRange::min_n};
         };
 
     protected:
@@ -88,9 +89,10 @@ class CoqAssembly
         virtual int apos() const final;
         virtual int afree() const final;
         virtual std::string aid() const final;
-        inline const uint32_t idx2apos (const uint32_t idx, const uint32_t nchunks) const {
-            uint32_t cnum = idx % nchunks;
-            uint32_t cidx = idx / nchunks;
+        inline const uint32_t idx2apos (const uint32_t idx, const Nchunks & nchunks) const {
+            uint32_t nc = nchunks.u();
+            uint32_t cnum = idx % nc;
+            uint32_t cidx = idx / nc;
             return cnum * CoqAssembly::chunksize + cidx;
         }
 
