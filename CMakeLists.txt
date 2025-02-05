@@ -46,12 +46,12 @@ set(CMAKE_CXX_SCAN_FOR_MODULES ON)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-IF(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++ -lc++abi")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-ELSEIF (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    link_libraries(-static-libgcc -static-libstdc++)
-ENDIF()
+#IF(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+#    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++ -lc++abi")
+#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+#ELSEIF (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+#    link_libraries(-static-libgcc -static-libstdc++)
+#ENDIF()
 
 IF(${CMAKE_CROSSCOMPILING})
   message(STATUS "make sure dependencies have been cross compiled and are available.")
