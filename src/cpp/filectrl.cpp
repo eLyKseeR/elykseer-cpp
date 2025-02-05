@@ -18,6 +18,8 @@ module;
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "generator.hpp"
+
 #include <filesystem>
 typedef std::filesystem::path filepath;
 
@@ -68,20 +70,16 @@ bool FileCtrl::dirExists(std::filesystem::path const & fp) noexcept
     return false;
 }
 
-std::vector<std::filesystem::path> FileCtrl::fileListRecursive(std::filesystem::path const & fp)
+std::generator<std::filesystem::path> FileCtrl::fileListRecursive(std::filesystem::path const & fp)
 {
-    std::vector<std::filesystem::path> res;
     std::filesystem::directory_iterator _pit{fp};
     while (_pit != std::filesystem::directory_iterator{}) {
         if (auto fp2 = *_pit++; dirExists(fp2)) {
-            auto dsub = fileListRecursive(fp2);
-            res.reserve( res.size() + dsub.size() );
-            res.insert( res.end(), dsub.begin(), dsub.end() );
+            co_yield std::ranges::elements_of{fileListRecursive(fp2)};
         } else {
-            res.push_back(fp2);
+            co_yield fp2;
         }
     }
-    return res;
 }
 
 } // namespace

@@ -21,7 +21,6 @@
 #define BOOST_ALL_DYN_LINK
 #endif
 
-#include <iostream>
 #include <optional>
 
 #include "boost/test/unit_test.hpp"
@@ -51,9 +50,9 @@ BOOST_AUTO_TEST_CASE( get_directory_listing )
 #else
     const std::string fp = "/usr/share";
 #endif
-	auto listing = lxr::FileCtrl::fileListRecursive(fp);
-	std::clog << "\nfiles: " << listing.size() << std::endl;
-    BOOST_CHECK( listing.size() > 20000 );
+    int counter{0};
+	for (auto const & _fplisting : lxr::FileCtrl::fileListRecursive(fp)) { counter++; }
+    BOOST_CHECK( counter > 20000 );
 }
 
 BOOST_AUTO_TEST_SUITE_END()

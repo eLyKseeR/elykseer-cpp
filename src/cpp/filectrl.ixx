@@ -18,6 +18,8 @@ module;
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "generator.hpp"
+
 #include <filesystem>
 typedef std::filesystem::path filepath;
 
@@ -38,7 +40,7 @@ class FileCtrl
         static bool fileExists(filepath const &) noexcept;
         static bool isFileReadable(filepath const &) noexcept;
         static bool dirExists(filepath const &) noexcept;
-        static std::vector<filepath> fileListRecursive(filepath const &);
+        static std::generator<filepath> fileListRecursive(filepath const &);
     protected:
         FileCtrl() {}
     private:
