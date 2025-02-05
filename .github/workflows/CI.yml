@@ -18,8 +18,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      CC: clang
-      CXX: clang++
+      CC: clang-19
+      CXX: clang++-19
 
     steps:
     - uses: actions/checkout@v2
@@ -27,7 +27,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt-get -y install cmake ninja-build clang clang-tools cppcheck m4 busybox libdigest-sha3-perl libboost-all-dev libboost-contract-dev gettext pkg-config automake autoconf libtool texinfo
+        sudo apt-get -y install cmake ninja-build clang-19 clang-tools-19 cppcheck m4 busybox libdigest-sha3-perl libboost-all-dev libboost-contract-dev gettext pkg-config automake autoconf libtool texinfo
 
     - name: Update submodules
       shell: bash
