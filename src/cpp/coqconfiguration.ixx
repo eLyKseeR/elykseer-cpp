@@ -22,6 +22,8 @@ module;
 #include <string>
 #include <cstdint>
 
+import lxr_nchunks;
+
 
 export module lxr_coqconfiguration;
 
@@ -49,14 +51,15 @@ End Configuration.
 struct CoqConfiguration
 {
     public:
-        inline void nchunks(const int _nch) { _nchunks = std::min(256, std::max(16,_nch)); }
-        inline uint16_t nchunks() const { return _nchunks; }
+        CoqConfiguration() noexcept = default;
+        inline void nchunks(const Nchunks & _nch) noexcept { _nchunks = _nch; }
+        inline const Nchunks& nchunks() const noexcept { return _nchunks; }
         std::string path_chunks;
         std::string path_db;
         std::string my_id;
         CoqConfiguration & operator=(CoqConfiguration const &) = default;
     private:
-        uint16_t _nchunks{16};
+        Nchunks _nchunks{ChunkRange::min_n};
 };
 
 } // namespace

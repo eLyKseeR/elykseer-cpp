@@ -18,14 +18,36 @@ module;
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "generator.hpp"
+
+#include <algorithm>
+
+
 module lxr_nchunks;
 
 
 namespace lxr {
 
-int Nchunks::nchunks() const
+Nchunks::Nchunks(int n) noexcept
+{
+    _n = std::min(ChunkRange::max_n, std::max(ChunkRange::min_n, n));
+}
+
+int Nchunks::i() const noexcept
 {
     return _n;
+}
+
+unsigned int Nchunks::u() const noexcept
+{
+    return _n;
+}
+
+std::generator<int> Nchunks::sequence() const {
+    int num = 1;
+    while (num <= _n) {
+        co_yield num++;
+    }
 }
 
 } // namespace

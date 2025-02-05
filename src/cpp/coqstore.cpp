@@ -304,7 +304,7 @@ void CoqKeyStore::outStream(std::ostream & os) const
     outputHeader(os, "DbKey");
 
     iterate([&os](const std::pair<std::string, lxr::CoqAssembly::KeyInformation> &p) {
-        os << "  <Key n=\"" << p.second._localnchunks << "\" iv=\"" << p.second._ivec.toHex() << "\" pk=\"" << p.second._pkey.toHex() << "\">" << p.first << "</Key>" << std::endl;
+        os << "  <Key n=\"" << p.second._localnchunks.u() << "\" iv=\"" << p.second._ivec.toHex() << "\" pk=\"" << p.second._pkey.toHex() << "\">" << p.first << "</Key>" << std::endl;
     });
     os << "</DbKey>" << std::endl;
 }

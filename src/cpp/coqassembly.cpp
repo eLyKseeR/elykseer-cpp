@@ -19,6 +19,7 @@ module;
 */
 
 #include <algorithm>
+#include <cassert>
 #include <chrono>
 #include <filesystem>
 #include <fstream>
@@ -34,6 +35,7 @@ import lxr_sha3;
 import lxr_os;
 import lxr_coqbuffer;
 import lxr_coqconfiguration;
+import lxr_nchunks;
 
 
 module lxr_coqassembly;
@@ -114,8 +116,8 @@ CoqAssemblyPlainWritable::CoqAssemblyPlainWritable(const CoqConfiguration &c)
   : CoqAssembly(c)
 {
   // std::clog << "CoqAssemblyPlainWritable::CoqAssemblyPlainWritable(const CoqConfiguration &c)" << std::endl;
-  uint32_t nchunks = c.nchunks();
-  _buffer.reset(new CoqBufferPlain(CoqAssembly::chunksize * nchunks));
+  const Nchunks& nchunks = c.nchunks();
+  _buffer.reset(new CoqBufferPlain(assemblysize(nchunks)));
   Key128 _rand128{false};
   const char *r = (const char*)_rand128.bytes();
   for (int i = 0; i < 16; i++) {
@@ -144,7 +146,7 @@ CoqAssemblyPlainFull::CoqAssemblyPlainFull(const CoqConfiguration &c)
   : CoqAssembly(c)
 {
   // std::clog << "CoqAssemblyPlainFull::CoqAssemblyPlainFull(const CoqConfiguration &c)" << std::endl;
-  _buffer.reset(new CoqBufferPlain(CoqAssembly::chunksize * c.nchunks()));
+  _buffer.reset(new CoqBufferPlain(assemblysize(c.nchunks())));
 }
 
 CoqAssemblyPlainFull::CoqAssemblyPlainFull(CoqAssemblyEncrypted *ca, std::shared_ptr<CoqBufferPlain> &b)
@@ -179,7 +181,7 @@ CoqAssemblyEncrypted::CoqAssemblyEncrypted(const CoqConfiguration &c)
   : CoqAssembly(c)
 {
   // std::clog << "CoqAssemblyEncrypted::CoqAssemblyEncrypted(const CoqConfiguration &c)" << std::endl;
-  _buffer.reset(new CoqBufferEncrypted(CoqAssembly::chunksize * c.nchunks()));
+  _buffer.reset(new CoqBufferEncrypted(assemblysize(c.nchunks())));
 }
 
 CoqAssemblyEncrypted::CoqAssemblyEncrypted(CoqAssemblyPlainFull *ca, std::shared_ptr<CoqBufferEncrypted> &b)
@@ -355,7 +357,7 @@ CoqAssembly::BlockInformation CoqAssemblyPlainWritable::backup(const CoqBufferPl
 CoqAssembly::BlockInformation CoqAssemblyPlainWritable::backup(const CoqBufferPlain &b, const uint32_t offset, const uint32_t dlen)
 {
     uint32_t apos_n = _assemblyinformation._apos;
-    uint32_t nchunks = _config.nchunks();
+    const Nchunks nchunks = _config.nchunks();
     if (dlen + offset > b.len()) { return {}; }
     auto const chksum = b.calc_checksum(offset, dlen);
     if (chksum) {
@@ -391,7 +393,8 @@ uint32_t CoqAssemblyEncrypted::extract()
     if (! _buffer) { return 0; }
     const aid_t aid = _assemblyinformation._aid;
     uint32_t nwritten{0};
-    for (int cid = 1; cid <= _assemblyinformation._nchunks; cid++) {
+    assert(_assemblyinformation._nchunks.i() <= 256);
+    for (int cid : _assemblyinformation._nchunks.sequence()) {
         if (const auto cfpathopt = chunk_path(cid, aid); cfpathopt) {
             const std::filesystem::path cfpath = cfpathopt.value();
             if (! std::filesystem::exists(cfpath)) {
@@ -449,10 +452,10 @@ std::shared_ptr<CoqAssemblyEncrypted> CoqAssemblyEncrypted::recall(const CoqConf
 {
     std::shared_ptr<CoqAssemblyEncrypted> newassembly{new CoqAssemblyEncrypted(c)};
     newassembly->_assemblyinformation._aid = aid;
-    uint32_t nchunks = c.nchunks();
+    const Nchunks& nchunks = c.nchunks();
     newassembly->_assemblyinformation._nchunks = nchunks;
     uint32_t nread{0};
-    for (int cid = 1; cid <= nchunks; cid++) {
+    for (int cid : nchunks.sequence()) {
         if (const auto cfpathopt = newassembly->chunk_path(cid, aid); cfpathopt) {
             const std::filesystem::path cfpath = cfpathopt.value();
             if (std::filesystem::exists(cfpath)) {
@@ -496,7 +499,7 @@ Program Definition restore (b : AssemblyPlainFull.B) (bi : blockinformation) : o
 std::shared_ptr<CoqBufferPlain> CoqAssemblyPlainFull::restore(const CoqAssembly::BlockInformation & bi) const
 {
     std::shared_ptr<CoqBufferPlain> b{new CoqBufferPlain(bi.blocksize)};
-    const uint32_t nchunks = _config.nchunks();
+    const Nchunks& nchunks = _config.nchunks();
     for (uint32_t idx = 0; idx < bi.blocksize; idx++) {
         uint32_t apos = idx2apos(idx + bi.blockapos, nchunks);
         b->at(idx, _buffer->at(apos)); 
