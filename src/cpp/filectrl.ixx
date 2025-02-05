@@ -40,7 +40,7 @@ class FileCtrl
         static bool fileExists(filepath const &) noexcept;
         static bool isFileReadable(filepath const &) noexcept;
         static bool dirExists(filepath const &) noexcept;
-        static std::generator<filepath> fileListRecursive(filepath const &);
+        static std::generator<filepath> fileListRecursive(const filepath);
     protected:
         FileCtrl() {}
     private:

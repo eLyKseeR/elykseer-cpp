@@ -31,28 +31,28 @@ module lxr_filectrl;
 
 namespace lxr {
 
-std::optional<std::filesystem::file_time_type> FileCtrl::fileLastWriteTime(std::filesystem::path const & fp) noexcept
+std::optional<std::filesystem::file_time_type> FileCtrl::fileLastWriteTime(filepath const & fp) noexcept
 {
     try {
         return std::filesystem::last_write_time(fp);
     } catch (...) { return {}; }
 }
 
-std::optional<uint64_t> FileCtrl::fileSize(std::filesystem::path const & fp) noexcept
+std::optional<uint64_t> FileCtrl::fileSize(filepath const & fp) noexcept
 {
     try {
         return std::filesystem::file_size(fp);
     } catch (...) { return {}; }
 }
 
-bool FileCtrl::fileExists(std::filesystem::path const & fp) noexcept
+bool FileCtrl::fileExists(filepath const & fp) noexcept
 {
     try {
         return std::filesystem::exists(fp);
     } catch (...) { return {}; }
 }
 
-bool FileCtrl::isFileReadable(std::filesystem::path const & fp) noexcept
+bool FileCtrl::isFileReadable(filepath const & fp) noexcept
 {
     try {
         auto s = std::filesystem::status(fp);
@@ -61,7 +61,7 @@ bool FileCtrl::isFileReadable(std::filesystem::path const & fp) noexcept
     return false;
 }
 
-bool FileCtrl::dirExists(std::filesystem::path const & fp) noexcept
+bool FileCtrl::dirExists(filepath const & fp) noexcept
 {
     try {
         auto s = std::filesystem::status(fp);
@@ -70,7 +70,7 @@ bool FileCtrl::dirExists(std::filesystem::path const & fp) noexcept
     return false;
 }
 
-std::generator<std::filesystem::path> FileCtrl::fileListRecursive(std::filesystem::path const & fp)
+std::generator<filepath> FileCtrl::fileListRecursive(const filepath fp)
 {
     std::filesystem::directory_iterator dirit{fp};
     while (dirit != std::filesystem::directory_iterator{}) {
