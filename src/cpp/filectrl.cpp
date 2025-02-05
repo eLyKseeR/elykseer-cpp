@@ -72,10 +72,12 @@ bool FileCtrl::dirExists(std::filesystem::path const & fp) noexcept
 
 std::generator<std::filesystem::path> FileCtrl::fileListRecursive(std::filesystem::path const & fp)
 {
-    std::filesystem::directory_iterator _pit{fp};
-    while (_pit != std::filesystem::directory_iterator{}) {
-        if (auto fp2 = *_pit++; dirExists(fp2)) {
-            co_yield std::ranges::elements_of{fileListRecursive(fp2)};
+    std::filesystem::directory_iterator dirit{fp};
+    while (dirit != std::filesystem::directory_iterator{}) {
+        if (auto const & fp2 = *dirit++; dirExists(fp2)) {
+            for (auto const & fp3 : fileListRecursive(fp2)) {
+                co_yield fp3;
+            }
         } else {
             co_yield fp2;
         }
