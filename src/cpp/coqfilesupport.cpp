@@ -24,8 +24,12 @@ module;
 #include <sstream>
 
 #if !defined(PLATFORM_win64)
-#include <sys/types.h>
-#include <sys/stat.h>
+#if __has_include(<sys/types.h>)
+#  include <sys/types.h>
+#endif
+#if __has_include(<sys/stat.h>)
+#  include <sys/stat.h>
+#endif
 #endif
 
 import lxr_sha3;
