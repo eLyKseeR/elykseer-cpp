@@ -26,7 +26,9 @@ typedef std::filesystem::path filepath;
 #ifndef _WIN32
 #include <pwd.h>
 #include <grp.h>
-#include <sys/stat.h>
+#if __has_include(<sys/stat.h>)
+#  include <sys/stat.h>
+#endif
 #else
 #include <windows.h>
 #include "aclapi.h"

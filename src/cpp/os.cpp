@@ -25,8 +25,12 @@ module;
 #ifndef _WIN32
 #include <cstring>
 #include <pwd.h>
-#include <sys/types.h>
-#include <unistd.h>
+#if __has_include(<sys/types.h>)
+#  include <sys/types.h>
+#endif
+#if __has_include(<unistd.h>)
+#  include <unistd.h>
+#endif
 #else
 #include <windows.h>
 #include <sysinfoapi.h>

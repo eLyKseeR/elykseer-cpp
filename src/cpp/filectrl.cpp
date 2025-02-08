@@ -26,10 +26,35 @@ typedef std::filesystem::path filepath;
 #include <optional>
 #include <vector>
 
+
+#if __has_include(<unistd.h>)
+#  include <unistd.h>
+#endif
+#if __has_include(<sys/stat.h>)
+#  include <sys/stat.h>
+#endif
+
+
 module lxr_filectrl;
 
 
 namespace lxr {
+
+static uid_t fp_uid = getuid();
+static gid_t fp_gid = getgid();
+static std::vector<gid_t> fp_gids{};
+
+void initialize_fp_gids() {
+    static bool fp_gids_initialised = false;
+    if (! fp_gids_initialised) {
+        int ngroups = getgroups(0, NULL);
+        std::vector<gid_t> my_gids;
+        my_gids.resize(ngroups);
+        getgroups(ngroups, my_gids.data());
+        fp_gids = std::move(my_gids);
+        fp_gids_initialised = true;
+    }
+}
 
 std::optional<std::filesystem::file_time_type> FileCtrl::fileLastWriteTime(filepath const & fp) noexcept
 {
@@ -55,8 +80,30 @@ bool FileCtrl::fileExists(filepath const & fp) noexcept
 bool FileCtrl::isFileReadable(filepath const & fp) noexcept
 {
     try {
+        if (! std::filesystem::exists(fp)) { return false; }
         auto s = std::filesystem::status(fp);
-        return std::filesystem::is_regular_file(s);
+        if (! std::filesystem::is_regular_file(s)) { return false; }
+        struct stat finfo;
+        if (stat(fp.c_str(), &finfo) != 0) { return false; }
+        auto we_are_owner = [&finfo]() -> bool { return finfo.st_uid == fp_uid; };
+        auto we_are_group = [&finfo]() -> bool { return finfo.st_gid == fp_gid; };
+        // we could also test that we do not have write permissions on these directories, just-to-be-sure (tm)
+        auto user_r_access = [&finfo]() -> bool { return finfo.st_mode & S_IRUSR; };
+        auto group_r_access = [&finfo]() -> bool { return finfo.st_mode & S_IRGRP; };
+        auto other_r_access = [&finfo]() -> bool { return finfo.st_mode & S_IROTH; };
+        /* user == uid has read access */
+        if (we_are_owner() && user_r_access()) { return true; }
+        /* check if others have read access */
+        if (other_r_access()) { return true; }
+        /* our group has read access */
+        if (we_are_group() && group_r_access()) { return true; }
+        /* we are in a group which has read access */
+        if (group_r_access()) {
+            initialize_fp_gids();
+            for (auto g : fp_gids) {
+                if (g == finfo.st_gid) { return true; }
+            }
+        }
     } catch (...) {}
     return false;
 }
@@ -65,7 +112,31 @@ bool FileCtrl::dirExists(filepath const & fp) noexcept
 {
     try {
         auto s = std::filesystem::status(fp);
-        return std::filesystem::is_directory(s);
+        if (std::filesystem::is_symlink(s) && fp.string().find("../") != std::string::npos) { return false; } // prevent loop
+        if (! std::filesystem::is_directory(s)) { return false; }
+        struct stat finfo;
+        if (stat(fp.c_str(), &finfo) != 0) {
+            return false;
+        }
+        auto we_are_owner = [&finfo]() -> bool { return finfo.st_uid == fp_uid; };
+        auto we_are_group = [&finfo]() -> bool { return finfo.st_gid == fp_gid; };
+        // we could also test that we do not have write permissions on these directories, just-to-be-sure (tm)
+        auto user_rx_access = [&finfo]() -> bool { return finfo.st_mode & S_IRUSR && finfo.st_mode & S_IXUSR; };
+        auto group_rx_access = [&finfo]() -> bool { return finfo.st_mode & S_IRGRP && finfo.st_mode & S_IXGRP; };
+        auto other_rx_access = [&finfo]() -> bool { return finfo.st_mode & S_IROTH && finfo.st_mode & S_IXOTH; };
+        /* user == uid has r,x access */
+        if (we_are_owner() && user_rx_access()) { return true; }
+        /* check if others have r,x access */
+        if (other_rx_access()) { return true; }
+        /* our group has read access */
+        if (we_are_group() && group_rx_access()) { return true; }
+        /* we are in a group which has r,x access */
+        if (group_rx_access()) {
+            initialize_fp_gids();
+            for (auto g : fp_gids) {
+                if (g == finfo.st_gid) { return true; }
+            }
+        }
     } catch (...) {}
     return false;
 }
