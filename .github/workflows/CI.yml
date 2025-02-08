@@ -42,6 +42,7 @@ jobs:
       working-directory: ${{github.workspace}}/
       run: |
         mkdir -vp build
+        rm -rf .git/modules/ext/*
         git submodule update --init
 
     - name: Build dependencies
