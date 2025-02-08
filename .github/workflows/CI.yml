@@ -29,20 +29,19 @@ jobs:
         sudo apt update
         sudo apt-get -y install cmake ninja-build clang-19 clang-tools-19 cppcheck m4 busybox libdigest-sha3-perl libboost-all-dev libboost-contract-dev gettext pkg-config automake autoconf libtool texinfo
 
-    - name: Set up cache on external code
-      uses: actions/cache@v2
-      with:
-        path: ext
-        key: ${{ runner.os }}-ext-${{ hashFiles('**/CMakeLists.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-ext-
+#    - name: Set up cache on external code
+#      uses: actions/cache@v2
+#      with:
+#        path: ext
+#        key: ${{ runner.os }}-ext-${{ hashFiles('**/CMakeLists.txt') }}
+#        restore-keys: |
+#          ${{ runner.os }}-ext-
 
     - name: Update submodules
       shell: bash
       working-directory: ${{github.workspace}}/
       run: |
         mkdir -vp build
-        rm -rf .git/modules/ext/*
         git submodule update --init
 
     - name: Build dependencies
