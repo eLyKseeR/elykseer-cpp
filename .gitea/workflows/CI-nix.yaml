@@ -1,0 +1,58 @@
+name: Gitea Actions Demo
+run-name: ${{ gitea.actor }} is testing out Gitea Actions 🚀
+on: [push]
+
+jobs:
+  Explore-Gitea-Actions:
+    runs-on: nixos-latest
+    steps:
+      - run: echo "🎉 The job was automatically triggered by a ${{ gitea.event_name }} event."
+      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by Gitea!"
+      - run: echo "🔎 The name of your branch is ${{ gitea.ref }} and your repository is ${{ gitea.repository }}."
+      - name: install node
+        run: nix-env -iA nixpkgs.nodejs_20
+      - name: Check out repository code
+        #uses: actions/checkout@v4
+        uses: https://gitea.com/ScMi1/checkout@v1.4
+        with:
+          submodules: false
+      - run: |
+          git submodule update --init
+      - run: echo "💡 The ${{ gitea.repository }} repository has been cloned to the runner."
+      - run: echo "🖥️ The workflow is now ready to test your code on the runner."
+      - name: List files in the repository
+        run: |
+          printenv | sort
+          ls ${{ gitea.workspace }}
+      - name: compute dependencies cache hash
+        id: cache_hash
+        shell: bash
+        run: |
+          HASH=$(sha256sum <(git submodule | cut -d ' ' -f 2) | cut -d ' ' -f 1)
+          echo "hash=$HASH" >> $GITHUB_OUTPUT
+          echo "output: hash=$HASH"
+      - name: cache dependencies
+        id: caching
+        uses: actions/cache@v4
+        with:
+          key: ${{ steps.cache_hash.outputs.hash }}
+          path: |
+            ext/Linux_*
+            ext/Darwin_*
+            ext/xWindows_*
+      - name: compile dependencies
+        run: |
+          nix-shell --run "make -C ext"
+      - name: build project
+        shell: nix-shell --run "{0}"
+        run: |
+          mkdir -vp build
+          cd build
+          cmake --fresh -G Ninja -DCMAKE_BUILD_TYPE=Debug ..
+          ninja
+      - name: test project
+        shell: nix-shell --run "{0}"
+        run: |
+          cd build
+          ./tests/cpp/utelykseer-cpp --report_level=detailed
+      - run: echo "🍏 This job's status is ${{ job.status }}."

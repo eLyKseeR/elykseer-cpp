@@ -8,17 +8,21 @@ stdenv.mkDerivation rec {
     # Customizable development requirements
     nativeBuildInputs = [
         cmake
+        ninja
+        ccache
         git
         gnused
-        pandoc
-        html2text
+        gettext
+        texifno
         swig
-        #gcc
-        clang
+        gcc
+        llvmPackages_19.clang-tools
+        llvmPackages_19.openmp
+        lldb_19
+        clang_19
         opam m4
-        #global
         cppcheck
-        #busybox
+        perl
         perl538Packages.DigestSHA3
         pkg-config
         autoconf automake libtool
@@ -29,7 +33,7 @@ stdenv.mkDerivation rec {
     buildInputs = [
         openssl
         zlib
-        boost
+        boost186
     ];
 
     shellHook = ''
@@ -39,7 +43,6 @@ stdenv.mkDerivation rec {
       else
         export SED=sed
       fi
-      export SED=sed
       export CC=clang
       export CXX=clang++
     '';
