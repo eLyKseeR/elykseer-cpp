@@ -13,7 +13,7 @@ stdenv.mkDerivation rec {
         git
         gnused
         gettext
-        texifno
+        texinfo
         swig
         gcc
         llvmPackages_19.clang-tools
