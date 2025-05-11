@@ -21,7 +21,6 @@ module;
 #include "generator.hpp"
 
 #include <filesystem>
-typedef std::filesystem::path filepath;
 
 #include <optional>
 #include <vector>
@@ -40,6 +39,8 @@ module lxr_filectrl;
 
 namespace lxr {
 
+#if defined(PLATFORM_win64)
+#else
 static uid_t fp_uid = getuid();
 static gid_t fp_gid = getgid();
 static std::vector<gid_t> fp_gids{};
@@ -55,34 +56,36 @@ void initialize_fp_gids() {
         fp_gids_initialised = true;
     }
 }
+#endif
 
-std::optional<std::filesystem::file_time_type> FileCtrl::fileLastWriteTime(filepath const & fp) noexcept
+std::optional<std::filesystem::file_time_type> FileCtrl::fileLastWriteTime(std::filesystem::path const & fp) noexcept
 {
     try {
         return std::filesystem::last_write_time(fp);
     } catch (...) { return {}; }
 }
 
-std::optional<uint64_t> FileCtrl::fileSize(filepath const & fp) noexcept
+std::optional<uint64_t> FileCtrl::fileSize(std::filesystem::path const & fp) noexcept
 {
     try {
         return std::filesystem::file_size(fp);
     } catch (...) { return {}; }
 }
 
-bool FileCtrl::fileExists(filepath const & fp) noexcept
+bool FileCtrl::fileExists(std::filesystem::path const & fp) noexcept
 {
     try {
         return std::filesystem::exists(fp);
     } catch (...) { return {}; }
 }
 
-bool FileCtrl::isFileReadable(filepath const & fp) noexcept
+bool FileCtrl::isFileReadable(std::filesystem::path const & fp) noexcept
 {
     try {
         if (! std::filesystem::exists(fp)) { return false; }
         auto s = std::filesystem::status(fp);
         if (! std::filesystem::is_regular_file(s)) { return false; }
+#if !defined(PLATFORM_win64)
         struct stat finfo;
         if (stat(fp.c_str(), &finfo) != 0) { return false; }
         auto we_are_owner = [&finfo]() -> bool { return finfo.st_uid == fp_uid; };
@@ -104,16 +107,18 @@ bool FileCtrl::isFileReadable(filepath const & fp) noexcept
                 if (g == finfo.st_gid) { return true; }
             }
         }
+#endif
     } catch (...) {}
     return false;
 }
 
-bool FileCtrl::dirExists(filepath const & fp) noexcept
+bool FileCtrl::dirExists(std::filesystem::path const & fp) noexcept
 {
     try {
         auto s = std::filesystem::status(fp);
         if (std::filesystem::is_symlink(s) && fp.string().find("../") != std::string::npos) { return false; } // prevent loop
         if (! std::filesystem::is_directory(s)) { return false; }
+#if !defined(PLATFORM_win64)
         struct stat finfo;
         if (stat(fp.c_str(), &finfo) != 0) {
             return false;
@@ -137,11 +142,12 @@ bool FileCtrl::dirExists(filepath const & fp) noexcept
                 if (g == finfo.st_gid) { return true; }
             }
         }
+#endif
     } catch (...) {}
     return false;
 }
 
-std::generator<filepath> FileCtrl::fileListRecursive(const filepath fp)
+std::generator<std::filesystem::path> FileCtrl::fileListRecursive(const std::filesystem::path fp)
 {
     std::filesystem::directory_iterator dirit{fp};
     while (dirit != std::filesystem::directory_iterator{}) {

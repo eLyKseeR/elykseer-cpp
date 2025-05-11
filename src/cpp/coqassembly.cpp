@@ -20,6 +20,7 @@ module;
 
 #include <algorithm>
 #include <cassert>
+#include <cstdint>
 #include <chrono>
 #include <filesystem>
 #include <fstream>
@@ -118,12 +119,17 @@ CoqAssemblyPlainWritable::CoqAssemblyPlainWritable(const CoqConfiguration &c)
   // std::clog << "CoqAssemblyPlainWritable::CoqAssemblyPlainWritable(const CoqConfiguration &c)" << std::endl;
   const Nchunks& nchunks = c.nchunks();
   _buffer.reset(new CoqBufferPlain(assemblysize(nchunks)));
-  Key128 _rand128{false};
-  const char *r = (const char*)_rand128.bytes();
-  for (int i = 0; i < 16; i++) {
-    _buffer->at(idx2apos(i,nchunks), r[i]);
+  uint32_t _rand32;
+  uint32_t idx{0};
+  while (idx < nchunks.u()) {
+    _rand32 = Random::rng().random();
+    const unsigned char *r = (const unsigned char[4])_rand32;
+    for (int i = 0; i < 4; i++) {
+      _buffer->at(idx, r[i]);
+    }
+    idx += 4;
   }
-  _assemblyinformation._apos = 16;
+  _assemblyinformation._apos = nchunks.u();
   _assemblyinformation._nchunks = nchunks;
   mk_assembly_id();
 }
@@ -357,13 +363,12 @@ CoqAssembly::BlockInformation CoqAssemblyPlainWritable::backup(const CoqBufferPl
 CoqAssembly::BlockInformation CoqAssemblyPlainWritable::backup(const CoqBufferPlain &b, const uint32_t offset, const uint32_t dlen)
 {
     uint32_t apos_n = _assemblyinformation._apos;
-    const Nchunks nchunks = _config.nchunks();
     if (dlen + offset > b.len()) { return {}; }
     auto const chksum = b.calc_checksum(offset, dlen);
     if (chksum) {
         // TODO parallelise !
         for (int i = 0; i < dlen; i++) {
-            uint32_t apos = idx2apos(i + apos_n, nchunks);
+            uint32_t apos = idx2apos(i + apos_n);
             _buffer->at(apos, b.at(i + offset));
         }
         _assemblyinformation._apos += dlen;
@@ -398,7 +403,7 @@ uint32_t CoqAssemblyEncrypted::extract()
         if (const auto cfpathopt = chunk_path(cid, aid); cfpathopt) {
             const std::filesystem::path cfpath = cfpathopt.value();
             if (! std::filesystem::exists(cfpath)) {
-                if (FILE * fstr = fopen(cfpath.string().c_str(), "wb"); fstr) {
+                if (std::ofstream fstr(cfpath, std::ios::binary); fstr.good()) {
 #ifdef DEBUG
                     std::clog << "    extract chunk " << cid << " to path " << cfpath << std::endl;
 #endif
@@ -407,7 +412,7 @@ uint32_t CoqAssemblyEncrypted::extract()
                     } else {
                         std::clog << "only wrote " << n << " bytes to chunk with path " << cfpath.string() << std::endl;
                     }
-                    fclose(fstr);
+                    fstr.close();
                 } else {
                     std::clog << "cannot write to chunk with path " << cfpath.string() << std::endl;
                 }
@@ -459,7 +464,7 @@ std::shared_ptr<CoqAssemblyEncrypted> CoqAssemblyEncrypted::recall(const CoqConf
         if (const auto cfpathopt = newassembly->chunk_path(cid, aid); cfpathopt) {
             const std::filesystem::path cfpath = cfpathopt.value();
             if (std::filesystem::exists(cfpath)) {
-                if (FILE * fstr = fopen(cfpath.string().c_str(), "rb"); fstr) {
+                if (std::ifstream fstr(cfpath, std::ios::binary); fstr.good()) {
 #ifdef DEBUG
                     std::clog << "    recall chunk " << cid << " from path " << cfpath << std::endl;
 #endif
@@ -468,7 +473,7 @@ std::shared_ptr<CoqAssemblyEncrypted> CoqAssemblyEncrypted::recall(const CoqConf
                     } else {
                         std::clog << "only read " << n << " bytes from chunk with path " << cfpath.string() << std::endl;
                     }
-                    fclose(fstr);
+                    fstr.close();
                 } else {
                     std::clog << "cannot read from chunk with path " << cfpath.string() << std::endl;
                 }
@@ -499,9 +504,8 @@ Program Definition restore (b : AssemblyPlainFull.B) (bi : blockinformation) : o
 std::shared_ptr<CoqBufferPlain> CoqAssemblyPlainFull::restore(const CoqAssembly::BlockInformation & bi) const
 {
     std::shared_ptr<CoqBufferPlain> b{new CoqBufferPlain(bi.blocksize)};
-    const Nchunks& nchunks = _config.nchunks();
     for (uint32_t idx = 0; idx < bi.blocksize; idx++) {
-        uint32_t apos = idx2apos(idx + bi.blockapos, nchunks);
+        uint32_t apos = idx2apos(idx + bi.blockapos);
         b->at(idx, _buffer->at(apos)); 
     }
     return b;

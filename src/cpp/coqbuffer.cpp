@@ -19,6 +19,7 @@ module;
 */
 
 #include <algorithm>
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <optional>
@@ -55,8 +56,8 @@ public:
     uint32_t len() const;
     std::optional<const Key256> calc_checksum(int offset, int dlen) const;
     int copy_sz_pos(int pos0, int sz, CoqBuffer &target, int pos1) const;
-    int fileout_sz_pos(int pos, int sz, FILE *fstr) const;
-    int filein_sz_pos(int pos, int sz, FILE *fstr);
+    int fileout_sz_pos(int pos, int sz, std::ofstream & fstr) const;
+    int filein_sz_pos(int pos, int sz, std::ifstream & fstr);
     int to_buffer(int n, char *b) const;
     char at(uint32_t idx0) const { return _buffer[std::min(_len, idx0)]; }
     void at(uint32_t idx0, char v) { _buffer[std::min(_len, idx0)] = v; }
@@ -94,19 +95,20 @@ int CoqBuffer::pimpl::copy_sz_pos(int pos0, int sz, CoqBuffer &target, int pos1)
     return 0;
 }
 
-int CoqBuffer::pimpl::fileout_sz_pos(int pos, int sz, FILE *fstr) const
+int CoqBuffer::pimpl::fileout_sz_pos(int pos, int sz, std::ofstream & fstr) const
 {
     if (sz < 1 || pos < 0) { return 0; }
     if (sz + pos > _len) { return -1; }
-    fwrite(_buffer+pos, 1, sz, fstr);
-    return sz;
+    fstr.write(_buffer+pos, sz);
+    return fstr.good()?sz:-2;
 }
 
-int CoqBuffer::pimpl::filein_sz_pos(int pos, int sz, FILE *fstr)
+int CoqBuffer::pimpl::filein_sz_pos(int pos, int sz, std::ifstream & fstr)
 {
     if (sz < 1 || pos < 0) { return 0; }
     if (sz + pos > _len) { return -1; }
-    return fread(_buffer+pos, 1, sz, fstr);
+    fstr.read(_buffer+pos, sz);
+    return fstr.gcount();
 }
 
 int CoqBuffer::pimpl::to_buffer(int n, char *b) const
@@ -265,18 +267,18 @@ int CoqBuffer::copy_sz_pos(int pos0, int sz, CoqBuffer &target, int pos1) const
     }
 }
 
-int CoqBuffer::fileout_sz_pos(int pos, int sz, FILE *fstr) const
+int CoqBuffer::fileout_sz_pos(int pos, int sz, std::ofstream & fstr) const
 {
-    if (_pimpl && fstr) {
+    if (_pimpl && fstr.good()) {
         return _pimpl->fileout_sz_pos(pos, sz, fstr);
     } else {
         return -1;
     }
 }
 
-int CoqBuffer::filein_sz_pos(int pos, int sz, FILE *fstr)
+int CoqBuffer::filein_sz_pos(int pos, int sz, std::ifstream & fstr)
 {
-    if (_pimpl && fstr) {
+    if (_pimpl && fstr.good()) {
         return _pimpl->filein_sz_pos(pos, sz, fstr);
     } else {
         return -1;

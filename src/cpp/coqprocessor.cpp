@@ -23,9 +23,9 @@ module;
 #include <filesystem>
 #include <memory>
 #include <optional>
+#include <fstream>
 #include <iostream>
 #include <string>
-#include <vector>
 
 import lxr_sha3;
 import lxr_key256;
@@ -144,7 +144,7 @@ std::optional<CoqFilesupport::FileInformation> CoqProcessor::file_backup(const s
             std::clog << "file_backup skipped for '" << fp << "' as it is the same as before." << std::endl;
 #endif
         } else {
-            FILE *fstr = fopen(fp.c_str(), "rb");
+            std::ifstream fstr(fp, std::ios::binary);
             if (! fstr) { return {}; }
             {
                 const uint64_t fsize{fi.fsize};
@@ -154,8 +154,9 @@ std::optional<CoqFilesupport::FileInformation> CoqProcessor::file_backup(const s
                     auto dsz = fsize - fpos;
                     int sz = block_sz;
                     if (dsz < block_sz) { sz = dsz; }
-                    fseek(fstr, fpos, SEEK_SET);
-                    int nread = fread(buffer, 1, sz, fstr);
+                    fstr.seekg(fpos);
+                    fstr.read(buffer, sz);
+                    int nread = fstr.gcount();
                     
                     WriteQueueEntity wqe;
                     wqe._fhash = fhash;
@@ -170,7 +171,7 @@ std::optional<CoqFilesupport::FileInformation> CoqProcessor::file_backup(const s
                 }
                 _cache->iterate_write_queue();
             }
-            fclose(fstr);
+            fstr.close();
             _cache->get_finfo_store()->add(fhash.toHex(), fi);
             return fi;
         }

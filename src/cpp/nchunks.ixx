@@ -30,7 +30,7 @@ class ChunkRange
 {
     public:
         static constexpr int min_n { 16 };
-        static constexpr int max_n { 256 };
+        static constexpr int max_n { 128 };
 };
 
 class Nchunks 

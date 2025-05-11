@@ -29,14 +29,6 @@ jobs:
         sudo apt update
         sudo apt-get -y install cmake ninja-build clang-19 clang-tools-19 cppcheck m4 busybox libdigest-sha3-perl libboost-all-dev libboost-contract-dev gettext pkg-config automake autoconf libtool texinfo
 
-#    - name: Set up cache on external code
-#      uses: actions/cache@v2
-#      with:
-#        path: ext
-#        key: ${{ runner.os }}-ext-${{ hashFiles('**/CMakeLists.txt') }}
-#        restore-keys: |
-#          ${{ runner.os }}-ext-
-
     - name: Update submodules
       shell: bash
       working-directory: ${{github.workspace}}/
@@ -44,33 +36,36 @@ jobs:
         mkdir -vp build
         git submodule update --init
 
+    - name: compute dependencies cache hash
+      id: cache_hash
+      shell: bash
+      run: |
+        HASH=$(sha256sum <(git submodule | cut -d ' ' -f 2) | cut -d ' ' -f 1)
+        echo "hash=$HASH" >> $GITHUB_OUTPUT
+        echo "output: hash=$HASH"
+    - name: cache dependencies
+      id: caching
+      uses: actions/cache@v4
+      with:
+        key: ${{ steps.cache_hash.outputs.hash }}
+        path: |
+          ext/Linux_*
+          ext/Darwin_*
+          ext/xWindows_*
+
     - name: Build dependencies
       shell: bash
       working-directory: ${{github.workspace}}/ext
       run: make
 
-    - name: Set up cache on build dir
-      uses: actions/cache@v2
-      with:
-        path: build
-        key: ${{ runner.os }}-build-${{ hashFiles('**/CMakeLists.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-build-
-
     - name: Configure CMake
-      # Use a bash shell so we can use the same syntax for environment variable
-      # access regardless of the host operating system
       shell: bash
       working-directory: ${{github.workspace}}/build
-      # Note the current convention is to use the -S and -B options here to specify source 
-      # and build directories, but this is only available with CMake 3.13 and higher.  
-      # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
       run: cmake --fresh -GNinja -DCMAKE_BUILD_TYPE=$BUILD_TYPE ..
 
     - name: Build
       working-directory: ${{github.workspace}}/build
       shell: bash
-      # Execute the build.  You can specify a specific target with "--target <NAME>"
       run: cmake --build . --config $BUILD_TYPE
 
     - name: Test
@@ -79,7 +74,7 @@ jobs:
       # Execute tests defined by the CMake configuration.  
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       #run: ctest -C $BUILD_TYPE
-      run: ctest
+      run: ./tests/cpp/utelykseer-cpp --report_level=detailed
 
     - name: Packaging
       working-directory: ${{github.workspace}}/build
