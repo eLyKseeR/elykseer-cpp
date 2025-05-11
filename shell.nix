@@ -33,6 +33,7 @@ stdenv.mkDerivation rec {
     buildInputs = [
         openssl
         zlib
+        zstd
         boost186
     ];
 
