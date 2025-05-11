@@ -54,6 +54,8 @@ makedirs: $(CCACHE_DIR) $(HOST_TARGETDIR) $(WIN64_TARGETDIR)
 
 $(CCACHE_DIR) $(HOST_TARGETDIR) $(WIN64_TARGETDIR):
 	mkdir -vp $@
+	mkdir -vp $@/lib
+	ln -sf $@/lib $@/lib64
 
 check_cross_compilers: check_cc check_cxx check_ar check_ranlib
 check_ar:
