@@ -18,7 +18,7 @@ module;
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <stdio.h>
+#include <fstream>
 #include <memory>
 #include <optional>
 
@@ -114,8 +114,8 @@ class CoqBuffer
     std::optional<const Key256> calc_checksum() const;
     std::optional<const Key256> calc_checksum(int offset, int dlen) const;
     int copy_sz_pos(int pos0, int sz, CoqBuffer & target, int pos1) const;
-    int fileout_sz_pos(int pos, int sz, FILE *fstr) const;
-    int filein_sz_pos(int pos, int sz, FILE *fstr);
+    int fileout_sz_pos(int pos, int sz, std::ofstream & fstr) const;
+    int filein_sz_pos(int pos, int sz, std::ifstream & fstr);
     int to_buffer(int n, char *b) const;
     char at(uint32_t idx) const;
     void at(uint32_t idx, char v);

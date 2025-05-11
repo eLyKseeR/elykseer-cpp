@@ -169,7 +169,7 @@ namespace std {
         static void* operator new(const size_t _Size) { // default: new/delete
             void* const _Ptr           = ::operator new[](_Size + sizeof(_Dealloc_fn));
             const _Dealloc_fn _Dealloc = [](void* const _Ptr, const size_t _Size) {
-                ::operator delete[](_Ptr, _Size + sizeof(_Dealloc_fn));
+                ::operator delete[](_Ptr, (void*)(_Size + sizeof(_Dealloc_fn)));
             };
             ::memcpy(static_cast<char*>(_Ptr) + _Size, &_Dealloc, sizeof(_Dealloc_fn));
             return _Ptr;

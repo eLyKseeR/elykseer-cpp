@@ -18,6 +18,7 @@
 */
 
 #include <chrono>
+#include <fstream>
 #include <iostream>
 #include <filesystem>
 #include <fstream>
@@ -188,10 +189,10 @@ void set_myid(std::optional<std::string> &myid, std::string const p) {
 
 void set_n_chunks(std::optional<int> &nchunks, std::string const p) {
   int n = atoi(p.c_str());
-  if (n >= 16 && n <= 256) {
+  if (n >= 16 && n <= 128) {
     nchunks = n;
   } else {
-    std::clog << "number of chunks, out of range (16-256): " << p << std::endl;
+    std::clog << "number of chunks, out of range (16-128): " << p << std::endl;
     output_error();
   }
 }
@@ -322,7 +323,7 @@ int main (int argc, char * const argv[]) {
 #ifdef DEBUG
         std::clog << "  open file " << fp.c_str() << std::endl;
 #endif
-        FILE *tgt = fopen(fp.c_str(), "wx");
+        std::ofstream tgt(fp, std::ios::binary);
         if (tgt) {
 #ifdef DEBUG
           std::clog << "  file ready." << std::endl;
@@ -333,7 +334,7 @@ int main (int argc, char * const argv[]) {
 #ifdef DEBUG
                 std::clog << "     fseek to " << rqr._readrequest._fpos << std::endl;
 #endif
-                fseek(tgt, rqr._readrequest._fpos, SEEK_SET);
+                tgt.seekp(rqr._readrequest._fpos);
 #ifdef DEBUG
                 std::clog << "     writing " << rqr._rresult->len() << " bytes" << std::endl;
 #endif
@@ -354,7 +355,7 @@ int main (int argc, char * const argv[]) {
             }
           }
           process_read_blocks(qac->iterate_read_queue());
-          fclose(tgt);
+          tgt.close();
         }
       }
     }

@@ -84,16 +84,17 @@ class CoqAssembly
         virtual int buffer_len() const = 0;
         virtual std::optional<const Key256> calc_checksum() const = 0;
         virtual std::optional<const std::filesystem::path> chunk_path(const uint16_t cnum, const aid_t aid) const final;
-
-    public:
+        
+        public:
         virtual int apos() const final;
         virtual int afree() const final;
         virtual std::string aid() const final;
-        inline const uint32_t idx2apos (const uint32_t idx, const Nchunks & nchunks) const {
-            uint32_t nc = nchunks.u();
-            uint32_t cnum = idx % nc;
-            uint32_t cidx = idx / nc;
-            return cnum * CoqAssembly::chunksize + cidx;
+        const uint32_t idx2apos (const uint32_t idx) const {
+            uint32_t nc = _assemblyinformation._nchunks.u();
+            uint32_t asize = assemblysize(_assemblyinformation._nchunks);
+            uint32_t eff_asize = asize - nc;
+            uint32_t proj = idx * nc;
+            return (proj % eff_asize) + floor(proj / eff_asize) + nc;
         }
 
     protected:

@@ -95,7 +95,7 @@ void output_help() {
   std::cout << "--dry-run      just validate arguments" << std::endl;
   std::cout << "-x --pX        sets output path for encrypted chunks" << std::endl;
   std::cout << "-o --pD        sets output path for meta data" << std::endl;
-  std::cout << "-n --nchunks   sets number of chunks (16-256) per assembly" << std::endl;
+  std::cout << "-n --nchunks   sets number of chunks (16-128) per assembly" << std::endl;
   // std::cout << "-c --compression  sets compression (0 or 1)" << std::endl;
   // std::cout << "-u --deduplication sets duplication mode (0, 1 or 2)" << std::endl;
   std::cout << "--refdbfi      adds reference dbfi for deduplication (*)" << std::endl;
@@ -183,10 +183,10 @@ void set_backup_dir_rec(std::string const fp) {
 
 void set_n_chunks(std::optional<int> &nchunks, std::string const p) {
   int n = atoi(p.c_str());
-  if (n >= 16 && n <= 256) {
+  if (n >= 16 && n <= 128) {
     nchunks = n;
   } else {
-    std::clog << "number of chunks, out of range (16-256): " << p << std::endl;
+    std::clog << "number of chunks, out of range (16-128): " << p << std::endl;
     output_error();
   }
 }
