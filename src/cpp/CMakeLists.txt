@@ -16,11 +16,11 @@ set(LIB_PRIVATE_SRCS
     liz.cpp
     nchunks.cpp
     os.cpp
+    coqfilesupport.cpp
     coqbuffer.cpp
     coqassembly.cpp
     coqassemblycache.cpp
     coqenvironment.cpp
-    coqfilesupport.cpp
     coqstore.cpp
     coqprocessor.cpp
 )
@@ -32,6 +32,7 @@ set(LIB_HDRS
     appid.ixx
     filectrl.ixx
     fsutils.ixx
+    # generator.hpp
     liz.ixx
     nchunks.ixx
     os.ixx

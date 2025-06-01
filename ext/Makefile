@@ -45,7 +45,7 @@ xWin64: check_cross_compilers
 	export CROSS_COMPILATION=1; \
 	export TARGETDIR=$(WIN64_TARGETDIR); \
 	export HOST_SELECTOR="--host=x86_64-w64-mingw32"; \
-	export XCOMPILE_TOOLCHAIN="$(BASEP)/../build/Toolchain_Darwin_to_Windows.cmake"; \
+	export XCOMPILE_TOOLCHAIN="$(BASEP)/../support/Toolchain_Darwin_to_Windows.cmake"; \
 	export CMAKE_BUILD_TYPE="Release"; \
 	export PKG_CONFIG_PATH="$(WIN64_TARGETDIR)/lib/pkgconfig"; \
 	$(MAKE) make_exts
@@ -54,6 +54,8 @@ makedirs: $(CCACHE_DIR) $(HOST_TARGETDIR) $(WIN64_TARGETDIR)
 
 $(CCACHE_DIR) $(HOST_TARGETDIR) $(WIN64_TARGETDIR):
 	mkdir -vp $@
+	mkdir -vp $@/lib
+	ln -s $@/lib $@/lib64
 
 check_cross_compilers: check_cc check_cxx check_ar check_ranlib
 check_ar:
@@ -72,7 +74,7 @@ check_ranlib:
 make_exts: makedirs make_osmetrics make_rapidcheck make_elykseer_crypto
 	echo "all done."
 
-fset_os_metrics := $(TARGETDIR)/include/os-metrics.h $(TARGETDIR)/lib/libos-metrics_$(CMAKE_BUILD_TYPE)_1_0_0.a
+fset_os_metrics := $(TARGETDIR)/include/os-metrics.h $(TARGETDIR)/lib/libos-metrics_$(CMAKE_BUILD_TYPE)_1_1_0.a
 make_osmetrics: $(fset_os_metrics)
 $(fset_os_metrics):
 	echo "making os-metrics"
@@ -116,11 +118,11 @@ $(fset_elykseer_crypto):
 	if [ -z "$(CROSS_COMPILATION)" ]; then \
 	$(MAKE) -C ext; \
 	mkdir -vp build; cd build; \
-	cmake --fresh -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} --install-prefix "${TARGETDIR}" -G Ninja .. ; \
+	cmake --fresh -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DUSE_CRYPTOPP=True --install-prefix "${TARGETDIR}" -G Ninja .. ; \
 	else \
 	$(MAKE) -C ext xWin64; \
 	cd build; \
-	cmake --fresh -DCMAKE_TOOLCHAIN_FILE=${XCOMPILE_TOOLCHAIN} -DCMAKE_BUILD_TYPE=Release --install-prefix "${TARGETDIR}" -G "${CMAKE_GENERATOR}" . ; \
+	cmake --fresh -DCMAKE_TOOLCHAIN_FILE=${XCOMPILE_TOOLCHAIN} -DCMAKE_BUILD_TYPE=Release -DUSE_CRYPTOPP=True --install-prefix "${TARGETDIR}" -G Ninja .. ; \
 	fi; \
 	ninja; \
 	ninja install;

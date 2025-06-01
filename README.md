@@ -12,23 +12,29 @@ read [more](https://github.com/eLyKseeR/elykseer-cpp)
 
 1. code extraction and compilation (in directory `build`)
 
-> $ cd build
+> $ mkdir -vp build; cd build
 
-> $ cmake .
+> $ cmake -GNinja --install-prefix=$(pwd)/../dist -DCMAKE_BUILD_TYPE=Debug ..
 
-> $ make
+> $ ninja
 
 2. testing (in directory `build`)
 
-> $ ./ut.sh
+> $ ./tests/cpp/utelykseer-cpp
 
 
 # cross compilation
 
+- build Docker image 'xcompile'
+   - `docker build -t xcompile .` 
+
+- launch Docker image 'xcompile'
+   - ``docker run -it --rm --user=$(id -u):$(id -g) -v .:/work xcompile``
 ```sh
+export PATH=${HOME}/.local/bin:${PATH}
 cd build
-cmake --fresh -DCMAKE_TOOLCHAIN_FILE=Toolchain_Darwin_to_Windows.cmake --install-prefix=$(pwd)/../dist -DCMAKE_BUILD_TYPE=Release .
-make && make install/strip
+cmake --fresh -DCMAKE_TOOLCHAIN_FILE=../support/Toolchain_Darwin_to_Windows.cmake --install-prefix=$(pwd)/../dist -DCMAKE_BUILD_TYPE=Release -GNinja ..
+ninja && ninja install/strip
 ```
 
 # copyright

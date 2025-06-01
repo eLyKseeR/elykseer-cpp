@@ -1,6 +1,6 @@
 #!/bin/sh
 
-MINGW_PATH="/opt/homebrew/Cellar/mingw-w64/11.0.1/toolchain-x86_64"
+MINGW_PATH="/opt/homebrew/Cellar/mingw-w64/12.0.0_2/toolchain-x86_64"
 if [ ! -d ${MINGW_PATH} ]; then
     echo "missing path to mingw toolchain"
     exit 1
