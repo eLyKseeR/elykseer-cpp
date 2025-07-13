@@ -62,7 +62,7 @@ End Processor.
 class CoqProcessor
 {
     public:
-        static constexpr int block_sz = 32768;
+        static constexpr int block_sz = 37449;
         explicit CoqProcessor(const CoqConfiguration & c, const std::shared_ptr<CoqAssemblyCache> & cache);
         ~CoqProcessor();
         void close();
@@ -72,6 +72,8 @@ class CoqProcessor
     private:
         const CoqConfiguration _config;
         std::shared_ptr<CoqAssemblyCache> _cache{nullptr};
+        CoqProcessor(CoqProcessor const &) = delete;
+        CoqProcessor & operator=(CoqProcessor const &) = delete;
 };
 
 } // namespace

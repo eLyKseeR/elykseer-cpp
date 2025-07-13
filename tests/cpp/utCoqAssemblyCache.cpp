@@ -19,14 +19,15 @@
 
 #ifndef BOOST_ALL_DYN_LINK
 #define BOOST_ALL_DYN_LINK
+#include <cstdint>
 #endif
 
 #include "boost/test/unit_test.hpp"
 
 #include <iostream>
-#include <fstream>
+// #include <fstream>
 #include <filesystem>
-#include <sstream>
+// #include <sstream>
 #include <variant>
 
 import lxr_coqassembly;
@@ -91,7 +92,13 @@ BOOST_AUTO_TEST_CASE( backup_restore_roundtrip )
     std::shared_ptr<lxr::CoqFInfoStore> _finfostore{new lxr::CoqFInfoStore()};
     std::map<std::string, lxr::CoqAssemblyCache::mvalue_t> map_metrics1{};
 
-    std::string msg{"abcdef012345789"};
+    const int repetitions = 119834;
+    const std::string m{"abcdef012345789ghijklmnopqrstuvwxyz"};
+    std::string msg; //msg.reserve(m.size() * repetitions);
+    for (int i = repetitions; i > 0; i--) {
+        msg += m;
+    }
+    BOOST_CHECK_EQUAL(m.size() * repetitions, msg.size());
     lxr::Key256 _fhash = lxr::Sha3_256::hash(std::string("/etc/motd"));
 
     // create CoqAssemblyCache and store a string
@@ -101,16 +108,34 @@ BOOST_AUTO_TEST_CASE( backup_restore_roundtrip )
         qac.register_fblock_store(_fblockstore);
         qac.register_finfo_store(_finfostore);
 
+        auto addr_fblockstore1 = _fblockstore.get();
+
         lxr::WriteQueueEntity wqe;
         wqe._fhash = _fhash;
-        wqe._fpos = 42;
-        wqe._buffer.reset(new lxr::CoqBufferPlain(15, msg.c_str()));
-
-        qac.enqueue_write_request(wqe);
-        auto wrote = qac.iterate_write_queue();
+        auto msg_len = msg.size();
+        uint32_t written{0};
+        while (written < msg_len) {
+            wqe._fpos = written;
+            uint32_t sz = std::min(37449UL, msg_len - written);
+            wqe._buffer.reset(new lxr::CoqBufferPlain(sz, msg.c_str() + written));
+            written += sz;
+            if (! qac.enqueue_write_request(wqe)) {
+                auto wrote = qac.iterate_write_queue();
+                qac.enqueue_write_request(wqe);
+            }
+        }
+        std::clog << " QAC: blocks: " << _fblockstore->size() << std::endl;
+        qac.iterate_write_queue();
+        std::clog << " QAC: blocks: " << _fblockstore->size() << std::endl;
         qac.close();
+        auto addr_fblockstore2 = _fblockstore.get();
+        BOOST_CHECK_EQUAL(addr_fblockstore1, addr_fblockstore2);
 
+        std::clog << " QAC: blocks: " << _fblockstore->size() << std::endl;
         BOOST_CHECK_EQUAL(_keystore->size(), 1);
+        BOOST_CHECK_EQUAL(qac.get_fblock_store()->size(), 1);
+        auto bp = qac.get_fblock_store()->at(0);
+        BOOST_CHECK_EQUAL(bp->second->size(), 112);
         BOOST_CHECK_EQUAL(_fblockstore->size(), 1);
 
         auto metrics = qac.metrics();
@@ -121,6 +146,7 @@ BOOST_AUTO_TEST_CASE( backup_restore_roundtrip )
     // ----
 
     lxr::CoqAssembly::aid_t _aid = _keystore->at(0)->first;
+    BOOST_CHECK_NE(_aid, "");
 
     for (auto const &e : map_metrics1) {
         std::clog << "  " << e.first << ": ";
@@ -132,13 +158,13 @@ BOOST_AUTO_TEST_CASE( backup_restore_roundtrip )
             std::clog << std::get<uint64_t>(e.second) << std::endl;
     }
 
-    BOOST_CHECK_EQUAL(15ULL, std::get<uint64_t>(map_metrics1["backup_bytes"]));
+    BOOST_CHECK_EQUAL(m.size() * repetitions, std::get<uint64_t>(map_metrics1["backup_bytes"]));
     BOOST_CHECK_EQUAL(0ULL, std::get<uint64_t>(map_metrics1["restored_bytes"]));
     BOOST_CHECK_EQUAL(0UL, std::get<uint32_t>(map_metrics1["n_read_environments"]));
     BOOST_CHECK_EQUAL(1UL, std::get<uint32_t>(map_metrics1["n_write_environments"]));
     BOOST_CHECK_EQUAL(1UL, std::get<uint32_t>(map_metrics1["n_assembly_finalised"]));
-    BOOST_CHECK_EQUAL(1UL, std::get<uint32_t>(map_metrics1["n_write_requests"]));
-    BOOST_CHECK_EQUAL(1UL, std::get<uint32_t>(map_metrics1["n_iterate_writes"]));
+    BOOST_CHECK_EQUAL(112UL, std::get<uint32_t>(map_metrics1["n_write_requests"]));
+    BOOST_CHECK_EQUAL(10UL, std::get<uint32_t>(map_metrics1["n_iterate_writes"]));
     BOOST_CHECK_EQUAL(0UL, std::get<uint32_t>(map_metrics1["len_read_queue"]));
     BOOST_CHECK_EQUAL(0UL, std::get<uint32_t>(map_metrics1["len_write_queue"]));
 
@@ -152,9 +178,15 @@ BOOST_AUTO_TEST_CASE( backup_restore_roundtrip )
 
         lxr::ReadQueueEntity rqe;
         rqe._aid = _aid;
-        lxr::CoqAssembly::BlockInformation bi = _fblockstore->at(0)->second.front();
+        int bidx = 13;
+        auto bp = _fblockstore->at(0);
+        BOOST_CHECK_EQUAL(bp->second->size(), 112);
+        lxr::CoqAssembly::BlockInformation bi = bp->second->at(bidx);
+        BOOST_CHECK_EQUAL(37449, bi.blocksize);
+        BOOST_CHECK_EQUAL(bidx * 37449, bi.filepos);
         rqe._apos = bi.blockapos;
-        rqe._rlen = msg.length();
+        rqe._rlen = bi.blocksize; //msg.length();
+        rqe._fpos = bi.filepos;
 
         qac.enqueue_read_request(rqe);
         auto rres = qac.iterate_read_queue();
@@ -162,8 +194,8 @@ BOOST_AUTO_TEST_CASE( backup_restore_roundtrip )
 
         BOOST_CHECK_EQUAL(1, rres.size());
         char restored_buffer[bi.blocksize];
-        rres[0]._rresult->to_buffer(bi.blocksize, restored_buffer);
-        BOOST_CHECK_EQUAL(std::string(restored_buffer, bi.blocksize), msg);
+        auto chk = rres[0]._rresult->calc_checksum();
+        BOOST_CHECK_EQUAL(chk->toHex(), bi.bchecksum.toHex());
     }
 }
 

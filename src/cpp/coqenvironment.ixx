@@ -20,6 +20,7 @@ module;
 
 #include <memory>
 #include <optional>
+#include <string>
 #include <vector>
 
 import lxr_coqassembly;

@@ -109,7 +109,7 @@ void CoqEnvironmentReadable::recreate_assembly()
 std::optional<std::pair<CoqAssembly::aid_t,CoqAssembly::KeyInformation>>  CoqEnvironmentWritable::finalise_assembly()
 {
     if (! _assembly) { return {}; }
-    if (_assembly->apos() <= 16) {
+    if (_assembly->apos() == 0) {
         _assembly.reset();
         return {};
     }
@@ -235,7 +235,7 @@ std::pair<CoqEnvironment::rel_fname_fblocks, CoqEnvironment::rel_aid_keys> CoqEn
         bi.filepos = fpos;
         fpos += sz;
         nwritten += sz; // sz > 0 -> we make progress
-        _fblocks.push_back({fname, bi});   // TODO pass in fhash
+        _fblocks.push_back(bipair_t(std::string(fname), bi));
         if (recreate) {
             auto oki = finalise_and_recreate_assembly();
             if (oki) {

@@ -118,11 +118,11 @@ $(fset_elykseer_crypto):
 	if [ -z "$(CROSS_COMPILATION)" ]; then \
 	$(MAKE) -C ext; \
 	mkdir -vp build; cd build; \
-	cmake --fresh -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DUSE_CRYPTOPP=True --install-prefix "${TARGETDIR}" -G Ninja .. ; \
+	cmake --fresh -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DUSE_CRYPTOPP=ON --install-prefix "${TARGETDIR}" -G Ninja .. ; \
 	else \
 	$(MAKE) -C ext xWin64; \
 	cd build; \
-	cmake --fresh -DCMAKE_TOOLCHAIN_FILE=${XCOMPILE_TOOLCHAIN} -DCMAKE_BUILD_TYPE=Release -DUSE_CRYPTOPP=True --install-prefix "${TARGETDIR}" -G Ninja .. ; \
+	cmake --fresh -DCMAKE_TOOLCHAIN_FILE=${XCOMPILE_TOOLCHAIN} -DCMAKE_BUILD_TYPE=Release -DUSE_CRYPTOPP=ON --install-prefix "${TARGETDIR}" -G Ninja .. ; \
 	fi; \
 	ninja; \
 	ninja install;

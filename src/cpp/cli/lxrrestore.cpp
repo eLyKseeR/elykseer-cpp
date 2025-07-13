@@ -341,7 +341,7 @@ int main (int argc, char * const argv[]) {
               }
             }
           };
-          for (auto const bi : fbs.value()) {
+          for (auto const bi : *(fbs.value())) {
             lxr::ReadQueueEntity rqe;
             rqe._aid = bi.blockaid; rqe._apos = bi.blockapos;
             rqe._rlen = bi.blocksize; rqe._fpos = bi.filepos;

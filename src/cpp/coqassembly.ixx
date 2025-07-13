@@ -21,7 +21,7 @@ module;
 #include <filesystem>
 #include <memory>
 #include <optional>
-#include <string>
+#include <cassert>
 
 import lxr_coqbuffer;
 import lxr_coqconfiguration;
@@ -91,9 +91,10 @@ class CoqAssembly
         virtual std::string aid() const final;
         inline const uint32_t idx2apos (const uint32_t idx, const Nchunks & nchunks) const {
             uint32_t nc = nchunks.u();
+            assert(idx < nc * (256 * 1024 - 1));
             uint32_t cnum = idx % nc;
             uint32_t cidx = idx / nc;
-            return cnum * CoqAssembly::chunksize + cidx;
+            return cnum * (CoqAssembly::chunksize - 1) + cidx;
         }
 
     protected:

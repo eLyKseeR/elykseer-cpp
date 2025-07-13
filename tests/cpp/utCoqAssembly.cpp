@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE( instantiate_CoqAssemblyPlainWritable )
     lxr::CoqAssemblyPlainWritable _assembly(_config);
 
     BOOST_CHECK_EQUAL(_assembly.buffer_len(), 16 * lxr::CoqAssembly::chunksize);
-    BOOST_CHECK_EQUAL(16, _assembly.apos());
+    BOOST_CHECK_EQUAL(0, _assembly.apos());
 }
 
 // Test case: create a _CoqAssemblyPlainFull_
@@ -102,13 +102,13 @@ BOOST_AUTO_TEST_CASE( backup_restore_roundtrip )
     
     lxr::CoqAssemblyPlainWritable _assembly(_config);
     BOOST_CHECK_EQUAL(_assembly.buffer_len(), 17 * lxr::CoqAssembly::chunksize);
-    BOOST_CHECK_EQUAL(16, _assembly.apos());
+    BOOST_CHECK_EQUAL(0, _assembly.apos());
 
     // backup
     const std::string msg{"good morning and hello world\n."};
     lxr::CoqBufferPlain buffer(msg.length(), msg.c_str());
     lxr::CoqAssembly::BlockInformation bi = _assembly.backup(buffer);
-    BOOST_CHECK_EQUAL(16 + msg.length(), _assembly.apos());
+    BOOST_CHECK_EQUAL(msg.length(), _assembly.apos());
 
     // finish
     std::shared_ptr<lxr::CoqAssemblyPlainFull> afinished = _assembly.finish();

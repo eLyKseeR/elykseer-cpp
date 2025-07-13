@@ -21,6 +21,7 @@ module;
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <optional>
 #include <string>
 
@@ -168,15 +169,16 @@ bool CoqKeyStore::add(const std::string &k, const CoqAssembly::KeyInformation &v
 
 bool CoqFBlockStore::add(const std::string &k, const CoqAssembly::BlockInformation &v)
 {
-    auto entry = v;
+    CoqAssembly::BlockInformation entry = v;
     auto it = _entries.find(k);
     if (it != _entries.end()) {
-        entry.blockid = it->second.size() + 1;
-        it->second.push_back(std::move(entry));
+        entry.blockid = it->second->size() + 1;
+        // std::clog << "   new fblockstore entry " << entry.blockid  << " " << k << " : " << v.blocksize << " @ " << v.filepos << std::endl;
+        it->second->push_back(entry);
     } else {
         entry.blockid = 1;
-        std::vector<CoqAssembly::BlockInformation> vect{std::move(entry)};
-        return CoqStore::add(k, vect);
+        auto vect = new std::vector<CoqAssembly::BlockInformation>({entry});
+        return CoqStore::add(k, std::shared_ptr<std::vector<CoqAssembly::BlockInformation>>(vect));
     }
     return true;
 }
@@ -227,7 +229,7 @@ void CoqFBlockStore::inStream(std::istream & ins)
         if (root->first == "DbFBlock") {
             for (auto fh = root->second.begin(); fh != root->second.end(); fh++) {
                 if (fh->first == "File") {
-                    std::vector<lxr::CoqAssembly::BlockInformation> bis;
+                    std::shared_ptr<std::vector<lxr::CoqAssembly::BlockInformation>> bis {new std::vector<lxr::CoqAssembly::BlockInformation>()};
                     std::string fhash{""};
                     for (auto b = fh->second.begin(); b != fh->second.end(); b++) {
                         if (b->first == "FBlock") {
@@ -244,13 +246,13 @@ void CoqFBlockStore::inStream(std::istream & ins)
                                     bi.bchecksum.fromHex(attr->second.get<std::string>("chksum"));
                                 }
                             }
-                            bis.push_back(bi);
+                            bis->push_back(bi);
                         }
                         else if (b->first == "<xmlattr>") {
                             fhash = b->second.get<std::string>("fhash");
                         }
                     }
-                    if (fhash != "" && bis.size() > 0) {
+                    if (fhash != "" && bis->size() > 0) {
                         CoqStore::add(fhash, bis);
                     }
                 }
@@ -313,9 +315,9 @@ void CoqFBlockStore::outStream(std::ostream & os) const
 {
     outputHeader(os, "DbFBlock");
 
-    iterate([&os](const std::pair<std::string, std::vector<lxr::CoqAssembly::BlockInformation>> &p) {
+    iterate([&os](const std::pair<std::string, std::shared_ptr<std::vector<lxr::CoqAssembly::BlockInformation>>> &p) {
         os << "  <File fhash=\"" << p.first << "\">" << std::endl;
-        for (const auto & bi : p.second) {
+        for (const auto & bi : *(p.second)) {
             os << "    <FBlock idx=\"" << bi.blockid << "\" apos=\"" << bi.blockapos << "\" fpos=\"" << bi.filepos << "\" blen=\"" << bi.blocksize << "\" clen=\"" << 0 << "\" compressed=\"" << 0 << "\" chksum=\"" << bi.bchecksum.toHex() << "\">" << bi.blockaid << "</FBlock>" << std::endl;
         }
         os << "  </File>" << std::endl;
@@ -336,7 +338,7 @@ void CoqFInfoStore::outStream(std::ostream & os) const
 // Template class instances
 // instantiate template classes with the used types.
 
-template class CoqStore<std::vector<CoqAssembly::BlockInformation>, std::string>;
+template class CoqStore<std::shared_ptr<std::vector<CoqAssembly::BlockInformation>>, std::string>;
 template class CoqStore<CoqAssembly::KeyInformation, std::string>;
 template class CoqStore<CoqFilesupport::FileInformation, std::string>;
 template class CoqStore<std::string, std::string>;

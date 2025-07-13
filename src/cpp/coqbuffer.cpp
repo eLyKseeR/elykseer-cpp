@@ -64,6 +64,9 @@ public:
     void decrypt_buffer(const Key128 &iv, const Key256 &pk);
 
 private:
+    pimpl(pimpl const &) = delete;
+    pimpl & operator=(pimpl const &) = delete;
+
     uint32_t _len{0};
     char *_buffer{nullptr};
 };

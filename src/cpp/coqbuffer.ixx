@@ -108,6 +108,8 @@ class CoqBuffer
     explicit CoqBuffer(int n, const char *b);
     explicit CoqBuffer(std::unique_ptr<struct CoqBuffer::pimpl> &&);
     ~CoqBuffer();
+    CoqBuffer(CoqBuffer const &) = delete;
+    CoqBuffer & operator=(CoqBuffer const &) = delete;
   public:
     virtual EncryptionState state() const = 0;
     uint32_t len() const;

@@ -19,6 +19,7 @@ module;
 */
 
 #include <algorithm>
+#include <cassert>
 #include <deque>
 #include <functional>
 #include <memory>
@@ -105,6 +106,9 @@ public:
     CoqAssemblyCache::vmetric_t metrics() const;
 
 private:
+    pimpl(pimpl const &) = delete;
+    pimpl & operator=(pimpl const &) = delete;
+
     const CoqConfiguration _config;
     std::deque<std::shared_ptr<CoqEnvironmentReadable>> _readenvs{};
     const int n_readenvs;
@@ -390,10 +394,11 @@ std::vector<ReadQueueResult> CoqAssemblyCache::iterate_read_queue()
 std::vector<ReadQueueResult> CoqAssemblyCache::pimpl::iterate_read_queue()
 {
     std::lock_guard<std::mutex> guard(_read_mutex);
-    // std::clog << "AssemblyCache::iterate_read_queue  readqueue size = " << _pimpl->_readqueue.size() << std::endl;
     if (! _readqueue.empty()) {
         ++n_iterate_reads;
+#ifdef DEBUG
         std::clog << "CoqAssemblyCache::iterate_read_queue  size of queue: " << _readqueue.size() << std::endl;
+#endif
         std::vector<lxr::ReadQueueEntity> rmatches = _readqueue;
         _readqueue.clear();
         return run_read_requests(rmatches);
@@ -459,9 +464,12 @@ std::vector<WriteQueueResult> CoqAssemblyCache::pimpl::run_write_requests(const 
             _writeenv.reset(new CoqEnvironmentWritable(_config));
             _writeenv->recreate_assembly();
         }
+        // std::cout << "run write request @ " << wreq._fpos << " for " << wreq._buffer->len() << std::endl;
+
         if (wreq._buffer) {
             std::pair<CoqEnvironment::rel_fname_fblocks, CoqEnvironment::rel_aid_keys> backup_result = _writeenv->backup(wreq._fhash.toHex(), wreq._fpos, *wreq._buffer, wreq._buffer->len());
             for (auto const & fb : backup_result.first) {
+                // std::clog << "   results on " << fb.first << " : " << fb.second.blocksize << " @ " << fb.second.filepos << std::endl;
                 _fblockstore->add(fb.first, fb.second);
             }
             for (auto const & ki : backup_result.second) {
@@ -500,7 +508,7 @@ std::vector<WriteQueueResult> CoqAssemblyCache::pimpl::iterate_write_queue()
             std::lock_guard<std::mutex> guard(_write_mutex);
             ++n_iterate_writes;
             // make a copy of the write queue
-            wq = std::move(_writequeue);
+            wq = _writequeue;
             _writequeue.clear();
         }
 
@@ -530,14 +538,15 @@ bool CoqAssemblyCache::enqueue_write_request(const WriteQueueEntity &wqe)
     return false;
 }
 
-bool CoqAssemblyCache::pimpl::enqueue_write_request(const WriteQueueEntity &wqe)
+bool CoqAssemblyCache::pimpl::enqueue_write_request(const WriteQueueEntity & wqe)
 {
     if (_writequeue.size() >= n_queuesz) {
         return false;
     } else {
         std::lock_guard<std::mutex> guard(_write_mutex);
+        // std::cout << "enqueue write request @ " << wqe._fpos << std::endl;
         ++n_write_requests;
-        _writequeue.push_back(std::move(wqe));
+        _writequeue.push_back(wqe);
     }
     return true;
 }

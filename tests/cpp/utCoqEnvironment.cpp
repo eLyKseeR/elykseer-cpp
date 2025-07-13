@@ -103,7 +103,7 @@ BOOST_AUTO_TEST_CASE( backup_restore_roundtrip )
     _renv.restore_assembly(_keys.value().first, _keys.value().second);
 
     // test restored bytes
-    lxr::CoqAssembly::BlockInformation bi = _fblockstore->at(0)->second.front();
+    lxr::CoqAssembly::BlockInformation bi = _fblockstore->at(0)->second->front();
     BOOST_CHECK_EQUAL(bi.blocksize, msg.length());
     std::shared_ptr<lxr::CoqBufferPlain> restored_block = _renv._assembly->restore(bi);
     char restored_buffer[bi.blocksize];

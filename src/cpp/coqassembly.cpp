@@ -25,6 +25,7 @@ module;
 #include <fstream>
 #include <iostream>
 #include <optional>
+#include <cstdint>
 #include <sstream>
 
 import lxr_key128;
@@ -118,12 +119,16 @@ CoqAssemblyPlainWritable::CoqAssemblyPlainWritable(const CoqConfiguration &c)
   // std::clog << "CoqAssemblyPlainWritable::CoqAssemblyPlainWritable(const CoqConfiguration &c)" << std::endl;
   const Nchunks& nchunks = c.nchunks();
   _buffer.reset(new CoqBufferPlain(assemblysize(nchunks)));
-  Key128 _rand128{false};
-  const char *r = (const char*)_rand128.bytes();
-  for (int i = 0; i < 16; i++) {
-    _buffer->at(idx2apos(i,nchunks), r[i]);
+  uint32_t idx = 0;
+  while (idx < nchunks.u()) {
+    Key128 _rand128{false};
+    const char *r = (const char*)_rand128.bytes();
+    for (int i = 0; i < 16; i++) {
+        _buffer->at(idx + i, r[i]);
+    }
+    idx += 16;
   }
-  _assemblyinformation._apos = 16;
+  _assemblyinformation._apos = 0;
   _assemblyinformation._nchunks = nchunks;
   mk_assembly_id();
 }
@@ -258,7 +263,7 @@ int CoqAssembly::apos() const
 
 int CoqAssembly::afree() const
 {
-    return assemblysize(_assemblyinformation._nchunks) - _assemblyinformation._apos;
+    return assemblysize(_assemblyinformation._nchunks) - _assemblyinformation._apos - _assemblyinformation._nchunks.u();
 }
 
 std::string CoqAssembly::aid() const
@@ -364,7 +369,7 @@ CoqAssembly::BlockInformation CoqAssemblyPlainWritable::backup(const CoqBufferPl
         // TODO parallelise !
         for (int i = 0; i < dlen; i++) {
             uint32_t apos = idx2apos(i + apos_n, nchunks);
-            _buffer->at(apos, b.at(i + offset));
+            _buffer->at(apos + nchunks.u(), b.at(i + offset));
         }
         _assemblyinformation._apos += dlen;
         return { 1, chksum.value(), dlen, 0,
@@ -502,7 +507,7 @@ std::shared_ptr<CoqBufferPlain> CoqAssemblyPlainFull::restore(const CoqAssembly:
     const Nchunks& nchunks = _config.nchunks();
     for (uint32_t idx = 0; idx < bi.blocksize; idx++) {
         uint32_t apos = idx2apos(idx + bi.blockapos, nchunks);
-        b->at(idx, _buffer->at(apos)); 
+        b->at(idx, _buffer->at(apos + nchunks.u())); 
     }
     return b;
 }

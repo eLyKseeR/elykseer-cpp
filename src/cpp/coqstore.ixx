@@ -20,7 +20,7 @@ module;
 
 #include <filesystem>
 #include <functional>
-// #include <memory>
+#include <memory>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -130,20 +130,20 @@ class CoqKeyStore : public CoqStore<CoqAssembly::KeyInformation, std::string>
         virtual void outStream(std::ostream & os) const override final;
         virtual void inStream(std::istream & ins) override final;
     private:
+        CoqKeyStore(CoqKeyStore const &) = delete;
         CoqKeyStore & operator=(CoqKeyStore const &) = delete;
 };
 
 
-class CoqFBlockStore : public CoqStore<std::vector<CoqAssembly::BlockInformation>, std::string>
+class CoqFBlockStore : public CoqStore<std::shared_ptr<std::vector<CoqAssembly::BlockInformation>>, std::string>
 {
     public:
         explicit CoqFBlockStore() : CoqStore() {}
-        bool add(const std::string &, const CoqAssembly::BlockInformation &);
+        virtual bool add(const std::string &, const CoqAssembly::BlockInformation &) final;
         virtual void outStream(std::ostream & os) const override final;
         virtual void inStream(std::istream & ins) override final;
     private:
-        virtual bool add(const std::string &, const std::vector<CoqAssembly::BlockInformation> &) override final
-            { return false; }
+        CoqFBlockStore(CoqFBlockStore const &) = delete;
         CoqFBlockStore & operator=(CoqFBlockStore const &) = delete;
 };
 
@@ -156,6 +156,7 @@ class CoqFInfoStore : public CoqStore<CoqFilesupport::FileInformation, std::stri
         virtual void outStream(std::ostream & os) const override final;
         virtual void inStream(std::istream & ins) override final;
     private:
+        CoqFInfoStore(CoqFInfoStore const &) = delete;
         CoqFInfoStore & operator=(CoqFInfoStore const &) = delete;
 };
 
