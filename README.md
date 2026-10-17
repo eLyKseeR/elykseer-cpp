@@ -37,6 +37,13 @@ cmake --fresh -DCMAKE_TOOLCHAIN_FILE=../support/Toolchain_Darwin_to_Windows.cmak
 ninja && ninja install/strip
 ```
 
+# contributing
+
+Contributions are welcome! Before submitting your first pull request, please review our
+[Contributor License Agreement](CLA.md) (CLA). The CLA allows us to maintain _eLyKseeR_ under a
+dual-licensing model (GPLv3 for open source use, with commercial licenses available for proprietary
+applications). It is the same for all eLyKseeR repositories. See [CONTRIBUTING.md](CONTRIBUTING.md) for how to sign.
+
 # copyright
 
 Copyright 2018-2025 by Alexander Diemand
