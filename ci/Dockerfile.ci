@@ -1,0 +1,69 @@
+# syntax=docker/dockerfile:1
+#
+# CI image for elykseer-cpp (used by .forgejo/workflows/CI-nix.yaml)
+#
+# contains:
+#   - a pinned nixpkgs, with the whole shell.nix environment already realised
+#   - nodejs (needed by actions/checkout and actions/cache;
+#     nodejs_20 is marked insecure (EOL) in nixos-25.05, 22 runs node20 actions)
+#   - the external dependencies (ext/Makefile: os-metrics, rapidcheck,
+#     elykseer-crypto with its own libgpg-error, libassuan, gpgme, cryptopp,
+#     openssl) prebuilt into /opt/elykseer/ext/Linux_<uname -m>
+#     (e.g. Linux_x86_64, Linux_aarch64)
+#
+# build with ci/build-ci-image.sh (it computes EXT_REVS and EXT_HASH)
+
+ARG NIX_IMAGE=nixos/nix:2.35.2
+FROM ${NIX_IMAGE}
+
+# nix cannot load its seccomp filter under qemu (cross-arch image builds)
+RUN echo "filter-syscalls = false" >> /etc/nix/nix.conf
+
+# nixos-25.05 (same as elykseer-crypto's CI image)
+ARG NIXPKGS_REV=ac62194c3917d5f474c1a844b6fd6da2db95077d
+
+# unpack the pinned nixpkgs into the store and make it the default <nixpkgs>
+RUN set -eux; \
+    p=$(nix-prefetch-url --unpack --print-path \
+        "https://github.com/NixOS/nixpkgs/archive/${NIXPKGS_REV}.tar.gz" | tail -1); \
+    nix-store --add-root /nix/var/nix/gcroots/nixpkgs --realise "$p"; \
+    ln -s "$p" /nixpkgs; \
+    test -f /nixpkgs/default.nix
+ENV NIX_PATH=nixpkgs=/nixpkgs
+
+# tools needed outside of nix-shell by the forgejo runner and actions
+# (git, tar, gzip, bash already come with the base image)
+RUN nix-env -iA nixpkgs.nodejs_22 nixpkgs.zstd \
+    && nix-collect-garbage -d
+
+WORKDIR /opt/elykseer
+
+# realise the build environment
+COPY shell.nix /opt/elykseer/shell.nix
+RUN nix-shell /opt/elykseer/shell.nix --run 'clang --version && cmake --version && gpg --version'
+
+# fetch the external sources at the pinned submodule commits
+# EXT_REVS: space separated list of <path>=<commit>, e.g. "ext/os-metrics=1b04e62..."
+# (ext/Makefile fetches elykseer-crypto's own submodules)
+ARG EXT_REVS
+ARG EXT_HASH
+COPY .gitmodules /opt/elykseer/.gitmodules
+COPY ext/Makefile ext/rapidcheck-cstdint.patch /opt/elykseer/ext/
+RUN set -eux; \
+    test -n "${EXT_REVS}" && test -n "${EXT_HASH}"; \
+    for pr in ${EXT_REVS}; do \
+        path=${pr%%=*}; rev=${pr#*=}; \
+        url=$(git config -f .gitmodules "submodule.${path}.url"); \
+        git clone --quiet "$url" "$path"; \
+        git -C "$path" checkout --quiet "$rev"; \
+    done
+
+# build them exactly like CI does, then drop the sources
+# (ext/Makefile installs into ext/$(uname -s)_$(uname -m), which matches CMake's EXT_PATH)
+RUN set -eux; \
+    target="$(uname -s)_$(uname -m)"; \
+    nix-shell /opt/elykseer/shell.nix --run 'make -C ext'; \
+    ls "ext/$target/lib/libelykseer-crypto.a" "ext/$target/lib/librapidcheck.a" \
+       "ext/$target/include/lxr/aes.ixx" "ext/$target/include/os-metrics.h"; \
+    find ext -mindepth 1 -maxdepth 1 ! -name "$target" -exec rm -rf {} +; \
+    echo "${EXT_HASH}" > /opt/elykseer/ext.hash

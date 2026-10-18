@@ -11,15 +11,19 @@ on:
   schedule:
     # random HH:MM to avoid a load spike on GitHub Actions at 00:00
     - cron: '42 16 * * *'
+
+permissions:
+  contents: read
+
 jobs:
   semgrep:
     name: semgrep/ci
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     env:
       SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
     container:
-      image: semgrep/semgrep
+      image: semgrep/semgrep@sha256:529ee8a277ec8adc5b534d7c74eea0a47e9de21d62852b6ba7ac6ba9566845c3
     if: (github.actor != 'dependabot[bot]')
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - run: semgrep ci

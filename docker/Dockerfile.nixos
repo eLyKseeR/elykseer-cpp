@@ -1,0 +1,9 @@
+# docker buildx build --platform linux/amd64,linux/arm64 --tag code.sbclab.net/elykseer/nixos:latest --tag code.sbclab.net/elykseer/nixos:1.0.0  --push -f Dockerfile.nixos .
+
+FROM nixos/nix:latest
+
+RUN echo 'filter-syscalls = false' >> /etc/nix/nix.conf
+RUN nix-channel --add https://channels.nixos.org/nixos-25.11 nixpkgs && nix-channel --update
+
+RUN mkdir -p /bin && \
+    ln -s $(which sleep) /bin/sleep

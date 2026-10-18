@@ -18,6 +18,7 @@ stdenv.mkDerivation rec {
         gcc
         llvmPackages_19.clang-tools
         llvmPackages_19.openmp
+        llvmPackages_19.llvm   # llvm-symbolizer for sanitizer reports
         lldb_19
         clang_19
         opam m4

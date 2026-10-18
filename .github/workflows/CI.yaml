@@ -5,76 +5,61 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+
 env:
-  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Debug
+  # same nixpkgs as ci/Dockerfile.ci (nixos-25.05)
+  NIXPKGS_REV: ac62194c3917d5f474c1a844b6fd6da2db95077d
 
 jobs:
   build:
-    # The CMake configure and build commands are platform agnostic and should work equally
-    # well on Windows or Mac.  You can convert this to a matrix build if you need
-    # cross-platform coverage.
-    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+    # the toolchain comes from shell.nix, exactly like in the forgejo CI image
+    # (that image lives in a private registry, so it is not used here)
     runs-on: ubuntu-latest
 
-    env:
-      CC: clang-19
-      CXX: clang++-19
-
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        submodules: false
 
-    - name: Install dependencies
-      run: |
-        sudo apt update
-        sudo apt-get -y install cmake ninja-build clang-19 clang-tools-19 cppcheck m4 busybox libdigest-sha3-perl libboost-all-dev libboost-contract-dev gettext pkg-config automake autoconf libtool texinfo
+    - uses: cachix/install-nix-action@448cde739abec1eaf0646249e3d25bb8d9bc7702 # v31.11.2
+      with:
+        nix_path: nixpkgs=https://github.com/NixOS/nixpkgs/archive/${{ env.NIXPKGS_REV }}.tar.gz
+
+    - name: realise build environment
+      run: nix-shell --run 'clang --version && cmake --version'
 
     - name: Update submodules
-      shell: bash
-      working-directory: ${{github.workspace}}/
-      run: |
-        mkdir -vp build
-        git submodule update --init
+      run: git submodule update --init
 
     - name: compute dependencies cache hash
       id: cache_hash
-      shell: bash
       run: |
-        HASH=$(sha256sum <(git submodule | cut -d ' ' -f 2) | cut -d ' ' -f 1)
+        HASH=$(ci/ext-hash.sh)
         echo "hash=$HASH" >> $GITHUB_OUTPUT
         echo "output: hash=$HASH"
+
     - name: cache dependencies
-      id: caching
-      uses: actions/cache@v4
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
-        key: ${{ steps.cache_hash.outputs.hash }}
+        key: ext-${{ runner.os }}-${{ runner.arch }}-${{ steps.cache_hash.outputs.hash }}
         path: |
           ext/Linux_*
-          ext/Darwin_*
-          ext/xWindows_*
 
     - name: Build dependencies
-      shell: bash
-      working-directory: ${{github.workspace}}/ext
-      run: make
-
-    - name: Configure CMake
-      shell: bash
-      working-directory: ${{github.workspace}}/build
-      run: cmake --fresh -GNinja -DCMAKE_BUILD_TYPE=$BUILD_TYPE ..
+      run: nix-shell --run 'ci/ci.sh deps'
 
     - name: Build
-      working-directory: ${{github.workspace}}/build
-      shell: bash
-      run: cmake --build . --config $BUILD_TYPE
+      run: nix-shell --run 'ci/ci.sh build'
 
-    - name: Test
-      working-directory: ${{github.workspace}}/build
-      shell: bash
-      # run: ctest
-      run: ./tests/cpp/utelykseer-cpp --report_level=detailed
+    - name: Test (unit tests, CLI smoke test)
+      run: nix-shell --run 'ci/ci.sh test'
+
+    - name: Build and test with ASan/UBSan
+      run: nix-shell --run 'ci/ci.sh asan'
 
     - name: Packaging
       working-directory: ${{github.workspace}}/build
-      shell: bash
-      run: cpack
+      run: nix-shell ../shell.nix --run cpack
