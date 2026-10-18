@@ -25,6 +25,15 @@ PUSH=${PUSH:-1}
 
 TAG="${TAGBASE}:${VTAG}"
 
+# EXT_HASH is computed from HEAD but the image is built from the working
+# tree: refuse if they differ, the image would never match in CI
+HASHED="shell.nix .gitmodules ext/Makefile ext/rapidcheck-cstdint.patch"
+if ! git diff --quiet HEAD -- ${HASHED}; then
+    echo "uncommitted changes in: $(git diff --name-only HEAD -- ${HASHED} | tr '\n' ' ')"
+    echo "commit them first, the CI image is matched against HEAD"
+    exit 1
+fi
+
 # the prebuilt deps only cover what ext/Makefile builds;
 # the header-only submodules are checked out by CI itself
 PREBUILT="ext/os-metrics ext/rapidcheck ext/elykseer-crypto"

@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       # built with ci/build-ci-image.sh
-      image: code.sbclab.net/elykseer/elykseer-cpp-ci:1.0.0
+      image: code.sbclab.net/elykseer/elykseer-cpp-ci:1.0.1
       options: >-
         --privileged
         --security-opt seccomp=unconfined
