@@ -23,6 +23,7 @@ module;
 #include <deque>
 #include <functional>
 #include <memory>
+#include <mutex>
 #include <iostream>
 #include <optional>
 #include <sstream>
