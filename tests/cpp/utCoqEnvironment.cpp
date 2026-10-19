@@ -164,9 +164,11 @@ BOOST_AUTO_TEST_CASE( finalise_fails_without_chunks )
     const std::string msg{"cannot be written"};
     lxr::CoqBufferPlain buffer(msg.length(), msg.c_str());
     _wenv.backup("file", 0, buffer, buffer.len());
-    std::filesystem::permissions(_config.path_chunks, std::filesystem::perms::owner_read | std::filesystem::perms::owner_exec);
+    // a regular file in place of the chunk directory: no chunk can be written
+    // (unlike missing write permissions, this also holds when running as root)
+    std::filesystem::remove(_config.path_chunks);
+    std::ofstream(_config.path_chunks) << "not a directory";
     auto _keys = _wenv.finalise_assembly();
-    std::filesystem::permissions(_config.path_chunks, std::filesystem::perms::owner_all);
     BOOST_CHECK(! _keys);
     BOOST_CHECK_EQUAL(1, _wenv.n_failed);
 }
