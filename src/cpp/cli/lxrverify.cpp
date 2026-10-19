@@ -22,6 +22,7 @@
 #include <fstream>
 #include <map>
 #include <string>
+#include <variant>
 #include <getopt.h>
 
 import lxr_coqassemblycache;

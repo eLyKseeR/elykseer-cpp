@@ -1,0 +1,6 @@
+# LeakSanitizer suppressions for ci/ci.sh asan
+#
+# elykseer-crypto's lxr::Gpg does not release its gpgme context, keys and
+# data buffers (seen in LXRbackup: gpgme_new, _gpgme_key_new, mem_write).
+# To be fixed in elykseer-crypto; remove this entry afterwards.
+leak:gpgme

@@ -1,0 +1,6 @@
+# build context for ci/Dockerfile.ci: only what it COPYs
+*
+!shell.nix
+!.gitmodules
+!ext/Makefile
+!ext/rapidcheck-cstdint.patch

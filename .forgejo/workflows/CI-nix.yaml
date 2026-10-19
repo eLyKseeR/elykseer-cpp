@@ -1,0 +1,73 @@
+name: Forgejo CI Testing
+on: [push]
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    container:
+      # built with ci/build-ci-image.sh
+      image: code.sbclab.net/elykseer/elykseer-cpp-ci:1.0.1
+      options: >-
+        --privileged
+        --security-opt seccomp=unconfined
+      credentials:
+        username: ci_elykseer
+        password: ${{ secrets.PAT }}
+      env:
+        DOCKER_TLS_CERTDIR: ""
+
+    steps:
+      - name: intro
+        run: |
+          echo "🎉 The job was automatically triggered by a ${{ forgejo.event_name }} event.";
+          echo "🐧 This job is now running on a ${{ runner.os }} server hosted by forgejo!";
+          echo "🔎 The name of your branch is ${{ forgejo.ref }} and your repository is ${{ forgejo.repository }}.";
+      - name: Check out repository code
+        uses: https://data.forgejo.org/actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          submodules: false
+      - name: use prebuilt dependencies from the CI image
+        id: prebuilt
+        shell: bash
+        run: |
+          HASH=$(ci/ext-hash.sh)
+          echo "hash=$HASH" >> $GITHUB_OUTPUT
+          EXT_TARGET="$(uname -s)_$(uname -m)"
+          if [ -d /opt/elykseer/ext/$EXT_TARGET ] && [ "$(cat /opt/elykseer/ext.hash 2>/dev/null)" = "$HASH" ]; then
+            ln -sfn /opt/elykseer/ext/$EXT_TARGET ext/$EXT_TARGET
+            echo "hit=true" >> $GITHUB_OUTPUT
+            echo "using prebuilt dependencies ($HASH)"
+          else
+            echo "hit=false" >> $GITHUB_OUTPUT
+            echo "CI image does not match ext/ ($HASH), building dependencies"
+          fi
+      - name: fetch submodules
+        run: |
+          if [ "${{ steps.prebuilt.outputs.hit }}" = "true" ]; then
+            # header-only sources; the prebuilt ones are in the image
+            git submodule update --init ext/date ext/sizebounded ext/stream-cpp ext/rapidcheck
+          else
+            git submodule update --init
+          fi
+      - name: cache dependencies
+        if: steps.prebuilt.outputs.hit != 'true'
+        uses: https://data.forgejo.org/actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          key: ext-${{ steps.prebuilt.outputs.hash }}
+          path: |
+            ext/Linux_*
+      - name: compile dependencies
+        if: steps.prebuilt.outputs.hit != 'true'
+        shell: nix-shell --run "{0}"
+        run: ci/ci.sh deps
+      - name: build project
+        shell: nix-shell --run "{0}"
+        run: ci/ci.sh build
+      - name: test project (unit tests, CLI smoke test)
+        shell: nix-shell --run "{0}"
+        run: ci/ci.sh test
+      - name: build and test with ASan/UBSan
+        shell: nix-shell --run "{0}"
+        run: ci/ci.sh asan
+      - run: echo "🍏 This job's status is ${{ job.status }}."
