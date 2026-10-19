@@ -2,7 +2,7 @@ module;
 /*
     eLyKseeR or LXR - cryptographic data archiving software
     https://github.com/eLyKseeR/elykseer-cpp
-    Copyright (C) 2018-2025 Alexander Diemand
+    Copyright (C) 2018-2026 Alexander Diemand
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -34,6 +34,8 @@ export namespace lxr {
 
 /*
 
+from elykseer-ml @ e6db580 (0.10.1), theories/Processor.v (outline):
+
 ```coq
 Module Export Processor.
 
@@ -45,9 +47,10 @@ Record processor : RecordProcessor :=
         }.
 
 Definition cache_sz : positive := 3.
+Definition block_sz := 32768.
 Definition prepare_processor (c : configuration) : processor
 
-Program Definition file_backup (this : processor) (fp : Filesystem.path) : (fileinformation * processor)
+Program Definition file_backup (find_fchecksum : string -> option string) (find_fblocks : string -> list blockinformation) (fp : Filesystem.path) : processor
 
 Program Definition directory_backup (this : processor) (fp : Filesystem.path) : processor
 
@@ -62,7 +65,7 @@ End Processor.
 class CoqProcessor
 {
     public:
-        static constexpr int block_sz = 37449;
+        static constexpr int block_sz = 32768;
         explicit CoqProcessor(const CoqConfiguration & c, const std::shared_ptr<CoqAssemblyCache> & cache);
         ~CoqProcessor();
         void close();

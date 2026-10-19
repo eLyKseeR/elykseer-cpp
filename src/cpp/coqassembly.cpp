@@ -2,7 +2,7 @@ module;
 /*
     eLyKseeR or LXR - cryptographic data archiving software
     https://github.com/eLyKseeR/elykseer-cpp
-    Copyright (C) 2018-2025 Alexander Diemand
+    Copyright (C) 2018-2026 Alexander Diemand
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,20 +20,16 @@ module;
 
 #include <algorithm>
 #include <cassert>
-#include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <optional>
 #include <cstdint>
-#include <sstream>
 
 import lxr_key128;
 import lxr_key256;
-import lxr_random;
 import lxr_sha3;
 
-import lxr_os;
 import lxr_coqbuffer;
 import lxr_coqconfiguration;
 import lxr_nchunks;
@@ -81,67 +77,82 @@ CoqAssembly::~CoqAssembly() = default;
 // create a distinct assembly id (256 bits)
 
 /*
+```coq
+Definition mkaid (c : configuration) : aid_t :=
+    Utilities.rnd256 (my_id c).
+```
+extracted to (theories/MakeML.v):
+```ocaml
+Extract Constant rnd256 =>
+   "
    function
-   x -> Elykseer_crypto.Random.with_rng (fun rng -> Elykseer_crypto.Random.random32 rng) |> string_of_int |>
+   x -> Elykseer_crypto.Key256.mk () |> Elykseer_crypto.Key256.to_hex |>
      String.cat x |>
-     String.cat (Unix.gethostname ()) |> String.cat (Unix.gettimeofday () |> string_of_float) |>
      Elykseer_crypto.Sha3_256.string
+   ".
+```
 */
+
+CoqAssembly::aid_t CoqAssembly::mk_aid(const std::string & my_id, const std::string & rnd_hex)
+{
+  return Sha3_256::hash(my_id + rnd_hex).toHex();
+}
 
 void CoqAssembly::mk_assembly_id()
 {
-  auto now = std::chrono::system_clock::now();
-  auto tstamp = std::chrono::system_clock::to_time_t(now);
-  std::stringstream ss;
-  ss << lxr::Random::rng().random() << _config.my_id << OS::hostname() << tstamp;
-  const std::string v{ss.str()};
-  const auto h = Sha3_256::hash(v).toHex();
-  // std::clog << "  mk_assembly_id: " << v << " => " << h << std::endl;
-  _assemblyinformation._aid = h;
+  const Key256 rnd{false};
+  _assemblyinformation._aid = mk_aid(_config.my_id, rnd.toHex());
 }
 
 // CoqAssemblyPlainWritable
 
 /*
 ```coq
-    Definition create (c : configuration) : H * B :=
+    Definition create (c : configuration) : assemblyinformation * B :=
         let chunks := config_nchunks c in
         let b := BufferPlain.buffer_create (chunksize_N * Nchunks.to_N chunks) in
-        let rb := Buffer.ranbuf128 tt in
-        let nb := BufferPlain.copy_sz_pos rb 0 16 b 0 in
-        (mkassembly chunks (Utilities.rnd256 (my_id c)) nb, b).
+        let rb := Cstdio.ranbuf128 tt in
+        (* header bytes: n_chunks - tag_len, at most the 128 random bytes available;
+           the tail of tag_len bytes holds the GCM tag *)
+        let nb := BufferPlain.copy_sz_pos rb 0 (N.min (Nchunks.to_N chunks - Cstdio.tag_len) 128) b 0 in
+        (mkassembly chunks (mkaid c) nb, b).
 ```
 */
 
 CoqAssemblyPlainWritable::CoqAssemblyPlainWritable(const CoqConfiguration &c)
+  : CoqAssemblyPlainWritable(c, "")
+{
+  mk_assembly_id();
+}
+
+CoqAssemblyPlainWritable::CoqAssemblyPlainWritable(const CoqConfiguration &c, const aid_t &aid)
   : CoqAssembly(c)
 {
-  // std::clog << "CoqAssemblyPlainWritable::CoqAssemblyPlainWritable(const CoqConfiguration &c)" << std::endl;
   const Nchunks& nchunks = c.nchunks();
   _buffer.reset(new CoqBufferPlain(assemblysize(nchunks)));
-  uint32_t idx = 0;
-  while (idx < nchunks.u()) {
-    Key128 _rand128{false};
-    const char *r = (const char*)_rand128.bytes();
-    for (int i = 0; i < 16; i++) {
+  // the random header is copied to the physical positions [0, h), like BufferPlain.copy_sz_pos
+  const uint32_t h = header_len(nchunks);
+  for (uint32_t idx = 0; idx < h; idx += 32) {
+    const Key256 _rand256{false};
+    const char *r = (const char*)_rand256.bytes();
+    for (uint32_t i = 0; i < 32 && idx + i < h; i++) {
         _buffer->at(idx + i, r[i]);
     }
-    idx += 16;
   }
-  _assemblyinformation._apos = 0;
+  _assemblyinformation._apos = h;
   _assemblyinformation._nchunks = nchunks;
-  mk_assembly_id();
+  _assemblyinformation._aid = aid;
 }
 
 CoqAssemblyPlainWritable::~CoqAssemblyPlainWritable() = default;
 
 /*
 ```coq
-    Definition create (c : configuration) :=
+    Definition create (c : configuration) : assemblyinformation * B :=
         let chunks := config_nchunks c in
         let sz := chunksize_N * Nchunks.to_N chunks in
         let b := BufferPlain.buffer_create sz in
-        (mkassembly chunks (Utilities.rnd256 (my_id c)) sz, b).
+        (mkassembly chunks (mkaid c) sz, b).
 ```
 */
 
@@ -173,10 +184,10 @@ CoqAssemblyPlainFull::~CoqAssemblyPlainFull() = default;
 
 /*
 ```coq
-    Definition create (c : configuration) : H * B :=
+    Definition create (c : configuration) : assemblyinformation * B :=
         let chunks := config_nchunks c in
         let b := BufferEncrypted.buffer_create (chunksize_N * Nchunks.to_N chunks) in
-        (mkassembly chunks (Utilities.rnd256 (my_id c)) 0, b).
+        (mkassembly chunks (mkaid c) 0, b).
 ```
 */
 
@@ -200,33 +211,45 @@ CoqAssemblyEncrypted::~CoqAssemblyEncrypted() = default;
 
 // compute file path of a chunk
 
+/*
+```ocaml
+Extract Constant chunk_identifier =>
+   "fun config aid cid ->
+      let s = (Configuration.my_id config) ^
+              (string_of_int (Conversion.p2i cid)) ^
+              aid in
+      Elykseer_crypto.Sha3_256.string s
+   ".
+
+Extract Constant chunk_identifier_path =>
+   "fun config aid cid -> let cident = chunk_identifier config aid cid in
+      let subd = Helper.mk_cid_subdir cident in
+      (Configuration.path_chunks config ^ ""/"" ^ subd ^ ""/"" ^ cident ^ "".lxr"")
+   ".
+```
+*/
+
+std::string CoqAssembly::chunk_identifier(const std::string & my_id, const aid_t & aid, const uint16_t cid)
+{
+    return Sha3_256::hash(my_id + std::to_string(cid) + aid).toHex();
+}
+
 std::optional<const std::filesystem::path> CoqAssembly::chunk_path(const uint16_t cnum, const aid_t aid) const {
-    std::stringstream ss;
-    ss << _config.my_id << aid << cnum;
-    const auto h = Sha3_256::hash(ss.str()).toHex();
+    const auto h = chunk_identifier(_config.my_id, aid, cnum);
     const int len = h.length();
     if (len != 64) {
         std::clog << "chunk_path |sha3_256| != 64 chars" << std::endl;
         return {};
     }
+    // <chunkpath>/<c63c64>/<c61c62>/<chunk id>.lxr
     std::filesystem::path fp = _config.path_chunks;
-    if (! std::filesystem::exists(fp)) {
-        std::filesystem::create_directory(fp);
-    }
-    char subdir[3];
-    subdir[0]=h[len-2];
-    subdir[1]=h[len-1];
-    subdir[2]='\0';
-    fp /= std::string(subdir,2);
-    if (! std::filesystem::exists(fp)) {
-        std::filesystem::create_directory(fp);
-    }
-    subdir[0]=h[len-4];
-    subdir[1]=h[len-3];
-    subdir[2]='\0';
-    fp /= std::string(subdir,2);
-    if (! std::filesystem::exists(fp)) {
-        std::filesystem::create_directory(fp);
+    fp /= h.substr(len-2, 2);
+    fp /= h.substr(len-4, 2);
+    std::error_code ec;
+    std::filesystem::create_directories(fp, ec);
+    if (ec) {
+        std::clog << "cannot create chunk directory " << fp.string() << ": " << ec.message() << std::endl;
+        return {};
     }
     (fp /= h) . replace_extension("lxr");
     return fp;
@@ -261,9 +284,19 @@ int CoqAssembly::apos() const
     return _assemblyinformation._apos;
 }
 
+/*
+```coq
+        (* data is striped over the chunks: logical position i is stored in chunk (i mod n) at
+           offset (i / n); the GCM tag occupies the last tag_len bytes of the last chunk, hence
+           the last tag_len rows (tag_len * n logical bytes) are not available for data *)
+        let nch := Nchunks.to_N e0.(econfig AB).(Configuration.config_nchunks) in
+        let afree := (Assembly.assemblysize e0.(econfig AB).(Configuration.config_nchunks)) - e0.(cur_assembly AB).(apos) - Cstdio.tag_len * nch in
+```
+*/
 int CoqAssembly::afree() const
 {
-    return assemblysize(_assemblyinformation._nchunks) - _assemblyinformation._apos - _assemblyinformation._nchunks.u();
+    const int free = (int)assemblysize(_assemblyinformation._nchunks) - (int)_assemblyinformation._apos - (int)(tag_len * _assemblyinformation._nchunks.u());
+    return std::max(0, free);
 }
 
 std::string CoqAssembly::aid() const
@@ -296,20 +329,25 @@ std::optional<const Key256> CoqAssemblyEncrypted::calc_checksum() const
 
 /*
 ```coq
-Program Definition decrypt (a : AssemblyEncrypted.H) (b : AssemblyEncrypted.B) (ki : keyinformation) : option (AssemblyPlainWritable.H * AssemblyPlainWritable.B) :=
-    let a' := set apos (const 0) a in
-    let bdec := Buffer.decrypt (id_buffer_t_from_enc b) (ivec ki) (pkey ki) in
-    let b' := id_assembly_plain_buffer_t_from_buf bdec in
-    Some (a', b').
+Program Definition decrypt (a : assemblyinformation) (b : AssemblyEncrypted.B) (ki : keyinformation) : option (assemblyinformation * AssemblyPlainFull.B) :=
+    let a' := set_apos a 0 in
+    (* fails if the key, the ivec, or the aid do not match, or the data was tampered with *)
+    match Cstdio.decrypt (id_buffer_t_from_enc b) (aid a) (ivec ki) (pkey ki) with
+    | None => None
+    | Some (_bsz, bdec) =>
+        let b' := id_assembly_plain_buffer_t_from_buf bdec in
+        Some (a', b')
+    end.
 ```
 */
 
 std::shared_ptr<CoqAssemblyPlainFull> CoqAssemblyEncrypted::decrypt(const CoqAssembly::KeyInformation & ki)
 {
-    auto newbuf = _buffer->decrypt(ki._ivec, ki._pkey);
-    auto res = std::make_shared<CoqAssemblyPlainFull>(this, newbuf);
+    if (! _buffer) { return nullptr; }
+    auto newbuf = _buffer->decrypt(ki._ivec, ki._pkey, _assemblyinformation._aid);
     _buffer.reset();
-    return res;
+    if (! newbuf) { return nullptr; }
+    return std::make_shared<CoqAssemblyPlainFull>(this, newbuf);
 }
 
 std::shared_ptr<CoqAssemblyPlainFull> CoqAssemblyPlainWritable::finish()
@@ -321,36 +359,40 @@ std::shared_ptr<CoqAssemblyPlainFull> CoqAssemblyPlainWritable::finish()
 
 /*
 ```coq
-Program Definition encrypt (a : AssemblyPlainFull.H) (b : AssemblyPlainFull.B) (ki : keyinformation) : option (AssemblyEncrypted.H * AssemblyEncrypted.B) :=
-    let a' := set apos (const (assemblysize (nchunks a))) a in
-    let benc  := Buffer.encrypt (id_buffer_t_from_full b) (ivec ki) (pkey ki) in
-    let b' := id_assembly_enc_buffer_t_from_buf benc in
-    Some (a', b').
+Program Definition encrypt (a : assemblyinformation) (b : AssemblyPlainFull.B) (ki : keyinformation) : option (assemblyinformation * AssemblyEncrypted.B) :=
+    let a' := set_apos a (assemblysize (nchunks a)) in
+    match Cstdio.encrypt (id_buffer_t_from_full b) (aid a) (ivec ki) (pkey ki) with
+    | None => None
+    | Some (_bsz, benc) =>
+        let b' := id_assembly_enc_buffer_t_from_buf benc in
+        Some (a', b')
+    end.
 ```
 */
 
 std::shared_ptr<CoqAssemblyEncrypted> CoqAssemblyPlainFull::encrypt(const CoqAssembly::KeyInformation & ki)
 {
-    auto newbuf = _buffer->encrypt(ki._ivec, ki._pkey);
-    auto res = std::make_shared<CoqAssemblyEncrypted>(this, newbuf);
+    if (! _buffer) { return nullptr; }
+    auto newbuf = _buffer->encrypt(ki._ivec, ki._pkey, _assemblyinformation._aid);
     _buffer.reset();
-    return res;
+    if (! newbuf) { return nullptr; }
+    return std::make_shared<CoqAssemblyEncrypted>(this, newbuf);
 }
 
 /*
 ```coq
-Program Definition backup (a : AssemblyPlainWritable.H) (b : AssemblyPlainWritable.B) (fpos : N) (content : BufferPlain.buffer_t) : (AssemblyPlainWritable.H * blockinformation) :=
-    let apos_n := apos a in
+Program Definition backup (a : assemblyinformation) (b : AssemblyPlainWritable.B) (fpos : N) (content : BufferPlain.buffer_t) : (assemblyinformation * blockinformation) :=
+    let apos_n := a.(apos) in
     let bsz := BufferPlain.buffer_len content in
     let chksum := calc_checksum content in
     let nwritten := assembly_add_content content bsz apos_n b in
     let bi := {| blockid   := 1
-               ; bchecksum := chksum
-               ; blocksize := nwritten
-               ; filepos   := fpos
-               ; blockaid  := aid a
-               ; blockapos := apos_n |} in
-    let a' := set apos (fun ap => ap + nwritten) a in
+            ; bchecksum := chksum
+            ; blocksize := nwritten
+            ; filepos   := fpos
+            ; blockaid  := aid a
+            ; blockapos := apos_n |} in
+    let a' := set_apos a (apos_n + nwritten) in
     (a', bi).
 ```
 */
@@ -364,12 +406,12 @@ CoqAssembly::BlockInformation CoqAssemblyPlainWritable::backup(const CoqBufferPl
     uint32_t apos_n = _assemblyinformation._apos;
     const Nchunks nchunks = _config.nchunks();
     if (dlen + offset > b.len()) { return {}; }
+    if (apos_n + dlen > assemblysize(nchunks)) { return {}; }
     auto const chksum = b.calc_checksum(offset, dlen);
     if (chksum) {
         // TODO parallelise !
-        for (int i = 0; i < dlen; i++) {
-            uint32_t apos = idx2apos(i + apos_n, nchunks);
-            _buffer->at(apos + nchunks.u(), b.at(i + offset));
+        for (uint32_t i = 0; i < dlen; i++) {
+            _buffer->at(idx2apos(i + apos_n, nchunks), b.at(i + offset));
         }
         _assemblyinformation._apos += dlen;
         return { 1, chksum.value(), dlen, 0,
@@ -380,14 +422,14 @@ CoqAssembly::BlockInformation CoqAssemblyPlainWritable::backup(const CoqBufferPl
 
 /*
 ```coq
-Program Definition extract (c : configuration) (a : AssemblyEncrypted.H) (b : AssemblyEncrypted.B) : N :=
+Program Definition extract (c : configuration) (a : assemblyinformation) (b : AssemblyEncrypted.B) : N :=
     let aid := aid a in
     let buf := id_buffer_t_from_enc b in
     List.fold_left
         ( fun nwritten cid =>
             let cpath := chunk_identifier_path c aid cid in
             let apos := chunksize_N * ((Conversion.pos2N cid) - 1) in
-            nwritten + ext_store_chunk_to_path cpath chunksize_N apos buf
+            nwritten + store_chunk_to_path cpath chunksize_N apos buf
         )
         (Utilities.make_list (nchunks a))
         0.
@@ -427,7 +469,7 @@ uint32_t CoqAssemblyEncrypted::extract()
 
 /*
 ```coq
-Program Definition recall (c : configuration) (a : AssemblyEncrypted.H) : option (AssemblyEncrypted.H * AssemblyEncrypted.B) :=
+Program Definition recall (c : configuration) (a : assemblyinformation) : option (assemblyinformation * AssemblyEncrypted.B) :=
     let cidlist := Utilities.make_list (nchunks a) in
     let b := BufferEncrypted.buffer_create (Conversion.pos2N (nchunks a) * chunksize_N) in
     let aid := aid a in
@@ -435,7 +477,7 @@ Program Definition recall (c : configuration) (a : AssemblyEncrypted.H) : option
     let nread := List.fold_left
                     (fun nread cid =>
                         let cpath := chunk_identifier_path c aid cid in
-                        match ext_load_chunk_from_path cpath with
+                        match load_chunk_from_path cpath with
                         | None => nread
                         | Some cb =>
                             let apos := chunksize_N * ((Conversion.pos2N cid) - 1) in
@@ -446,7 +488,7 @@ Program Definition recall (c : configuration) (a : AssemblyEncrypted.H) : option
                     )
                     cidlist
                     0 in
-    let a' := set apos (const nread) a in
+    let a' := set_apos a nread in
     let b' := id_enc_from_buffer_t b in
     if N.eqb nread blen
     then Some (a', b')
@@ -482,7 +524,12 @@ std::shared_ptr<CoqAssemblyEncrypted> CoqAssemblyEncrypted::recall(const CoqConf
             }
         }
     }
-    return std::move(newassembly);
+    if (nread != assemblysize(nchunks)) {
+        std::clog << "failed to recall assembly " << aid << ": read " << nread << " of " << assemblysize(nchunks) << " bytes" << std::endl;
+        return nullptr;
+    }
+    newassembly->_assemblyinformation._apos = nread;
+    return newassembly;
 }
 
 /*
@@ -503,11 +550,22 @@ Program Definition restore (b : AssemblyPlainFull.B) (bi : blockinformation) : o
 */
 std::shared_ptr<CoqBufferPlain> CoqAssemblyPlainFull::restore(const CoqAssembly::BlockInformation & bi) const
 {
-    std::shared_ptr<CoqBufferPlain> b{new CoqBufferPlain(bi.blocksize)};
     const Nchunks& nchunks = _config.nchunks();
+    if (! _buffer || bi.blocksize == 0 || (uint64_t)bi.blockapos + bi.blocksize > assemblysize(nchunks)) { return nullptr; }
+    std::shared_ptr<CoqBufferPlain> b{new CoqBufferPlain(bi.blocksize)};
     for (uint32_t idx = 0; idx < bi.blocksize; idx++) {
-        uint32_t apos = idx2apos(idx + bi.blockapos, nchunks);
-        b->at(idx, _buffer->at(apos + nchunks.u())); 
+        b->at(idx, _buffer->at(idx2apos(idx + bi.blockapos, nchunks)));
+    }
+    bool ok{false};
+    try {
+        auto const chksum = b->calc_checksum();
+        ok = chksum && chksum.value().toHex() == bi.bchecksum.toHex();
+    } catch (...) {
+        // no checksum given
+    }
+    if (! ok) {
+        std::clog << "block checksum differs in assembly " << bi.blockaid << " at " << bi.blockapos << std::endl;
+        return nullptr;
     }
     return b;
 }

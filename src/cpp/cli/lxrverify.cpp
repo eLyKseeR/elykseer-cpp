@@ -27,6 +27,7 @@
 
 import lxr_coqassemblycache;
 import lxr_coqconfiguration;
+import lxr_coqfilesupport;
 import lxr_coqprocessor;
 import lxr_coqstore;
 import lxr_filectrl;
@@ -35,7 +36,6 @@ import lxr_liz;
 import lxr_os;
 
 import lxr_gpg;
-import lxr_sha3;
 
 
 // options
@@ -86,7 +86,7 @@ void output_help() {
   std::cout << "--dry-run      just validate arguments" << std::endl;
   std::cout << "--nogpg        turn off decrypion of meta data using GnuPG" << std::endl;
   std::cout << "-x --pChunks   sets path for encrypted chunks" << std::endl;
-  std::cout << "-b --pDbFb     adds backup meta data dbfb (*)" << std::endl;
+  std::cout << "-b --pDbFb     adds backup meta data (files) (*)" << std::endl;
   std::cout << "-k --pKeys     adds backup encryption keys dbks (*)" << std::endl;
   std::cout << "-y --myid      sets unique identifier for this local instance" << std::endl;
   std::cout << "-f --file      file to be restored (*)" << std::endl;
@@ -244,8 +244,9 @@ int main (int argc, char * const argv[]) {
   int corr_files = 0;
   for (int i = 0; i < counter_files; i++) {
     //std::cout << "checking " << i << "  " << list_files[i] << std::endl;
-    auto const fhash = lxr::Sha3_256::hash(list_files[i]).toHex();
+    auto const fhash = lxr::CoqFilesupport::file_hash(list_files[i], _config.my_id);
     if (! _fblockstore->contains(fhash)) {
+      std::clog << "  cannot verify file '" << list_files[i] << "': no meta data found" << std::endl;
       list_files[i] = "";
       corr_files++;
     }
@@ -281,29 +282,29 @@ int main (int argc, char * const argv[]) {
   }
 
   // run program
-  bool res = true;
+  bool res = (corr_files == 0);
   for (int i = 0; i < counter_files; i++) {
     if (list_files[i] != "") {
-      auto const fhash = lxr::Sha3_256::hash(list_files[i]).toHex();
+      auto const fhash = lxr::CoqFilesupport::file_hash(list_files[i], _config.my_id);
       if (auto const fbs = _fblockstore->find(fhash); fbs) {
-          auto process_read_blocks = [&res](const std::vector<lxr::ReadQueueResult> & rqrs) {
+          uint32_t n_blocks{0}, n_blocks_ok{0};
+          // a block that fails its checksum has no result (_rresult == nullptr)
+          auto process_read_blocks = [&n_blocks_ok](const std::vector<lxr::ReadQueueResult> & rqrs) {
             for (auto const &rqr : rqrs) {
               if (rqr._rresult) {
-                // rqr._rresult->fileout_sz_pos(0, rqr._rresult->len(), tgt);
                 auto const optchksum = rqr._rresult->calc_checksum();
                 if (optchksum && optchksum.value().toHex() == rqr._readrequest._chksum.toHex()) {
-                  res &= true;
-                } else {
-                  res &= false;
+                  n_blocks_ok++;
                 }
               }
             }
           };
-          for (auto const bi : *(fbs.value())) {
+          for (auto const & bi : *(fbs.value())) {
             lxr::ReadQueueEntity rqe;
             rqe._aid = bi.blockaid; rqe._apos = bi.blockapos;
             rqe._rlen = bi.blocksize; rqe._fpos = bi.filepos;
             rqe._chksum = bi.bchecksum;
+            n_blocks++;
             std::clog << "   read request @" << bi.filepos << " in aid = " << bi.blockaid << std::endl;
             if (! qac->enqueue_read_request(rqe)) {
               process_read_blocks(qac->iterate_read_queue());
@@ -311,6 +312,10 @@ int main (int argc, char * const argv[]) {
             }
           }
           process_read_blocks(qac->iterate_read_queue());
+          if (n_blocks_ok != n_blocks) {
+            std::clog << "  failed to verify file '" << list_files[i] << "': " << (n_blocks - n_blocks_ok) << " of " << n_blocks << " blocks failed" << std::endl;
+            res = false;
+          }
       }
     }
   }

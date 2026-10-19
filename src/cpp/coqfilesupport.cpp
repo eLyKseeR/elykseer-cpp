@@ -2,7 +2,7 @@ module;
 /*
     eLyKseeR or LXR - cryptographic data archiving software
     https://github.com/eLyKseeR/elykseer-cpp
-    Copyright (C) 2018-2025 Alexander Diemand
+    Copyright (C) 2018-2026 Alexander Diemand
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -43,7 +43,12 @@ namespace lxr {
 
 typedef std::string filename;
 
-std::optional<CoqFilesupport::FileInformation> CoqFilesupport::get_file_information(const filename &fn) noexcept
+std::string CoqFilesupport::file_hash(const filename &fn, const std::string &my_id) noexcept
+{
+    return lxr::Sha3_256::hash(fn + my_id).toHex();
+}
+
+std::optional<CoqFilesupport::FileInformation> CoqFilesupport::get_file_information(const filename &fn, const std::string &my_id) noexcept
 {
     FileInformation fi;
 
@@ -51,6 +56,7 @@ std::optional<CoqFilesupport::FileInformation> CoqFilesupport::get_file_informat
     if (! std::filesystem::exists(fp)) { return {}; }
 
     fi.fname = fn;
+    fi.fhash = file_hash(fn, my_id);
     fi.fchecksum = lxr::Sha3_256::hash(fp).toHex();
 
     #if defined(PLATFORM_darwin) || defined(PLATFORM_freebsd)

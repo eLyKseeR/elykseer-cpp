@@ -2,7 +2,7 @@ module;
 /*
     eLyKseeR or LXR - cryptographic data archiving software
     https://github.com/eLyKseeR/elykseer-cpp
-    Copyright (C) 2018-2025 Alexander Diemand
+    Copyright (C) 2018-2026 Alexander Diemand
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ export module lxr_coqassemblycache;
 export namespace lxr {
 
 /*
-Coq defines data structures in module [Configuration](https://github.com/eLyKseeR/elykseer-ml/blob/main/theories/Configuration.v)
+from elykseer-ml @ e6db580 (0.10.1), theories/AssemblyCache.v:
 ```coq
 Record readqueueentity : Type :=
     mkreadqueueentity
@@ -59,11 +59,12 @@ Record writequeueentity : Type :=
         ; qfpos : N
         ; qbuffer : BufferPlain.buffer_t (* implicit write data size = buffer size *)
         }.
-Record writequeueresult : Type :=
+(* Record writequeueresult : Type :=
     mkwritequeueresult
-        { writerequest : writequeueentity
+        { writefhash : string
+        ; writefpos : N
         ; wresult : readqueueentity
-        }.
+        }. *)
 ```
 */
 
@@ -73,12 +74,14 @@ struct ReadQueueEntity
     uint32_t _apos;
     uint32_t _rlen;
     uint64_t _fpos;
+    // the block's checksum, verified when it is read
     Key256 _chksum{true};
 };
 
 struct ReadQueueResult
 {
     struct ReadQueueEntity _readrequest;
+    // nullptr if the block failed its checksum
     std::shared_ptr<CoqBufferPlain> _rresult{nullptr};
 };
 

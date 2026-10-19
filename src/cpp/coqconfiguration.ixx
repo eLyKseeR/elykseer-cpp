@@ -32,6 +32,8 @@ export namespace lxr {
 
 /*
 
+from elykseer-ml @ e6db580 (0.10.1), theories/Configuration.v:
+
 ```coq
 Module Export Configuration.
 
@@ -40,12 +42,14 @@ Record configuration : Type :=
         { config_nchunks : Nchunks.t
         ; path_chunks : string
         ; path_db : string
-        ; my_id : N
+        ; my_id : string
+        ; trace : Tracer.tracer
         }.
 
 End Configuration.
 ```
 
+   the tracer is not modelled; diagnostics go to std::clog.
 */
 
 struct CoqConfiguration
