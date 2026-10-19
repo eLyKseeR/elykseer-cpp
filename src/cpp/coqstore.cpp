@@ -2,7 +2,7 @@ module;
 /*
     eLyKseeR or LXR - cryptographic data archiving software
     https://github.com/eLyKseeR/elykseer-cpp
-    Copyright (C) 2018-2025 Alexander Diemand
+    Copyright (C) 2018-2026 Alexander Diemand
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -36,6 +36,7 @@ import lxr_coqconfiguration;
 import lxr_coqfilesupport;
 import lxr_liz;
 import lxr_os;
+import lxr_streamio;
 
 
 module lxr_coqstore;
@@ -138,31 +139,37 @@ void CoqStore<V,K>::reset()
 // Output encrypted
 // The entities in the store are output to an encrypted file. The encryption uses a key which is looked up in GnuPG for a specific recipient. Pass in the keys identifier.
 
-template <typename V, typename K>
-bool CoqStore<V,K>::encrypted_output(const std::filesystem::path &fp, const std::string & gpg_recipient) const
+bool encrypted_output(const StreamIO &sio, const std::filesystem::path &fp, const std::string & gpg_recipient)
 {
     lxr::Gpg gpg;
     if (! gpg.has_public_key(gpg_recipient)) {
         std::clog << "Error: cannot find PGP recipient's encryption key !" << std::endl;
         return false;
     }
-    outStream(gpg.ostream());
+    sio.outStream(gpg.ostream());
     auto _enc = gpg.encrypt_to_key(gpg_recipient);
     if (_enc) {
         std::ofstream _outf; _outf.open(fp.string());
         _outf << _enc.value();
         _outf.close();
-        return true;
+        return _outf.good();
     } else {
         std::clog << "Error: cannot encrypt Store !" << std::endl;
     }
     return false;
 }
 
+template <typename V, typename K>
+bool CoqStore<V,K>::encrypted_output(const std::filesystem::path &fp, const std::string & gpg_recipient) const
+{
+    return lxr::encrypted_output(*this, fp, gpg_recipient);
+}
+
 // add entries
 
 bool CoqKeyStore::add(const std::string &k, const CoqAssembly::KeyInformation &v)
 {
+    // never replace the key of an assembly
     if (_entries.contains(k)) { return false; }
     return CoqStore::add(k, v);
 }
@@ -173,7 +180,6 @@ bool CoqFBlockStore::add(const std::string &k, const CoqAssembly::BlockInformati
     auto it = _entries.find(k);
     if (it != _entries.end()) {
         entry.blockid = it->second->size() + 1;
-        // std::clog << "   new fblockstore entry " << entry.blockid  << " " << k << " : " << v.blocksize << " @ " << v.filepos << std::endl;
         it->second->push_back(entry);
     } else {
         entry.blockid = 1;
@@ -185,154 +191,200 @@ bool CoqFBlockStore::add(const std::string &k, const CoqAssembly::BlockInformati
 
 bool CoqFInfoStore::add(const std::string &k, const CoqFilesupport::FileInformation &v)
 {
-    if (_entries.contains(k)) { return false; }
+    // the newest entry replaces an existing one (Store.add)
     return CoqStore::add(k, v);
 }
 
-// Stream input/output functions
+// XML documents
 
-void CoqKeyStore::inStream(std::istream & ins)
+static std::string xml_escape(const std::string &s)
 {
-    boost::property_tree::ptree pt;
-    boost::property_tree::xml_parser::read_xml(ins, pt,
-      boost::property_tree::xml_parser::no_comments |
-      boost::property_tree::xml_parser::trim_whitespace);
-
-    for (auto root = pt.begin(); root != pt.end(); root++) {
-        if (root->first == "DbKey") {
-            for (auto k = root->second.begin(); k != root->second.end(); k++) {
-                if (k->first == "Key") {
-                    lxr::CoqAssembly::KeyInformation ki;
-                    std::string _aid = k->second.data();
-                    for (auto attr = k->second.begin(); attr != k->second.end(); attr++) {
-                        if (attr->first == "<xmlattr>") {
-                            ki._localnchunks = attr->second.get<int>("n");
-                            ki._ivec.fromHex(attr->second.get<std::string>("iv"));
-                            ki._pkey.fromHex(attr->second.get<std::string>("pk"));
-                        }
-                    }
-                    add(_aid, ki);
-                }
-            }
+    std::string r; r.reserve(s.size());
+    for (const char c : s) {
+        switch (c) {
+            case '&': r += "&amp;"; break;
+            case '<': r += "&lt;"; break;
+            case '>': r += "&gt;"; break;
+            case '"': r += "&quot;"; break;
+            case '\'': r += "&apos;"; break;
+            default: r += c;
         }
     }
+    return r;
 }
 
-void CoqFBlockStore::inStream(std::istream & ins)
+static boost::property_tree::ptree read_xml_document(std::istream & ins)
 {
     boost::property_tree::ptree pt;
     boost::property_tree::xml_parser::read_xml(ins, pt,
       boost::property_tree::xml_parser::no_comments |
       boost::property_tree::xml_parser::trim_whitespace);
-
-    for (auto root = pt.begin(); root != pt.end(); root++) {
-        if (root->first == "DbFBlock") {
-            for (auto fh = root->second.begin(); fh != root->second.end(); fh++) {
-                if (fh->first == "File") {
-                    std::shared_ptr<std::vector<lxr::CoqAssembly::BlockInformation>> bis {new std::vector<lxr::CoqAssembly::BlockInformation>()};
-                    std::string fhash{""};
-                    for (auto b = fh->second.begin(); b != fh->second.end(); b++) {
-                        if (b->first == "FBlock") {
-                            lxr::CoqAssembly::BlockInformation bi;
-                            bi.blockaid = b->second.data();
-                            for (auto attr = b->second.begin(); attr != b->second.end(); attr++) {
-                                if (attr->first == "<xmlattr>") {
-                                    bi.blockid = attr->second.get<int>("idx");
-                                    bi.blockapos = attr->second.get<uint32_t>("apos");
-                                    bi.filepos = attr->second.get<uint64_t>("fpos");
-                                    bi.blocksize = attr->second.get<uint32_t>("blen");
-                                    // bi. = attr->second.get<int>("clen");
-                                    // bi. = attr->second.get<int>("compressed");
-                                    bi.bchecksum.fromHex(attr->second.get<std::string>("chksum"));
-                                }
-                            }
-                            bis->push_back(bi);
-                        }
-                        else if (b->first == "<xmlattr>") {
-                            fhash = b->second.get<std::string>("fhash");
-                        }
-                    }
-                    if (fhash != "" && bis->size() > 0) {
-                        CoqStore::add(fhash, bis);
-                    }
-                }
-            }
-        }
-    }
+    return pt;
 }
 
-void CoqFInfoStore::inStream(std::istream & ins)
+static void warn_legacy(const std::string & root)
 {
-    boost::property_tree::ptree pt;
-    boost::property_tree::xml_parser::read_xml(ins, pt,
-      boost::property_tree::xml_parser::no_comments |
-      boost::property_tree::xml_parser::trim_whitespace);
-
-    for (auto root = pt.begin(); root != pt.end(); root++) {
-        if (root->first == "DbFInfo") {
-            for (auto entry = root->second.begin(); entry != root->second.end(); entry++) {
-                if (entry->first == "FInfo") {
-                    lxr::CoqFilesupport::FileInformation fi;
-                    std::string _fhash = entry->second.data();
-                    for (auto attr = entry->second.begin(); attr != entry->second.end(); attr++) {
-                        if (attr->first == "<xmlattr>") {
-                            fi.fname = attr->second.get<std::string>("fname");
-                            fi.fsize = attr->second.get<uint64_t>("fsize");
-                            fi.fowner = attr->second.get<std::string>("fowner");
-                            fi.fpermissions = attr->second.get<int>("fpermissions");
-                            fi.fmodified = attr->second.get<std::string>("fmodified");
-                            fi.fchecksum = attr->second.get<std::string>("fchecksum");
-                        }
-                    }
-                    add(_fhash, fi);
-                }
-            }
-        }
+    if (root == "DbKey" || root == "DbFBlock" || root == "DbFInfo") {
+        std::clog << "ignoring meta data <" << root << "> of elykseer-cpp < 5.0.0: archives in this format cannot be read by this version" << std::endl;
     }
 }
 
 static void outputHeader(std::ostream & os, const std::string & ty)
 {
-    os << "<?xml version=\"1.0\"?>" << std::endl;
-    os << "<" << ty << " xmlns=\"http://spec.elykseer.com/lxr/v1.0\">" << std::endl;
-    os << "  <library><name>" << Liz::name() << "</name><version>" << Liz::version() << "</version></library>" << std::endl;
-    os << "  <host>" << OS::hostname() << "</host>" << std::endl;
-    os << "  <user>" << OS::username() << "</user>" << std::endl;
-    os << "  <date>" << OS::timestamp() << "</date>" << std::endl;
+    os << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << std::endl;
+    os << "<!-- " << Liz::name() << " " << Liz::version() << " on " << xml_escape(OS::hostname()) << " at " << OS::timestamp() << " -->" << std::endl;
+    os << "<" << ty << ">" << std::endl;
+}
+
+// schema/keys.xsd
+
+void CoqKeyStore::inStream(std::istream & ins)
+{
+    auto const pt = read_xml_document(ins);
+    for (auto const & root : pt) {
+        warn_legacy(root.first);
+        if (root.first != "keys") { continue; }
+        for (auto const & k : root.second) {
+            if (k.first != "key") { continue; }
+            lxr::CoqAssembly::KeyInformation ki;
+            const std::string _aid = k.second.get<std::string>("<xmlattr>.aid", "");
+            ki._localnchunks = k.second.get<int>("<xmlattr>.nchunks", 16);
+            ki._version = k.second.get<std::string>("<xmlattr>.version", "");
+            ki._pkey.fromHex(k.second.get<std::string>("secret", ""));
+            ki._ivec.fromHex(k.second.get<std::string>("iv", ""));
+            if (! _aid.empty()) { add(_aid, ki); }
+        }
+    }
 }
 
 void CoqKeyStore::outStream(std::ostream & os) const
 {
-    outputHeader(os, "DbKey");
-
+    outputHeader(os, "keys");
     iterate([&os](const std::pair<std::string, lxr::CoqAssembly::KeyInformation> &p) {
-        os << "  <Key n=\"" << p.second._localnchunks.u() << "\" iv=\"" << p.second._ivec.toHex() << "\" pk=\"" << p.second._pkey.toHex() << "\">" << p.first << "</Key>" << std::endl;
+        os << "<key nchunks=\"" << p.second._localnchunks.u() << "\" version=\"" << xml_escape(p.second._version) << "\" aid=\"" << xml_escape(p.first) << "\">"
+           << "<secret>" << p.second._pkey.toHex() << "</secret><iv>" << p.second._ivec.toHex() << "</iv></key>" << std::endl;
     });
-    os << "</DbKey>" << std::endl;
+    os << "</keys>" << std::endl;
+}
+
+// schema/fileinformation.xsd
+
+static void read_files_document(std::istream & ins, CoqFInfoStore *finfostore, CoqFBlockStore *fblockstore)
+{
+    auto const pt = read_xml_document(ins);
+    for (auto const & root : pt) {
+        warn_legacy(root.first);
+        if (root.first != "files") { continue; }
+        for (auto const & entry : root.second) {
+            if (entry.first != "fileinformation") { continue; }
+            const std::string fhash = entry.second.get<std::string>("<xmlattr>.fhash", "");
+            if (fhash.empty()) { continue; }
+            if (finfostore && entry.second.get_child_optional("name")) {
+                lxr::CoqFilesupport::FileInformation fi;
+                fi.fname = entry.second.get<std::string>("name", "");
+                fi.fhash = fhash;
+                fi.fsize = entry.second.get<uint64_t>("size", 0);
+                fi.fowner = entry.second.get<std::string>("owner", "");
+                fi.fpermissions = entry.second.get<uint32_t>("permissions", 0);
+                fi.fmodified = entry.second.get<std::string>("modified", "");
+                fi.fchecksum = entry.second.get<std::string>("checksum", "");
+                finfostore->add(fhash, fi);
+            }
+            if (fblockstore) {
+                std::shared_ptr<std::vector<lxr::CoqAssembly::BlockInformation>> bis {new std::vector<lxr::CoqAssembly::BlockInformation>()};
+                if (auto const fbs = entry.second.get_child_optional("fileblocks"); fbs) {
+                    for (auto const & b : fbs.value()) {
+                        if (b.first != "fileblock") { continue; }
+                        lxr::CoqAssembly::BlockInformation bi;
+                        bi.blockid = b.second.get<int>("<xmlattr>.blockid", 0);
+                        bi.blocksize = b.second.get<uint32_t>("<xmlattr>.blocksize", 0);
+                        bi.filepos = b.second.get<uint64_t>("<xmlattr>.filepos", 0);
+                        bi.blockapos = b.second.get<uint32_t>("<xmlattr>.apos", 0);
+                        bi.blockaid = b.second.get<std::string>("aid", "");
+                        bi.bchecksum.fromHex(b.second.get<std::string>("checksum", ""));
+                        bis->push_back(bi);
+                    }
+                }
+                if (bis->size() > 0) {
+                    fblockstore->CoqStore::add(fhash, bis);
+                }
+            }
+        }
+    }
+}
+
+static void write_files_document(std::ostream & os, const CoqFInfoStore *finfostore, const CoqFBlockStore *fblockstore)
+{
+    outputHeader(os, "files");
+    auto write_entry = [&os, finfostore, fblockstore](const std::string & fhash) {
+        os << "<fileinformation version=\"" << CoqAssembly::format_version << "\" fhash=\"" << xml_escape(fhash) << "\">" << std::endl;
+        lxr::CoqFilesupport::FileInformation fi{};
+        if (finfostore) {
+            if (auto const ofi = finfostore->find(fhash); ofi) { fi = ofi.value(); }
+        }
+        os << "<name>" << xml_escape(fi.fname) << "</name>" << std::endl;
+        os << "<size>" << fi.fsize << "</size>" << std::endl;
+        os << "<owner>" << xml_escape(fi.fowner) << "</owner>" << std::endl;
+        os << "<permissions>" << fi.fpermissions << "</permissions>" << std::endl;
+        os << "<modified>" << xml_escape(fi.fmodified) << "</modified>" << std::endl;
+        os << "<checksum>" << xml_escape(fi.fchecksum) << "</checksum>" << std::endl;
+        os << "<fileblocks>" << std::endl;
+        if (fblockstore) {
+            if (auto const obis = fblockstore->find(fhash); obis) {
+                for (const auto & bi : *(obis.value())) {
+                    os << "<fileblock blockid=\"" << bi.blockid << "\" blocksize=\"" << bi.blocksize << "\" filepos=\"" << bi.filepos << "\" apos=\"" << bi.blockapos << "\">"
+                       << "<aid>" << xml_escape(bi.blockaid) << "</aid><checksum>" << bi.bchecksum.toHex() << "</checksum></fileblock>" << std::endl;
+                }
+            }
+        }
+        os << "</fileblocks>" << std::endl;
+        os << "</fileinformation>" << std::endl;
+    };
+    if (fblockstore) {
+        fblockstore->iterate([&write_entry](const std::pair<std::string, std::shared_ptr<std::vector<lxr::CoqAssembly::BlockInformation>>> &p) {
+            write_entry(p.first);
+        });
+    }
+    if (finfostore) {
+        finfostore->iterate([&write_entry, fblockstore](const std::pair<std::string, lxr::CoqFilesupport::FileInformation> &p) {
+            if (! fblockstore || ! fblockstore->contains(p.first)) { write_entry(p.first); }
+        });
+    }
+    os << "</files>" << std::endl;
+}
+
+void CoqFBlockStore::inStream(std::istream & ins)
+{
+    read_files_document(ins, nullptr, this);
 }
 
 void CoqFBlockStore::outStream(std::ostream & os) const
 {
-    outputHeader(os, "DbFBlock");
+    write_files_document(os, nullptr, this);
+}
 
-    iterate([&os](const std::pair<std::string, std::shared_ptr<std::vector<lxr::CoqAssembly::BlockInformation>>> &p) {
-        os << "  <File fhash=\"" << p.first << "\">" << std::endl;
-        for (const auto & bi : *(p.second)) {
-            os << "    <FBlock idx=\"" << bi.blockid << "\" apos=\"" << bi.blockapos << "\" fpos=\"" << bi.filepos << "\" blen=\"" << bi.blocksize << "\" clen=\"" << 0 << "\" compressed=\"" << 0 << "\" chksum=\"" << bi.bchecksum.toHex() << "\">" << bi.blockaid << "</FBlock>" << std::endl;
-        }
-        os << "  </File>" << std::endl;
-    });
-    os << "</DbFBlock>" << std::endl;
+void CoqFInfoStore::inStream(std::istream & ins)
+{
+    read_files_document(ins, this, nullptr);
 }
 
 void CoqFInfoStore::outStream(std::ostream & os) const
 {
-    outputHeader(os, "DbFInfo");
+    write_files_document(os, this, nullptr);
+}
 
-    iterate([&os](const std::pair<std::string, lxr::CoqFilesupport::FileInformation> &p) {
-        os << "    <FInfo fname=\"" << p.second.fname << "\" fsize=\"" << p.second.fsize << "\" fowner=\"" << p.second.fowner << "\" fpermissions=\"" << p.second.fpermissions << "\" fmodified=\"" << p.second.fmodified << "\" fchecksum=\"" << p.second.fchecksum << "\">" << p.first << "</FInfo>" << std::endl;
-    });
-    os << "</DbFInfo>" << std::endl;
+CoqFilesStream::CoqFilesStream(const std::shared_ptr<CoqFInfoStore> &fi, const std::shared_ptr<CoqFBlockStore> &fb)
+  : _finfostore(fi), _fblockstore(fb)
+{}
+
+void CoqFilesStream::inStream(std::istream & ins)
+{
+    read_files_document(ins, _finfostore.get(), _fblockstore.get());
+}
+
+void CoqFilesStream::outStream(std::ostream & os) const
+{
+    write_files_document(os, _finfostore.get(), _fblockstore.get());
 }
 
 // Template class instances

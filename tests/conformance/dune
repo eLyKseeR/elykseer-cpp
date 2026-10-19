@@ -1,0 +1,5 @@
+; built inside an elykseer-ml checkout by generate.sh
+(executable
+ (name gen_vectors)
+ (modules gen_vectors)
+ (libraries elykseer elykseer_base elykseer_crypto mlcpp_cstdio unix))

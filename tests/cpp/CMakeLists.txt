@@ -27,6 +27,7 @@ set(TEST_PRIVATE_SRCS
   utCoqAssemblyCache.cpp
   utCoqEnvironment.cpp
   utCoqStore.cpp
+  utConformance.cpp
   utLiz.cpp
   utMain.cpp
   utOS.cpp

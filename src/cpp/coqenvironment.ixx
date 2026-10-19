@@ -2,7 +2,7 @@ module;
 /*
     eLyKseeR or LXR - cryptographic data archiving software
     https://github.com/eLyKseeR/elykseer-cpp
-    Copyright (C) 2018-2025 Alexander Diemand
+    Copyright (C) 2018-2026 Alexander Diemand
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -34,6 +34,8 @@ export module lxr_coqenvironment;
 export namespace lxr {
 
 /*
+
+from elykseer-ml @ e6db580 (0.10.1), theories/Environment.v (excerpt):
 
 ```coq
 Module Export Environment.
@@ -116,6 +118,8 @@ class CoqEnvironmentWritable : public CoqEnvironment
         virtual std::optional<std::pair<CoqAssembly::aid_t,CoqAssembly::KeyInformation>> finalise_and_recreate_assembly() override final;
         virtual std::pair<rel_fname_fblocks, rel_aid_keys> backup(const std::string &fname, uint64_t fpos, const CoqBufferPlain &b, const uint32_t dlen) override final;
         std::shared_ptr<CoqAssemblyPlainWritable> _assembly{nullptr};
+        // number of non-empty assemblies that failed to be encrypted or extracted
+        uint32_t n_failed{0};
 
     private:
         virtual bool restore_assembly(const CoqAssembly::aid_t &aid, const CoqAssembly::KeyInformation & ki) override;

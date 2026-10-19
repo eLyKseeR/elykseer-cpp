@@ -2,7 +2,7 @@ module;
 /*
     eLyKseeR or LXR - cryptographic data archiving software
     https://github.com/eLyKseeR/elykseer-cpp
-    Copyright (C) 2018-2025 Alexander Diemand
+    Copyright (C) 2018-2026 Alexander Diemand
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,14 +21,17 @@ module;
 #include <algorithm>
 #include <iostream>
 #include <memory>
+#include <cstring>
 #include <optional>
 #include <stdint.h>
+#include <string>
 
 #include "sizebounded/sizebounded.hpp"
 #include "sizebounded/sizebounded.ipp"
 
 import lxr_sha3;
-import lxr_aes;
+import lxr_aes_gcm;
+import lxr_key96;
 import lxr_key128;
 import lxr_key256;
 
@@ -60,8 +63,8 @@ public:
     int to_buffer(int n, char *b) const;
     char at(uint32_t idx0) const { return _buffer[std::min(_len, idx0)]; }
     void at(uint32_t idx0, char v) { _buffer[std::min(_len, idx0)] = v; }
-    void encrypt_buffer(const Key128 &iv, const Key256 &pk);
-    void decrypt_buffer(const Key128 &iv, const Key256 &pk);
+    bool encrypt_buffer(const Key128 &iv, const Key256 &pk, const std::string &aad);
+    bool decrypt_buffer(const Key128 &iv, const Key256 &pk, const std::string &aad);
 
 private:
     pimpl(pimpl const &) = delete;
@@ -119,50 +122,56 @@ int CoqBuffer::pimpl::to_buffer(int n, char *b) const
     return n;
 }
 
-void CoqBuffer::pimpl::encrypt_buffer(const Key128 &iv, const Key256 &pk)
+// AES-256-GCM, compatible with elykseer-ml (Cstdio.encrypt/decrypt):
+// nonce = the first 96 bits of the ivec, aad = the aid, the tag is in the last tag_len bytes
+
+static Key96 nonce_from_ivec(const Key128 &iv)
 {
-    constexpr uint32_t datasz{4096};
-    AesEncrypt aesenc(pk, iv);
-    sizebounded<unsigned char, datasz> buf;
-    uint32_t n_encrypted{0};
-    int blen, plen;
-    while (n_encrypted <= _len) {
-        blen = std::min(_len - n_encrypted, datasz);
-        // copy blen@n_encrypted data into buf
-        std::memcpy((char*)buf.ptr(), _buffer+n_encrypted, blen);
-        if (blen < datasz) {
-            plen = aesenc.finish(blen, buf);
-        } else {
-            plen = aesenc.process(blen, buf);
-        }
-        // copy back plen bytes from buf to buffer@n_encrypted
-        std::memcpy(_buffer+n_encrypted, buf.ptr(), plen);
-        n_encrypted += blen;
-        if (blen == 0) break;
-    }
+    Key96 nonce{true};
+    nonce.fromBytes(iv.bytes());
+    return nonce;
 }
 
-void CoqBuffer::pimpl::decrypt_buffer(const Key128 &iv, const Key256 &pk)
+bool CoqBuffer::pimpl::encrypt_buffer(const Key128 &iv, const Key256 &pk, const std::string &aad)
 {
-    constexpr uint32_t datasz{4096};
-    AesDecrypt aesdec(pk, iv);
-    sizebounded<unsigned char, datasz> buf;
+    if (! _buffer || _len < CoqBuffer::tag_len) { return false; }
+    AesGcmEncrypt aesenc(pk, nonce_from_ivec(iv));
+    if (! aesenc.aad((unsigned char const*)aad.data(), aad.size())) { return false; }
+    sizebounded<unsigned char, AesGcm::datasz> buf;
+    const uint32_t dlen = _len - CoqBuffer::tag_len;
     uint32_t n_encrypted{0};
-    int blen, plen;
-    while (n_encrypted <= _len) {
-        blen = std::min(_len - n_encrypted, datasz);
-        // copy blen@n_encrypted data into buf
+    while (n_encrypted < dlen) {
+        const int blen = std::min(dlen - n_encrypted, AesGcm::datasz);
         std::memcpy((char*)buf.ptr(), _buffer+n_encrypted, blen);
-        if (blen < datasz) {
-            plen = aesdec.finish(blen, buf);
-        } else {
-            plen = aesdec.process(blen, buf);
-        }
-        // copy back plen bytes from buf to buffer@n_encrypted
-        std::memcpy(_buffer+n_encrypted, buf.ptr(), plen);
+        if (aesenc.process(blen, buf) != blen) { return false; }
+        std::memcpy(_buffer+n_encrypted, buf.ptr(), blen);
         n_encrypted += blen;
-        if (blen == 0) break;
     }
+    if (aesenc.finish(0, buf) < 0) { return false; }
+    return aesenc.tag((unsigned char*)_buffer + dlen);
+}
+
+bool CoqBuffer::pimpl::decrypt_buffer(const Key128 &iv, const Key256 &pk, const std::string &aad)
+{
+    if (! _buffer || _len < CoqBuffer::tag_len) { return false; }
+    AesGcmDecrypt aesdec(pk, nonce_from_ivec(iv));
+    const uint32_t dlen = _len - CoqBuffer::tag_len;
+    if (! aesdec.aad((unsigned char const*)aad.data(), aad.size())) { return false; }
+    if (! aesdec.tag((unsigned char const*)_buffer + dlen)) { return false; }
+    sizebounded<unsigned char, AesGcm::datasz> buf;
+    uint32_t n_decrypted{0};
+    bool ok{true};
+    while (ok && n_decrypted < dlen) {
+        const int blen = std::min(dlen - n_decrypted, AesGcm::datasz);
+        std::memcpy((char*)buf.ptr(), _buffer+n_decrypted, blen);
+        if (aesdec.process(blen, buf) != blen) { ok = false; break; }
+        std::memcpy(_buffer+n_decrypted, buf.ptr(), blen);
+        n_decrypted += blen;
+    }
+    if (ok && aesdec.finish(0, buf) >= 0) { return true; }
+    // the plaintext is not authenticated: discard it
+    std::memset(_buffer, 0, _len);
+    return false;
 }
 
 CoqBuffer::CoqBuffer(int n)
@@ -297,20 +306,18 @@ int CoqBuffer::to_buffer(int n, char *b) const
 
 // buffer encryption
 
-std::shared_ptr<CoqBufferEncrypted> CoqBufferPlain::encrypt(const Key128 &iv, const Key256 &key)
+std::shared_ptr<CoqBufferEncrypted> CoqBufferPlain::encrypt(const Key128 &iv, const Key256 &key, const std::string &aad)
 {
-    if (_pimpl) {
-        _pimpl->encrypt_buffer(iv, key);
+    if (_pimpl && _pimpl->encrypt_buffer(iv, key, aad)) {
         return std::make_shared<CoqBufferEncrypted>(this, std::move(_pimpl));
     } else {
         return nullptr;
     }
 }
 
-std::shared_ptr<CoqBufferPlain> CoqBufferEncrypted::decrypt(const Key128 &iv, const Key256 &key)
+std::shared_ptr<CoqBufferPlain> CoqBufferEncrypted::decrypt(const Key128 &iv, const Key256 &key, const std::string &aad)
 {
-    if (_pimpl) {
-        _pimpl->decrypt_buffer(iv, key);
+    if (_pimpl && _pimpl->decrypt_buffer(iv, key, aad)) {
         return std::make_shared<CoqBufferPlain>(this, std::move(_pimpl));
     } else {
         return nullptr;

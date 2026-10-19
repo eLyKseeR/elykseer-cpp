@@ -57,6 +57,9 @@ jobs:
     - name: Test (unit tests, CLI smoke test)
       run: nix-shell --run 'ci/ci.sh test'
 
+    - name: Conformance with elykseer-ml (docker image)
+      run: nix-shell --run 'tests/conformance/check-elykseer-ml.sh build'
+
     - name: Build and test with ASan/UBSan
       run: nix-shell --run 'ci/ci.sh asan'
 

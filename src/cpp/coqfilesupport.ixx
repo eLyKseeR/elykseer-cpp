@@ -2,7 +2,7 @@ module;
 /*
     eLyKseeR or LXR - cryptographic data archiving software
     https://github.com/eLyKseeR/elykseer-cpp
-    Copyright (C) 2018-2025 Alexander Diemand
+    Copyright (C) 2018-2026 Alexander Diemand
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,11 +32,14 @@ export namespace lxr {
 
 /*
 
+from elykseer-ml @ e6db580 (0.10.1), theories/Filesupport.v:
+
 ```coq
 Definition filename := string.
 
 Record fileinformation : Type := mkfileinformation
      { fname : filename
+     ; fhash : string
      ; fsize : N
      ; fowner : string
      ; fpermissions : N
@@ -44,9 +47,10 @@ Record fileinformation : Type := mkfileinformation
      ; fchecksum : string
      }.
 
-Axiom get_file_information : filename -> fileinformation.
-
+Axiom get_file_information : configuration -> filename -> fileinformation.
 ```
+
+extracted to (theories/MakeML.v): fhash = Elykseer_crypto.Sha3_256.string (fn ^ c.my_id)
 */
 
 
@@ -58,6 +62,7 @@ class CoqFilesupport
         struct FileInformation
         {
             filename fname;
+            std::string fhash;
             uint64_t fsize;
             std::string fowner;
             uint32_t fpermissions;
@@ -65,7 +70,9 @@ class CoqFilesupport
             std::string fchecksum;
         };
 
-        static std::optional<struct FileInformation> get_file_information(const filename &) noexcept;
+        // fhash = sha3_256(fname ^ my_id)
+        static std::string file_hash(const filename &, const std::string & my_id) noexcept;
+        static std::optional<struct FileInformation> get_file_information(const filename &, const std::string & my_id) noexcept;
     private:
         CoqFilesupport() {}
         CoqFilesupport(const CoqFilesupport &) = delete;

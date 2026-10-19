@@ -2,7 +2,7 @@ module;
 /*
     eLyKseeR or LXR - cryptographic data archiving software
     https://github.com/eLyKseeR/elykseer-cpp
-    Copyright (C) 2018-2025 Alexander Diemand
+    Copyright (C) 2018-2026 Alexander Diemand
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -45,6 +45,7 @@ namespace lxr {
 // Private implementation
 
 /*
+from elykseer-ml @ e6db580 (0.10.1), theories/AssemblyCache.v:
 ```coq
 Record assemblycache : Type :=
     mkassemblycache
@@ -63,6 +64,8 @@ Record assemblycache : Type :=
             (* ^ file block store *)
         ; ackstore : KeyListStore.R
             (* ^ assembly key store *)
+        ; acfistore : FileinformationStore.R
+            (* ^ fileinformation store *)
         }.
 
 Definition prepare_assemblycache (c : configuration) (size : positive) : assemblycache :=
@@ -74,6 +77,7 @@ Definition prepare_assemblycache (c : configuration) (size : positive) : assembl
      ; acreadq := (mkreadqueue nil qsize)
      ; acfbstore := FBlockListStore.init c
      ; ackstore := KeyListStore.init c
+     ; acfistore := FileinformationStore.init c
     |}.
 ```
 */
@@ -229,10 +233,8 @@ Program Definition set_envs (ac0 : assemblycache) (envs : list EnvironmentReadab
     {| acenvs := envs; acsize := ac0.(acsize);
        acwriteenv := ac0.(acwriteenv); acconfig := ac0.(acconfig);
        acreadq := ac0.(acreadq); acwriteq := ac0.(acwriteq);
-       acfbstore := ac0.(acfbstore); ackstore := ac0.(ackstore) |}.
+       acfbstore := ac0.(acfbstore); ackstore := ac0.(ackstore); acfistore := ac0.(acfistore) |}.
 
-(* ensure that an environment with assembly (by aid) is available
-   and that it is in the head position of the list of envs *)
 Program Definition ensure_assembly (ac0 : assemblycache) (sel_aid : Assembly.aid_t) : option (EnvironmentReadable.E * assemblycache) :=
     match ac0.(acenvs) with
     | nil => (* create first env *)
@@ -293,39 +295,29 @@ CoqAssemblyCache::pimpl::try_restore_assembly(const CoqAssembly::aid_t & sel_aid
 std::optional<std::shared_ptr<CoqEnvironmentReadable>>
 CoqAssemblyCache::pimpl::ensure_assembly(const CoqAssembly::aid_t & sel_aid)
 {
-    auto match_aid = [&sel_aid](std::shared_ptr<CoqEnvironmentReadable> const & env) { return env->_assembly && env->_assembly->aid() == sel_aid; };
-    auto found = std::ranges::find_if(_readenvs.begin(), _readenvs.end(), match_aid);
+    auto match_aid = [&sel_aid](std::shared_ptr<CoqEnvironmentReadable> const & env) { return env && env->_assembly && env->_assembly->aid() == sel_aid; };
+    auto found = std::ranges::find_if(_readenvs, match_aid);
     if (found != _readenvs.end()) {
+        // found the aid, move it to the front if not so already
+        auto head = *found;
         if (found != _readenvs.begin()) {
-            // found the aid, move it to the front if not so already
-            auto head = *found;
-            _readenvs.erase(std::remove_if(_readenvs.begin(), _readenvs.end(), match_aid));
+            _readenvs.erase(found);
             _readenvs.push_front(head);
         }
-        // std::clog << "    found " << sel_aid << std::endl;
-        return *found;
+        return head;
     }
 
-    auto n_envs = _readenvs.size();
-    if (n_envs < n_readenvs) {
-        // std::clog << "    free positions in _readenvs" << std::endl;
-    } else {
-        // std::clog << "    replace env in _readenvs" << std::endl;
-        // drop last
-        _readenvs.pop_back();
-    }
-
-    // push new to front
     auto new_env = try_restore_assembly(sel_aid);
-    if (new_env) {
-        // std::clog << "    new env " << sel_aid << std::endl;
-        _readenvs.push_front(new_env.value());
-        return new_env.value();
-    } else {
+    if (! new_env) {
         std::clog << "    failed to restore! " << sel_aid << std::endl;
         return {};
     }
-    return {};
+    // only evict an environment after a successful restore
+    if (_readenvs.size() >= n_readenvs && ! _readenvs.empty()) {
+        _readenvs.pop_back();
+    }
+    _readenvs.push_front(new_env.value());
+    return new_env;
 }
 
 // Read request queue
@@ -335,37 +327,39 @@ Program Fixpoint run_read_requests (ac0 : assemblycache) (reqs : list readqueuee
     match reqs with
     | nil => (res, ac0)
     | h :: r =>
-        let aid := h.(qaid) in
+        let aid := h.(rqaid) in
         match ensure_assembly ac0 aid with
         | None => (res, ac0)
         | Some (env, ac1) =>
-            let buf := BufferPlain.buffer_create h.(qrlen) in
-            let _ := assembly_get_content env.(cur_buffer AssemblyPlainFull.B) h.(qrlen) h.(qapos) buf in
-            run_read_requests ac1 r ({| readrequest := h; rresult := buf |} :: res)
+            let buf := BufferPlain.buffer_create h.(rqrlen) in
+            let n := assembly_get_content env.(cur_buffer AssemblyPlainFull.B) h.(rqrlen) h.(rqapos) buf in
+            let res' := if N.ltb 0 n then {| readrequest := h; rresult := buf |} :: res else res in
+            run_read_requests ac1 r res'
         end
     end.
 ```
+   differences: the block's checksum (_chksum) is verified; a block that fails the check
+   is returned with _rresult == nullptr. Stops at the first assembly that cannot be restored,
+   the remaining requests have no result.
 */
 std::vector<ReadQueueResult> CoqAssemblyCache::pimpl::run_read_requests(const std::vector<ReadQueueEntity> & rreqs)
 {
     std::vector<ReadQueueResult> results{};
     // TODO parallelise
     for (auto const & rreq : rreqs) {
-        auto const &_aid = rreq._aid;
-        ensure_assembly(rreq._aid);
+        auto const renv = ensure_assembly(rreq._aid);
+        if (! renv || ! renv.value()->_assembly) { break; }
         lxr::CoqAssembly::BlockInformation bi;
         bi.blockid = 1; bi.blocksize = rreq._rlen; bi.blockaid = rreq._aid; bi.blockapos = rreq._apos;
-        if (auto const &_renv = _readenvs.front(); _renv->_assembly) {
-            std::shared_ptr<lxr::CoqBufferPlain> restored_block = _renv->_assembly->restore(bi);
-            restored_bytes += restored_block->len();
-            lxr::ReadQueueResult rres;
-            rres._readrequest = rreq;
-            rres._rresult = restored_block;
-            { // protected:
-                results.push_back(rres);
-                ++n_read_requests;
-            }
+        bi.bchecksum = rreq._chksum;
+        lxr::ReadQueueResult rres;
+        rres._readrequest = rreq;
+        rres._rresult = renv.value()->_assembly->restore(bi);
+        if (rres._rresult) {
+            restored_bytes += rres._rresult->len();
         }
+        results.push_back(rres);
+        ++n_read_requests;
     }
     return results;
 }
@@ -375,13 +369,11 @@ std::vector<ReadQueueResult> CoqAssemblyCache::pimpl::run_read_requests(const st
 Program Definition iterate_read_queue (ac0 : assemblycache) : (list readqueueresult * assemblycache) :=
     match rqueue ac0.(acreadq) with
     | nil => (nil, ac0)
-    | h :: r =>
-        let aid := h.(qaid) in
-        let sel := List.filter (fun e => String.eqb e.(qaid) aid) r in
+    | rq =>
         let ac1 := {| acenvs := ac0.(acenvs); acsize := ac0.(acsize); acwriteenv := ac0.(acwriteenv); acconfig := ac0.(acconfig);
-                      acreadq := {| rqueue := List.filter (fun e => negb (String.eqb e.(qaid) aid)) r; rqueuesz := ac0.(acreadq).(rqueuesz) |};
-                      acwriteq := ac0.(acwriteq)|} in
-        run_read_requests ac1 (h :: sel) nil
+                      acreadq := {| rqueue := nil; rqueuesz := ac0.(acreadq).(rqueuesz) |};
+                      acwriteq := ac0.(acwriteq); acfbstore := ac0.(acfbstore); ackstore := ac0.(ackstore); acfistore := ac0.(acfistore) |} in
+        run_read_requests ac1 rq nil
     end.
 ```
 */
@@ -412,13 +404,15 @@ std::vector<ReadQueueResult> CoqAssemblyCache::pimpl::iterate_read_queue()
 /*
 ```coq
 Program Definition enqueue_read_request (ac : assemblycache) (req : readqueueentity) : (bool * assemblycache) :=
-    let ln := List.length (rqueue ac.(acreadq)) in
+    let rq := rqueue ac.(acreadq) in
+    let ln := List.length rq in
     if N.leb (pos2N qsize) (nat2N ln) then
         (false, ac)
     else
         (true, {| acenvs := ac.(acenvs); acsize := ac.(acsize); acwriteenv := ac.(acwriteenv); acconfig := ac.(acconfig);
-                  acreadq := {| rqueue := List.app (rqueue ac.(acreadq)) (req :: nil); rqueuesz := rqueuesz ac.(acreadq) |};
-                  acwriteq := ac.(acwriteq)  |}).
+                  acreadq := {| rqueue := req :: rq; rqueuesz := rqueuesz ac.(acreadq) |};
+                  acwriteq := ac.(acwriteq);
+                  acfbstore := ac.(acfbstore); ackstore := ac.(ackstore); acfistore := ac.(acfistore)  |}).
 ```
 */
 bool CoqAssemblyCache::enqueue_read_request(const ReadQueueEntity &rqe)
@@ -444,18 +438,26 @@ bool CoqAssemblyCache::pimpl::enqueue_read_request(const ReadQueueEntity &rqe)
 // Write request queue
 /*
 ```coq
-Program Fixpoint run_write_requests (ac0 : assemblycache) (reqs : list writequeueentity) (res : list writequeueresult)
-                                  : (list writequeueresult * assemblycache) :=
+Program Fixpoint run_write_requests (ac0 : assemblycache) (reqs : list writequeueentity)
+                                  : assemblycache :=
     match reqs with
-    | nil => (res, ac0)
+    | nil => ac0
     | h :: r =>
-        let env := EnvironmentWritable.backup ac0.(acwriteenv) h.(qfhash) h.(qfpos) h.(qbuffer) in
+        let fhash := h.(qfhash) in
+        let fpos := h.(qfpos) in
+        let '(env, (bi, kis)) := EnvironmentWritable.backup ac0.(acwriteenv) fhash fpos h.(qbuffer) in
+        let ackstore' := match kis with
+                        | None => ac0.(ackstore)
+                        | Some (aid, ki) => KeyListStore.add aid ki ac0.(ackstore)
+                        end in
         let ac1 := {| acenvs := ac0.(acenvs); acsize := ac0.(acsize); acwriteenv := env; acconfig := ac0.(acconfig);
-                      acreadq := ac0.(acreadq); acwriteq := {| wqueue := nil; wqueuesz := wqueuesz ac0.(acwriteq) |} |} in
-        run_write_requests ac1 r ({| writerequest := h;
-                                     wresult := {| qaid := env.(cur_assembly AssemblyPlainWritable.B).(aid); qapos := env.(cur_assembly AssemblyPlainWritable.B).(apos);
-                                                   qrlen := buffer_len h.(qbuffer) |} |} :: res)
-    end.
+                    acreadq := ac0.(acreadq); acwriteq := {| wqueue := nil; wqueuesz := ac0.(acwriteq).(wqueuesz) |};
+                    acfbstore := FBlockListStore.add fhash bi ac0.(acfbstore);
+                    ackstore := ackstore'; acfistore := ac0.(acfistore) |} in
+        (* let wres := {| rqaid := env.(cur_assembly AssemblyPlainWritable.B).(aid);
+                    rqapos := bi.(blockapos);
+                    rqrlen := buffer_len h.(qbuffer);
+                    rqfpos := fpos |} in *)
 ```
 */
 std::vector<WriteQueueResult> CoqAssemblyCache::pimpl::run_write_requests(const std::vector<WriteQueueEntity> & wreqs)
@@ -484,13 +486,14 @@ std::vector<WriteQueueResult> CoqAssemblyCache::pimpl::run_write_requests(const 
 
 /*
 ```coq
-Program Definition iterate_write_queue (ac0 : assemblycache) : (list writequeueresult * assemblycache) :=
-    match wqueue ac0.(acwriteq) with
-    | nil => (nil, ac0)
-    | h :: r =>
-        let ac1 := {| acenvs := ac0.(acenvs); acsize := ac0.(acsize); acwriteenv := ac0.(acwriteenv); acconfig := ac0.(acconfig);
-                      acreadq := ac0.(acreadq); acwriteq := {| wqueue := nil; wqueuesz := wqueuesz ac0.(acwriteq) |} |} in
-        run_write_requests ac1 (h :: r) nil
+Program Definition iterate_write_queue (ac0 : assemblycache) : assemblycache :=
+    match ac0.(acwriteq).(wqueue) with
+    | nil => ac0
+    | wq =>
+        (* let ac1 := {| acenvs := ac0.(acenvs); acsize := ac0.(acsize); acwriteenv := ac0.(acwriteenv); acconfig := ac0.(acconfig);
+                      acreadq := ac0.(acreadq); acwriteq := {| wqueue := nil; wqueuesz := ac0.(acwriteq).(wqueuesz) |};
+                      acfbstore := ac0.(acfbstore); ackstore := ac0.(ackstore); acfistore := ac0.(acfistore) |} in *)
+        run_write_requests ac0 wq
     end.
 ```
 */
@@ -522,13 +525,15 @@ std::vector<WriteQueueResult> CoqAssemblyCache::pimpl::iterate_write_queue()
 /*
 ```coq
 Program Definition enqueue_write_request (ac : assemblycache) (req : writequeueentity) : (bool * assemblycache) :=
-    let ln := List.length (wqueue ac.(acwriteq)) in
+    let wq := wqueue ac.(acwriteq) in
+    let ln := List.length wq in
     if N.leb (pos2N qsize) (nat2N ln) then
         (false, ac)
     else
         (true, {| acenvs := ac.(acenvs); acsize := ac.(acsize); acwriteenv := ac.(acwriteenv); acconfig := ac.(acconfig);
-                  acwriteq := {| wqueue := List.app (wqueue ac.(acwriteq)) (req :: nil); wqueuesz := wqueuesz ac.(acwriteq) |};
-                  acreadq := ac.(acreadq)  |}).
+                  acwriteq := {| wqueue := req :: wq; wqueuesz := wqueuesz ac.(acwriteq) |};
+                  acreadq := ac.(acreadq);
+                  acfbstore := ac.(acfbstore); ackstore := ac.(ackstore); acfistore := ac.(acfistore) |}).
 ```
 */
 bool CoqAssemblyCache::enqueue_write_request(const WriteQueueEntity &wqe)
@@ -589,9 +594,14 @@ void CoqAssemblyCache::pimpl::flush()
 /*
 ```coq
 Program Definition close (ac0 : assemblycache) : assemblycache :=
-    let env := EnvironmentWritable.finalise_assembly ac0.(acwriteenv) in
-    {| acenvs := nil; acsize := ac0.(acsize); acwriteenv := env; acconfig := ac0.(acconfig);
-       acreadq := ac0.(acreadq); acwriteq := ac0.(acwriteq) |}.
+    match EnvironmentWritable.finalise_assembly ac0.(acwriteenv) with
+    | None => ac0
+    | Some (aid, ki) =>
+        let ackstore' := KeyListStore.add aid ki ac0.(ackstore) in
+        {| acenvs := nil; acsize := ac0.(acsize); acwriteenv := EnvironmentWritable.initial_environment ac0.(acconfig); acconfig := ac0.(acconfig);
+        acreadq := ac0.(acreadq); acwriteq := ac0.(acwriteq);
+        acfbstore := ac0.(acfbstore); ackstore := ackstore'; acfistore := ac0.(acfistore) |}
+    end.
 ```
 */
 void CoqAssemblyCache::close()
@@ -632,6 +642,7 @@ CoqAssemblyCache::vmetric_t CoqAssemblyCache::pimpl::metrics() const
     _metrics.push_back({"n_read_environments", (uint32_t)_readenvs.size()});
     _metrics.push_back({"n_write_environments", _writeenv ? uint32_t(1) : uint32_t(0)});
     _metrics.push_back({"n_assembly_finalised", n_assembly_finalised});
+    _metrics.push_back({"n_assembly_failed", _writeenv ? _writeenv->n_failed : uint32_t(0)});
     _metrics.push_back({"n_assembly_recalled", n_assembly_recalled});
     _metrics.push_back({"len_read_queue", (uint32_t)_readqueue.size()});
     _metrics.push_back({"len_write_queue", (uint32_t)_writequeue.size()});

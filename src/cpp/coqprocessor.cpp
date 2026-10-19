@@ -2,7 +2,7 @@ module;
 /*
     eLyKseeR or LXR - cryptographic data archiving software
     https://github.com/eLyKseeR/elykseer-cpp
-    Copyright (C) 2018-2025 Alexander Diemand
+    Copyright (C) 2018-2026 Alexander Diemand
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -27,7 +27,6 @@ module;
 #include <string>
 #include <vector>
 
-import lxr_sha3;
 import lxr_key256;
 
 import lxr_coqconfiguration;
@@ -71,70 +70,29 @@ void CoqProcessor::close()
 ```coq
 Definition block_sz := 32768.
 
-Local Program Fixpoint rec_file_backup_inner (n_blocks : nat) (this : processor) (fi : fileinformation) (fpos : N) (fptr : Cstdio.fptr) : processor :=
-    match n_blocks with
-    | O => this
-    | S n_blocks' =>
-        if N.ltb fpos fi.(fsize) then
-        let dsz : N := fi.(fsize) - fpos in
-            let sz : N := if (N.ltb block_sz dsz) then block_sz else dsz in
-            let _ := Cstdio.fseek fptr fpos in
-            match Cstdio.fread fptr sz with
-                | None => this
-                | Some (nread, b) =>
-                    let b' := BufferPlain.from_buffer b in
-                    let wqe : writequeueentity :=
-                        {| qfhash := Utilities.sha256 fi.(fname)
-                         ; qfpos := fpos
-                         ; qbuffer := b'
-                        |} in
-                    let this' := backup_block this wqe in
-                    rec_file_backup_inner n_blocks' this' fi (fpos + sz) fptr
-            end
-        else this
-    end.
-
-Local Program Definition open_file_backup (n_blocks : N) (fi : fileinformation) (fpos : N) : processor :=
-    match Cstdio.fopen fi.(fname) Cstdio.read_mode with
-    | Some fptr =>
-        let proc' := rec_file_backup_inner (nat_of_N n_blocks) this fi fpos fptr in
-        match Cstdio.fclose fptr with
-        | None => proc'
-        | Some _ =>
-            update_cache proc' (AssemblyCache.add_fileinformation proc'.(cache) fi)
-        end
-    | None => this
-    end.
-
-Program Definition file_backup (fp : Filesystem.path) : processor :=
+Program Definition file_backup (find_fchecksum : string -> option string) (find_fblocks : string -> list blockinformation) (fp : Filesystem.path) : processor :=
     let fn := Filesystem.Path.to_string fp in
-    let fi := get_file_information fn in
+    let fi := get_file_information this.(config) fn in
     (* deduplication level 1: compare file checksums *)
-    let ofi' := FileinformationStore.find fn this.(cache).(acfistore) in
     let found :=
-        match ofi' with
+        match find_fchecksum fi.(fhash) with
         | None => false
-        | Some fi' => if fi'.(fchecksum) =? fi.(fchecksum) then true else false
+        | Some fchecksum' => fchecksum' =? fi.(fchecksum)
         end
     in
-    if (found) then
-        this
-    else
-        let n_blocks := 1 + (fi.(fsize) + (block_sz / 2) - 1) / block_sz in
-        let proc1 := open_file_backup n_blocks fi 0 in
-        let (_, proc2) := run_write_requests proc1 in
-        proc2.
+    ...
 ```
+   deduplication level 2 (reuse of unchanged blocks, prepare_blocks/zip_blocks) is not implemented.
 */
 std::optional<CoqFilesupport::FileInformation> CoqProcessor::file_backup(const std::filesystem::path &fp)
 {
-    auto mayfi = CoqFilesupport::get_file_information(fp.string());
+    auto mayfi = CoqFilesupport::get_file_information(fp.string(), _config.my_id);
     if (mayfi) {
         CoqFilesupport::FileInformation fi = mayfi.value();
         // deduplication level 1: compare file checksums
         bool found = false;
-        Key256 fhash = Sha3_256::hash(fp.string());
-        std::optional<CoqFilesupport::FileInformation> ofi = _cache->get_finfo_store()->find(fhash.toHex());
+        Key256 fhash{true}; fhash.fromHex(fi.fhash);
+        std::optional<CoqFilesupport::FileInformation> ofi = _cache->get_finfo_store()->find(fi.fhash);
         if (ofi) {
             CoqFilesupport::FileInformation prevfi = ofi.value();
             if (fi.fchecksum == prevfi.fchecksum) { found = true; }
@@ -171,7 +129,7 @@ std::optional<CoqFilesupport::FileInformation> CoqProcessor::file_backup(const s
                 _cache->iterate_write_queue();
             }
             fclose(fstr);
-            _cache->get_finfo_store()->add(fhash.toHex(), fi);
+            _cache->get_finfo_store()->add(fi.fhash, fi);
             return fi;
         }
     }
@@ -180,6 +138,8 @@ std::optional<CoqFilesupport::FileInformation> CoqProcessor::file_backup(const s
 
 // directory_backup()
 /*
+   in elykseer-ml @ e6db580 (0.10.1) the directory traversal is commented out in
+   theories/Processor.v and implemented in the tools; the earlier definitions:
 ```coq
 Local Program Definition internal_directory_entries (fp : Filesystem.path) : (list Filesystem.path * list Filesystem.path) :=
     Filesystem.list_directory fp ([],[]) (fun de '(lfiles,ldirs) =>

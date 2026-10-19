@@ -8,6 +8,24 @@ read [more](https://github.com/eLyKseeR/elykseer-cpp)
 
 [![Compilation of project with submodules and verification by unit tests](https://github.com/eLyKseeR/elykseer-cpp/actions/workflows/CI.yaml/badge.svg?branch=main)](https://github.com/eLyKseeR/elykseer-cpp/actions/workflows/CI.yaml)
 
+# archive format
+
+Since version 5.0.0 the archive format follows the formal specification in
+[elykseer-ml](https://github.com/eLyKseeR/elykseer-ml) 0.10.1
+([doc/08_Format.md](https://github.com/eLyKseeR/elykseer-ml/blob/main/doc/08_Format.md)):
+assemblies are encrypted with AES-256-GCM (the aid is authenticated), chunk identifiers,
+data layout and file hashes are the same, and the meta data is written as XML following
+the schemas `schema/keys.xsd` (`LXRbackup-*-dbks.xml`) and `schema/fileinformation.xsd`
+(`LXRbackup-*-files.xml`). The chunks written for an assembly are byte-identical to those of
+elykseer-ml (`tests/cpp/utConformance.cpp`, vectors generated with `tests/conformance/generate.sh`),
+and archives written by elykseer-ml are restored by `LXRrestore` from its XML export
+(`tests/conformance/check-elykseer-ml.sh`, runs both checks in the elykseer-ml docker image).
+
+Archives written by elykseer-cpp 4.x cannot be read by 5.x; restore them with a 4.x release.
+
+`LXRrestore` and `LXRverify` check the checksum of every block and exit with status 1
+if a file cannot be restored completely; partially restored files are removed.
+
 # building
 
 1. code extraction and compilation (in directory `build`)

@@ -71,3 +71,72 @@ jobs:
         shell: nix-shell --run "{0}"
         run: ci/ci.sh asan
       - run: echo "🍏 This job's status is ${{ job.status }}."
+
+  # conformance with elykseer-ml: runs its docker image in a docker-in-docker service
+  conformance:
+    name: conformance with elykseer-ml
+    needs: test
+    runs-on: ubuntu-latest
+    container:
+      # built with ci/build-ci-image.sh
+      image: code.sbclab.net/elykseer/elykseer-cpp-ci:1.0.1
+      credentials:
+        username: ci_elykseer
+        password: ${{ secrets.PAT }}
+      env:
+        DOCKER_HOST: tcp://docker:2375
+    services:
+      docker:
+        # docker:29-dind
+        image: docker@sha256:3e5756e2b6dad6a5f1f5deacf0a19f9eaa2581b76ae092b2d4a118162e1d4d4e
+        options: --privileged
+        env:
+          DOCKER_TLS_CERTDIR: ""
+
+    steps:
+      - name: Check out repository code
+        uses: https://data.forgejo.org/actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          submodules: false
+      - name: use prebuilt dependencies from the CI image
+        id: prebuilt
+        shell: bash
+        run: |
+          HASH=$(ci/ext-hash.sh)
+          echo "hash=$HASH" >> $GITHUB_OUTPUT
+          EXT_TARGET="$(uname -s)_$(uname -m)"
+          if [ -d /opt/elykseer/ext/$EXT_TARGET ] && [ "$(cat /opt/elykseer/ext.hash 2>/dev/null)" = "$HASH" ]; then
+            ln -sfn /opt/elykseer/ext/$EXT_TARGET ext/$EXT_TARGET
+            echo "hit=true" >> $GITHUB_OUTPUT
+          else
+            echo "hit=false" >> $GITHUB_OUTPUT
+          fi
+      - name: fetch submodules
+        run: |
+          if [ "${{ steps.prebuilt.outputs.hit }}" = "true" ]; then
+            git submodule update --init ext/date ext/sizebounded ext/stream-cpp ext/rapidcheck
+          else
+            git submodule update --init
+          fi
+      - name: cache dependencies
+        if: steps.prebuilt.outputs.hit != 'true'
+        uses: https://data.forgejo.org/actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          key: ext-${{ steps.prebuilt.outputs.hash }}
+          path: |
+            ext/Linux_*
+      - name: compile dependencies
+        if: steps.prebuilt.outputs.hit != 'true'
+        shell: nix-shell --run "{0}"
+        run: ci/ci.sh deps
+      - name: build project
+        shell: nix-shell --run "{0}"
+        run: ci/ci.sh build
+      - name: wait for the docker daemon
+        shell: nix-shell -p docker-client --run "{0}"
+        run: |
+          for i in $(seq 60); do docker info >/dev/null 2>&1 && break; sleep 2; done
+          docker version
+      - name: conformance with elykseer-ml (vectors, restore of an elykseer-ml archive)
+        shell: nix-shell -p docker-client --run "{0}"
+        run: tests/conformance/check-elykseer-ml.sh build

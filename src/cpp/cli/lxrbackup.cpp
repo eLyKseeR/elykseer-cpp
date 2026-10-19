@@ -98,7 +98,7 @@ void output_help() {
   std::cout << "-n --nchunks   sets number of chunks (16-256) per assembly" << std::endl;
   // std::cout << "-c --compression  sets compression (0 or 1)" << std::endl;
   // std::cout << "-u --deduplication sets duplication mode (0, 1 or 2)" << std::endl;
-  std::cout << "--refdbfi      adds reference dbfi for deduplication (*)" << std::endl;
+  std::cout << "--refdbfi      adds reference meta data (files) for deduplication (*)" << std::endl;
   // std::cout << "--refdbfb      adds reference dbfb for deduplication (*)" << std::endl;
   std::cout << "-f             backups a file (*)" << std::endl;
   std::cout << "-d --d1        backups files in a directory (*)" << std::endl;
@@ -341,12 +341,18 @@ int main (int argc, char * const argv[]) {
   std::string timestamp = lxr::OS::timestamp();
   std::filesystem::path pdb{_config.path_db};
   std::string _frp = okey.value();
+  bool ok = true;
   auto const fp_dbk = pdb / ("LXRbackup-" + timestamp + "-dbks.xml");
-  _keystore->encrypted_output(fp_dbk, _frp);
-  auto const fp_dbfb = pdb / ("LXRbackup-" + timestamp + "-dbfb.xml");
-  _fblockstore->encrypted_output(fp_dbfb, _frp);
-  auto const fp_dbfi = pdb / ("LXRbackup-" + timestamp + "-dbfi.xml");
-  _finfostore->encrypted_output(fp_dbfi, _frp);
+  if (! _keystore->encrypted_output(fp_dbk, _frp)) {
+    std::clog << "failed to write encryption keys to " << fp_dbk.string() << std::endl;
+    ok = false;
+  }
+  // file information and file blocks (schema/fileinformation.xsd)
+  auto const fp_files = pdb / ("LXRbackup-" + timestamp + "-files.xml");
+  if (! lxr::encrypted_output(lxr::CoqFilesStream(_finfostore, _fblockstore), fp_files, _frp)) {
+    std::clog << "failed to write file meta data to " << fp_files.string() << std::endl;
+    ok = false;
+  }
 
   // show statistics
   if (verbose_out > 0) {
@@ -363,5 +369,12 @@ int main (int argc, char * const argv[]) {
     }
   }
 
-  return 0;
+  for (const auto & m : qac->metrics()) {
+    if (m.first == "n_assembly_failed" && std::get<uint32_t>(m.second) > 0) {
+      std::clog << std::get<uint32_t>(m.second) << " assemblies failed to be written" << std::endl;
+      ok = false;
+    }
+  }
+
+  return (ok ? 0 : 1);
 }

@@ -17,6 +17,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <algorithm>
 #include <chrono>
 #include <iostream>
 #include <filesystem>
@@ -29,6 +30,7 @@
 
 import lxr_coqassemblycache;
 import lxr_coqconfiguration;
+import lxr_coqfilesupport;
 import lxr_coqprocessor;
 import lxr_coqstore;
 import lxr_filectrl;
@@ -37,7 +39,6 @@ import lxr_liz;
 import lxr_os;
 
 import lxr_gpg;
-import lxr_sha3;
 
 
 // options
@@ -91,7 +92,7 @@ void output_help() {
   std::cout << "--nogpg        turn off decrypion of meta data using GnuPG" << std::endl;
   std::cout << "-x --pChunks   sets path for encrypted chunks" << std::endl;
   std::cout << "-o --pData     sets output path for decrypted data" << std::endl;
-  std::cout << "-b --pDbFb     adds backup meta data dbfb (*)" << std::endl;
+  std::cout << "-b --pDbFb     adds backup meta data (files) (*)" << std::endl;
   std::cout << "-k --pKeys     adds backup encryption keys dbks (*)" << std::endl;
   std::cout << "-f --file      file to be restored (*)" << std::endl;
   // std::cout << "-d --dir       files in directory to be restored (*)" << std::endl;
@@ -197,6 +198,39 @@ void set_n_chunks(std::optional<int> &nchunks, std::string const p) {
   }
 }
 
+// the restored file must stay below the output directory, also when
+// following symlinks that already exist in it (like lxr_restore of elykseer-ml)
+std::optional<std::filesystem::path> contained_target(const std::filesystem::path & base, const std::string & fname) {
+  std::filesystem::path relp{};
+  for (auto const & part : std::filesystem::path(fname).relative_path()) {
+    if (part == "..") {
+      std::clog << "  cannot restore file '" << fname << "': contains '..'" << std::endl;
+      return {};
+    }
+    if (part.empty() || part == ".") { continue; }
+    relp /= part;
+  }
+  if (relp.empty()) {
+    std::clog << "  cannot restore file '" << fname << "': empty file name" << std::endl;
+    return {};
+  }
+  const std::filesystem::path target = base / relp;
+  std::error_code ec1, ec2;
+  auto cbase = std::filesystem::weakly_canonical(base, ec1);
+  if (cbase.filename().empty()) { cbase = cbase.parent_path(); }   // trailing separator
+  const auto ctarget = std::filesystem::weakly_canonical(target, ec2);
+  if (ec1 || ec2) {
+    std::clog << "  cannot restore file '" << fname << "': cannot resolve path" << std::endl;
+    return {};
+  }
+  auto const [ib, it] = std::mismatch(cbase.begin(), cbase.end(), ctarget.begin(), ctarget.end());
+  if (ib != cbase.end() || it == ctarget.end()) {
+    std::clog << "  cannot restore file '" << fname << "': resolves outside of the output directory" << std::endl;
+    return {};
+  }
+  return target;
+}
+
 // void restore_dir(std::string const p) {
 //   if (counter_dirs >= MAX_RESTORE_DIRS -1 ) {
 //     std::clog << "maximum number of directories reached: " << MAX_RESTORE_DIRS << std::endl;
@@ -272,8 +306,9 @@ int main (int argc, char * const argv[]) {
   int corr_files = 0;
   for (int i = 0; i < counter_files; i++) {
     //std::cout << "checking " << i << "  " << list_files[i] << std::endl;
-    auto const fhash = lxr::Sha3_256::hash(list_files[i]).toHex();
+    auto const fhash = lxr::CoqFilesupport::file_hash(list_files[i], _config.my_id);
     if (! _fblockstore->contains(fhash)) {
+      std::clog << "  cannot restore file '" << list_files[i] << "': no meta data found" << std::endl;
       list_files[i] = "";
       corr_files++;
     }
@@ -308,9 +343,12 @@ int main (int argc, char * const argv[]) {
   }
 
   // run program
+  int failed_files = corr_files;
   for (int i = 0; i < counter_files; i++) {
     if (list_files[i] != "") {
-      std::filesystem::path fp{outputpath.value()}; fp /= list_files[i];
+      auto const ofp = contained_target(outputpath.value(), list_files[i]);
+      if (! ofp) { failed_files++; continue; }
+      const std::filesystem::path fp = ofp.value();
       std::filesystem::path dir = fp.parent_path();
       if (! std::filesystem::exists(dir)) {
 #ifdef DEBUG
@@ -318,44 +356,61 @@ int main (int argc, char * const argv[]) {
 #endif
         std::filesystem::create_directories(dir);
       }
-      auto const fhash = lxr::Sha3_256::hash(list_files[i]).toHex();
+      auto const fhash = lxr::CoqFilesupport::file_hash(list_files[i], _config.my_id);
       if (auto const fbs = _fblockstore->find(fhash); fbs) {
 #ifdef DEBUG
         std::clog << "  open file " << fp.c_str() << std::endl;
 #endif
         FILE *tgt = fopen(fp.c_str(), "wx");
-        if (tgt) {
+        if (! tgt) {
+          std::clog << "  cannot restore file '" << list_files[i] << "': cannot create " << fp.string() << std::endl;
+          failed_files++;
+          continue;
+        }
 #ifdef DEBUG
-          std::clog << "  file ready." << std::endl;
+        std::clog << "  file ready." << std::endl;
 #endif
-          auto process_read_blocks = [&tgt](const std::vector<lxr::ReadQueueResult> & rqrs) {
-            for (auto const &rqr : rqrs) {
-              if (rqr._rresult) {
+        uint64_t n_expected{0}, n_restored{0};
+        uint32_t n_blocks{0}, n_blocks_ok{0};
+        auto process_read_blocks = [&tgt,&n_restored,&n_blocks_ok](const std::vector<lxr::ReadQueueResult> & rqrs) {
+          for (auto const &rqr : rqrs) {
+            if (rqr._rresult) {
 #ifdef DEBUG
-                std::clog << "     fseek to " << rqr._readrequest._fpos << std::endl;
+              std::clog << "     fseek to " << rqr._readrequest._fpos << std::endl;
 #endif
-                fseek(tgt, rqr._readrequest._fpos, SEEK_SET);
+              fseek(tgt, rqr._readrequest._fpos, SEEK_SET);
 #ifdef DEBUG
-                std::clog << "     writing " << rqr._rresult->len() << " bytes" << std::endl;
+              std::clog << "     writing " << rqr._rresult->len() << " bytes" << std::endl;
 #endif
-                rqr._rresult->fileout_sz_pos(0, rqr._rresult->len(), tgt);
+              if (int n = rqr._rresult->fileout_sz_pos(0, rqr._rresult->len(), tgt); n == (int)rqr._rresult->len()) {
+                n_restored += n;
+                n_blocks_ok++;
               }
             }
-          };
-          for (auto const bi : *(fbs.value())) {
-            lxr::ReadQueueEntity rqe;
-            rqe._aid = bi.blockaid; rqe._apos = bi.blockapos;
-            rqe._rlen = bi.blocksize; rqe._fpos = bi.filepos;
-#ifdef DEBUG
-            std::clog << "   read request @" << bi.filepos << " in aid = " << bi.blockaid << std::endl;
-#endif
-            if (! qac->enqueue_read_request(rqe)) {
-              process_read_blocks(qac->iterate_read_queue());
-              qac->enqueue_read_request(rqe);
-            }
           }
-          process_read_blocks(qac->iterate_read_queue());
-          fclose(tgt);
+        };
+        for (auto const & bi : *(fbs.value())) {
+          lxr::ReadQueueEntity rqe;
+          rqe._aid = bi.blockaid; rqe._apos = bi.blockapos;
+          rqe._rlen = bi.blocksize; rqe._fpos = bi.filepos;
+          rqe._chksum = bi.bchecksum;
+          n_expected += bi.blocksize;
+          n_blocks++;
+#ifdef DEBUG
+          std::clog << "   read request @" << bi.filepos << " in aid = " << bi.blockaid << std::endl;
+#endif
+          if (! qac->enqueue_read_request(rqe)) {
+            process_read_blocks(qac->iterate_read_queue());
+            qac->enqueue_read_request(rqe);
+          }
+        }
+        process_read_blocks(qac->iterate_read_queue());
+        const bool ok = (fclose(tgt) == 0) && n_blocks_ok == n_blocks && n_restored == n_expected;
+        if (! ok) {
+          // missing blocks: e.g. lost chunks, wrong key, or corrupted data
+          std::clog << "  failed to restore file '" << list_files[i] << "': restored " << n_restored << " of " << n_expected << " bytes" << std::endl;
+          std::filesystem::remove(fp);
+          failed_files++;
         }
       }
     }
@@ -382,5 +437,9 @@ int main (int argc, char * const argv[]) {
     std::clog << "bps: " << bytes_read * 1e6 / tdiff << std::endl;
   }
 
+  if (failed_files > 0) {
+    std::clog << failed_files << " of " << counter_files << " files failed to restore" << std::endl;
+    return 1;
+  }
   return 0;
 }
