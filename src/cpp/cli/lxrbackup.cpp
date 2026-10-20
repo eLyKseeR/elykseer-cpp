@@ -233,14 +233,19 @@ void set_ownerkey(std::optional<std::string> &okey, std::string const p) {
 void add_ref_dbfi(std::shared_ptr<lxr::CoqFInfoStore> &store, std::string const p) {
   if (store && lxr::FileCtrl::fileExists(p)) {
     int sz0 = store->size();
+    bool ok{false};
     if (use_gpg == 1) {
       lxr::Gpg gpg;
       gpg.decrypt_from_file(p);
-      store->inStream(gpg.istream());
+      ok = store->inStream(gpg.istream());
     } else {
       std::ifstream _if; _if.open(p, std::ios::binary);
-      store->inStream(_if);
+      ok = store->inStream(_if);
       _if.close();
+    }
+    if (! ok) {
+      std::clog << "cannot read meta data: " << p << std::endl;
+      output_error();
     }
     int sz1 = store->size();
     std::clog << "       //# read " << sz1 - sz0 << " file infos from FInfoStore" << std::endl;

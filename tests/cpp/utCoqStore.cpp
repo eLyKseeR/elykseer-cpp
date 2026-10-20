@@ -164,7 +164,7 @@ BOOST_AUTO_TEST_CASE( keys_xml_roundtrip )
     BOOST_CHECK(xml.find("<key nchunks=\"42\" version=\"0.10.1\" aid=\"aid1\"><secret>" + ki._pkey.toHex() + "</secret><iv>" + ki._ivec.toHex() + "</iv></key>") != std::string::npos);
 
     lxr::CoqKeyStore _store2;
-    _store2.inStream(ss);
+    BOOST_CHECK(_store2.inStream(ss));
     BOOST_REQUIRE_EQUAL(_store2.size(), 1);
     auto ki2 = _store2.find("aid1");
     BOOST_REQUIRE(ki2);
@@ -183,7 +183,7 @@ BOOST_AUTO_TEST_CASE( keys_xml_from_elykseer_ml )
        << "<key nchunks=\"16\" version=\"0.10.1\" aid=\"7d1f\"><secret>000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f</secret><iv>f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff</iv></key>\n"
        << "</keys>\n";
     lxr::CoqKeyStore _store;
-    _store.inStream(ss);
+    BOOST_CHECK(_store.inStream(ss));
     auto ki = _store.find("7d1f");
     BOOST_REQUIRE(ki);
     BOOST_CHECK_EQUAL(ki->_pkey.toHex(), "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f");
@@ -216,7 +216,7 @@ BOOST_AUTO_TEST_CASE( files_xml_roundtrip )
     // each store reads its part
     std::stringstream ss1(xml), ss2(xml);
     lxr::CoqFInfoStore _fistore2;
-    _fistore2.inStream(ss1);
+    BOOST_CHECK(_fistore2.inStream(ss1));
     BOOST_CHECK_EQUAL(_fistore2.size(), 2);
     auto fi = _fistore2.find(fhash);
     BOOST_REQUIRE(fi);
@@ -227,7 +227,7 @@ BOOST_AUTO_TEST_CASE( files_xml_roundtrip )
     BOOST_CHECK_EQUAL(fi->fchecksum, "checksum42");
 
     lxr::CoqFBlockStore _fbstore2;
-    _fbstore2.inStream(ss2);
+    BOOST_CHECK(_fbstore2.inStream(ss2));
     BOOST_CHECK_EQUAL(_fbstore2.size(), 1);
     auto bis = _fbstore2.find(fhash);
     BOOST_REQUIRE(bis);
@@ -250,8 +250,48 @@ BOOST_AUTO_TEST_CASE( legacy_xml_ignored )
        << "  <Key n=\"16\" iv=\"f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff\" pk=\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\">7d1f</Key>\n"
        << "</DbKey>\n";
     lxr::CoqKeyStore _store;
-    _store.inStream(ss);
+    BOOST_CHECK(_store.inStream(ss));
     BOOST_CHECK_EQUAL(_store.size(), 0);
+}
+
+// Test case: a document that cannot be parsed is refused, not thrown
+
+BOOST_AUTO_TEST_CASE( malformed_xml_refused )
+{
+    const std::string broken{"<?xml version=\"1.0\"?>\n<keys>\n<key aid=\"a\"><secret>00</secret>\n"};
+    std::stringstream ss1(broken), ss2(broken);
+    lxr::CoqKeyStore _store;
+    BOOST_CHECK(! _store.inStream(ss1));
+    BOOST_CHECK_EQUAL(_store.size(), 0);
+    lxr::CoqFInfoStore _fistore;
+    BOOST_CHECK(! _fistore.inStream(ss2));
+    BOOST_CHECK_EQUAL(_fistore.size(), 0);
+}
+
+// Test case: hex values of the wrong length or with other characters are refused
+
+BOOST_AUTO_TEST_CASE( invalid_hex_refused )
+{
+    std::stringstream ss;
+    ss << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<keys>\n"
+       << "<key nchunks=\"16\" version=\"0.10.1\" aid=\"short\"><secret>0001</secret><iv>f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff</iv></key>\n"
+       << "<key nchunks=\"16\" version=\"0.10.1\" aid=\"nothex\"><secret>000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f</secret><iv>f0f1f2f3f4f5f6f7f8f9fafbfcfdfeXX</iv></key>\n"
+       << "<key nchunks=\"16\" version=\"0.10.1\" aid=\"good\"><secret>000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f</secret><iv>f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff</iv></key>\n"
+       << "</keys>\n";
+    lxr::CoqKeyStore _store;
+    BOOST_CHECK(! _store.inStream(ss));
+    BOOST_CHECK(! _store.find("short"));
+    BOOST_CHECK(! _store.find("nothex"));
+    BOOST_CHECK(_store.find("good"));
+
+    std::stringstream ss2;
+    ss2 << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<files>\n"
+        << "<fileinformation version=\"0.10.1\" fhash=\"0123\"><fileblocks>"
+        << "<fileblock blockid=\"1\" blocksize=\"10\" filepos=\"0\" apos=\"128\"><aid>a</aid><checksum>abc</checksum></fileblock>"
+        << "</fileblocks></fileinformation>\n</files>\n";
+    lxr::CoqFBlockStore _fbstore;
+    BOOST_CHECK(! _fbstore.inStream(ss2));
+    BOOST_CHECK(! _fbstore.find("0123"));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -118,13 +118,18 @@ void set_chunk_path(std::optional<std::string> & chunkpath, const std::string & 
 void add_dbfb_path(std::shared_ptr<lxr::CoqFBlockStore> & db, const std::string & fp) {
   if (lxr::FileCtrl::fileExists(fp)) {
     int sz0 = db->size();
+    bool ok{false};
     if (use_gpg == 1) {
       lxr::Gpg gpg;
       gpg.decrypt_from_file(fp);
-      db->inStream(gpg.istream());
+      ok = db->inStream(gpg.istream());
     } else {
       std::ifstream _if; _if.open(fp, std::ios::binary);
-      db->inStream(_if); _if.close();
+      ok = db->inStream(_if); _if.close();
+    }
+    if (! ok) {
+      std::clog << "cannot read meta data: " << fp << std::endl;
+      output_error();
     }
     int sz1 = db->size();
     std::clog << "       ### read " << sz1 - sz0 << " blocks from FBlockStore" << std::endl;
@@ -137,13 +142,18 @@ void add_dbfb_path(std::shared_ptr<lxr::CoqFBlockStore> & db, const std::string 
 void add_dbkey_path(std::shared_ptr<lxr::CoqKeyStore> & db, const std::string & fp) {
   if (lxr::FileCtrl::fileExists(fp)) {
     int sz0 = db->size();
+    bool ok{false};
     if (use_gpg == 1) {
       lxr::Gpg gpg;
       gpg.decrypt_from_file(fp);
-      db->inStream(gpg.istream());
+      ok = db->inStream(gpg.istream());
     } else {
       std::ifstream _if; _if.open(fp, std::ios::binary);
-      db->inStream(_if); _if.close();
+      ok = db->inStream(_if); _if.close();
+    }
+    if (! ok) {
+      std::clog << "cannot read meta data: " << fp << std::endl;
+      output_error();
     }
     int sz1 = db->size();
     std::clog << "       ### read " << sz1 - sz0 << " keys from KeyStore" << std::endl;

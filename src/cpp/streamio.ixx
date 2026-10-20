@@ -27,7 +27,8 @@ export namespace lxr {
 class StreamIO
 {
     public:
-        virtual void inStream(std::istream &) = 0;
+        // returns false if the input cannot be parsed
+        virtual bool inStream(std::istream &) = 0;
         virtual void outStream(std::ostream &) const = 0;
     protected:
         StreamIO() {}

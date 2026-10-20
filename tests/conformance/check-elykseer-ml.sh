@@ -13,7 +13,8 @@
 # ELYKSEER_ML_IMAGE overrides the image.
 set -euo pipefail
 
-IMAGE=${ELYKSEER_ML_IMAGE:-codieplusplus/elykseer-ml@sha256:8fcb8a9d139e4941fc54604b14597ed2768484968dfd12a56281c33d73934662}
+# keep the image up-to-date. This is codieplusplus/elykseer-ml:v0.10.2
+IMAGE=${ELYKSEER_ML_IMAGE:-codieplusplus/elykseer-ml@sha256:e3065286207306b7dc3fa1c35b1801d9cd0d2f44de722fb6c468d7d0f345702a}
 HERE=$(cd "$(dirname "$0")" && pwd)
 BUILD=$(cd "${1:-build}" && pwd)
 CLI="${BUILD}/src/cpp/cli"

@@ -16,7 +16,7 @@ if [ "${1:-}" = "--docker" ]; then
     OUT=${3:-${HERE}/../cpp/conformance_vectors.hpp}
     # the sources are passed in with tar, the header comes back on stdout
     tar --no-xattrs -C "${HERE}" -cf - gen_vectors.ml dune |
-        docker run --rm -i --platform linux/amd64 "${IMAGE}" bash -c '
+        docker run --rm -i "${IMAGE}" bash -c '
             set -e; eval $(opam env)
             mkdir lxr_cpp_conformance_tmp; tar -C lxr_cpp_conformance_tmp -xf -
             dune build ./lxr_cpp_conformance_tmp/gen_vectors.exe >&2

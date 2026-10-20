@@ -23,6 +23,14 @@ and archives written by elykseer-ml are restored by `LXRrestore` from its XML ex
 
 Archives written by elykseer-cpp 4.x cannot be read by 5.x; restore them with a 4.x release.
 
+**Security notice for archives written by 4.x and earlier:** their keys, ivecs and assembly
+identifiers came from a `std::mt19937` seeded with a single 32-bit value, so an attacker who
+holds the chunks can recover the keys by trying all 2³² seeds; the cipher was also not
+authenticated. Treat the content of such archives as readable by anyone who has access to
+the chunk files: restore them with a 4.x release, back the data up again with 5.x, and
+delete the old chunks. Since 5.0.0, all key material comes from the system CSPRNG
+(elykseer-crypto `Random::fill`: OpenSSL `RAND_bytes` or Crypto++ `OS_GenerateRandomBlock`).
+
 `LXRrestore` and `LXRverify` check the checksum of every block and exit with status 1
 if a file cannot be restored completely; partially restored files are removed.
 

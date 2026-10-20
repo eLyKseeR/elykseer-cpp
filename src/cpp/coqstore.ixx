@@ -160,7 +160,7 @@ class CoqKeyStore : public CoqStore<CoqAssembly::KeyInformation, std::string>
         explicit CoqKeyStore() : CoqStore() {}
         virtual bool add(const std::string &, const CoqAssembly::KeyInformation &) override final;
         virtual void outStream(std::ostream & os) const override final;
-        virtual void inStream(std::istream & ins) override final;
+        virtual bool inStream(std::istream & ins) override final;
     private:
         CoqKeyStore(CoqKeyStore const &) = delete;
         CoqKeyStore & operator=(CoqKeyStore const &) = delete;
@@ -173,7 +173,7 @@ class CoqFBlockStore : public CoqStore<std::shared_ptr<std::vector<CoqAssembly::
         explicit CoqFBlockStore() : CoqStore() {}
         virtual bool add(const std::string &, const CoqAssembly::BlockInformation &) final;
         virtual void outStream(std::ostream & os) const override final;
-        virtual void inStream(std::istream & ins) override final;
+        virtual bool inStream(std::istream & ins) override final;
     private:
         CoqFBlockStore(CoqFBlockStore const &) = delete;
         CoqFBlockStore & operator=(CoqFBlockStore const &) = delete;
@@ -186,7 +186,7 @@ class CoqFInfoStore : public CoqStore<CoqFilesupport::FileInformation, std::stri
         explicit CoqFInfoStore() : CoqStore() {}
         virtual bool add(const std::string &, const CoqFilesupport::FileInformation &) override final;
         virtual void outStream(std::ostream & os) const override final;
-        virtual void inStream(std::istream & ins) override final;
+        virtual bool inStream(std::istream & ins) override final;
     private:
         CoqFInfoStore(CoqFInfoStore const &) = delete;
         CoqFInfoStore & operator=(CoqFInfoStore const &) = delete;
@@ -200,7 +200,7 @@ class CoqFilesStream : public StreamIO
     public:
         explicit CoqFilesStream(const std::shared_ptr<CoqFInfoStore> &, const std::shared_ptr<CoqFBlockStore> &);
         virtual void outStream(std::ostream & os) const override final;
-        virtual void inStream(std::istream & ins) override final;
+        virtual bool inStream(std::istream & ins) override final;
     private:
         std::shared_ptr<CoqFInfoStore> _finfostore;
         std::shared_ptr<CoqFBlockStore> _fblockstore;

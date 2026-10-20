@@ -25,6 +25,7 @@
 #include <filesystem>
 #include <fstream>
 #include <sstream>
+#include <stdexcept>
 
 #include "boost/test/unit_test.hpp"
 
@@ -270,6 +271,20 @@ static std::filesystem::path chunk_file(const lxr::CoqConfiguration & _config, c
 {
     const auto cident = lxr::CoqAssembly::chunk_identifier(_config.my_id, aid, cid);
     return std::filesystem::path(_config.path_chunks) / cident.substr(62, 2) / cident.substr(60, 2) / (cident + ".lxr");
+}
+
+// Test case: buffer access out of range throws instead of touching the byte past the end
+
+BOOST_AUTO_TEST_CASE( buffer_at_bounds )
+{
+    lxr::CoqBufferPlain b(16);
+    b.at(15, 'x');
+    BOOST_CHECK_EQUAL(b.at(15), 'x');
+    BOOST_CHECK_THROW(b.at(16), std::out_of_range);
+    BOOST_CHECK_THROW(b.at(16, 'y'), std::out_of_range);
+    BOOST_CHECK_THROW(b.at(0xffffffff), std::out_of_range);
+    lxr::CoqBufferPlain empty(0);
+    BOOST_CHECK_THROW(empty.at(0), std::out_of_range);
 }
 
 // Test case: a modified chunk fails decryption

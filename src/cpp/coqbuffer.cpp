@@ -23,6 +23,7 @@ module;
 #include <memory>
 #include <cstring>
 #include <optional>
+#include <stdexcept>
 #include <stdint.h>
 #include <string>
 
@@ -61,12 +62,17 @@ public:
     int fileout_sz_pos(int pos, int sz, FILE *fstr) const;
     int filein_sz_pos(int pos, int sz, FILE *fstr);
     int to_buffer(int n, char *b) const;
-    char at(uint32_t idx0) const { return _buffer[std::min(_len, idx0)]; }
-    void at(uint32_t idx0, char v) { _buffer[std::min(_len, idx0)] = v; }
+    char at(uint32_t idx0) const { check_index(idx0); return _buffer[idx0]; }
+    void at(uint32_t idx0, char v) { check_index(idx0); _buffer[idx0] = v; }
     bool encrypt_buffer(const Key128 &iv, const Key256 &pk, const std::string &aad);
     bool decrypt_buffer(const Key128 &iv, const Key256 &pk, const std::string &aad);
 
 private:
+    void check_index(uint32_t idx0) const {
+        if (! _buffer || idx0 >= _len) {
+            throw std::out_of_range("CoqBuffer: index " + std::to_string(idx0) + " out of range " + std::to_string(_len));
+        }
+    }
     pimpl(pimpl const &) = delete;
     pimpl & operator=(pimpl const &) = delete;
 

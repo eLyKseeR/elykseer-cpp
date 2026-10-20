@@ -134,6 +134,7 @@ class CoqBuffer
     int fileout_sz_pos(int pos, int sz, FILE *fstr) const;
     int filein_sz_pos(int pos, int sz, FILE *fstr);
     int to_buffer(int n, char *b) const;
+    // throws std::out_of_range if idx >= len()
     char at(uint32_t idx) const;
     void at(uint32_t idx, char v);
   protected:

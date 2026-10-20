@@ -213,13 +213,30 @@ static std::string xml_escape(const std::string &s)
     return r;
 }
 
-static boost::property_tree::ptree read_xml_document(std::istream & ins)
+static std::optional<boost::property_tree::ptree> read_xml_document(std::istream & ins)
 {
     boost::property_tree::ptree pt;
-    boost::property_tree::xml_parser::read_xml(ins, pt,
-      boost::property_tree::xml_parser::no_comments |
-      boost::property_tree::xml_parser::trim_whitespace);
+    try {
+        boost::property_tree::xml_parser::read_xml(ins, pt,
+          boost::property_tree::xml_parser::no_comments |
+          boost::property_tree::xml_parser::trim_whitespace);
+    } catch (const boost::property_tree::ptree_error & e) {
+        std::clog << "cannot parse meta data: " << e.what() << std::endl;
+        return {};
+    }
     return pt;
+}
+
+// Key::fromHex expects exactly length()/4 lowercase hex digits and reads past the end of shorter strings
+template <typename K>
+static bool from_hex(K & k, const std::string & h)
+{
+    if (h.size() != (std::size_t)k.length() / 4) { return false; }
+    for (const char c : h) {
+        if (! ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'))) { return false; }
+    }
+    k.fromHex(h);
+    return true;
 }
 
 static void warn_legacy(const std::string & root)
@@ -238,10 +255,12 @@ static void outputHeader(std::ostream & os, const std::string & ty)
 
 // schema/keys.xsd
 
-void CoqKeyStore::inStream(std::istream & ins)
+bool CoqKeyStore::inStream(std::istream & ins)
 {
     auto const pt = read_xml_document(ins);
-    for (auto const & root : pt) {
+    if (! pt) { return false; }
+    bool ok{true};
+    for (auto const & root : pt.value()) {
         warn_legacy(root.first);
         if (root.first != "keys") { continue; }
         for (auto const & k : root.second) {
@@ -250,11 +269,16 @@ void CoqKeyStore::inStream(std::istream & ins)
             const std::string _aid = k.second.get<std::string>("<xmlattr>.aid", "");
             ki._localnchunks = k.second.get<int>("<xmlattr>.nchunks", 16);
             ki._version = k.second.get<std::string>("<xmlattr>.version", "");
-            ki._pkey.fromHex(k.second.get<std::string>("secret", ""));
-            ki._ivec.fromHex(k.second.get<std::string>("iv", ""));
+            if (! from_hex(ki._pkey, k.second.get<std::string>("secret", "")) ||
+                ! from_hex(ki._ivec, k.second.get<std::string>("iv", ""))) {
+                std::clog << "invalid key record for aid " << _aid << std::endl;
+                ok = false;
+                continue;
+            }
             if (! _aid.empty()) { add(_aid, ki); }
         }
     }
+    return ok;
 }
 
 void CoqKeyStore::outStream(std::ostream & os) const
@@ -269,10 +293,12 @@ void CoqKeyStore::outStream(std::ostream & os) const
 
 // schema/fileinformation.xsd
 
-static void read_files_document(std::istream & ins, CoqFInfoStore *finfostore, CoqFBlockStore *fblockstore)
+static bool read_files_document(std::istream & ins, CoqFInfoStore *finfostore, CoqFBlockStore *fblockstore)
 {
     auto const pt = read_xml_document(ins);
-    for (auto const & root : pt) {
+    if (! pt) { return false; }
+    bool ok{true};
+    for (auto const & root : pt.value()) {
         warn_legacy(root.first);
         if (root.first != "files") { continue; }
         for (auto const & entry : root.second) {
@@ -301,7 +327,11 @@ static void read_files_document(std::istream & ins, CoqFInfoStore *finfostore, C
                         bi.filepos = b.second.get<uint64_t>("<xmlattr>.filepos", 0);
                         bi.blockapos = b.second.get<uint32_t>("<xmlattr>.apos", 0);
                         bi.blockaid = b.second.get<std::string>("aid", "");
-                        bi.bchecksum.fromHex(b.second.get<std::string>("checksum", ""));
+                        if (! from_hex(bi.bchecksum, b.second.get<std::string>("checksum", ""))) {
+                            std::clog << "invalid block checksum for file " << fhash << std::endl;
+                            ok = false;
+                            continue;
+                        }
                         bis->push_back(bi);
                     }
                 }
@@ -311,6 +341,7 @@ static void read_files_document(std::istream & ins, CoqFInfoStore *finfostore, C
             }
         }
     }
+    return ok;
 }
 
 static void write_files_document(std::ostream & os, const CoqFInfoStore *finfostore, const CoqFBlockStore *fblockstore)
@@ -353,9 +384,9 @@ static void write_files_document(std::ostream & os, const CoqFInfoStore *finfost
     os << "</files>" << std::endl;
 }
 
-void CoqFBlockStore::inStream(std::istream & ins)
+bool CoqFBlockStore::inStream(std::istream & ins)
 {
-    read_files_document(ins, nullptr, this);
+    return read_files_document(ins, nullptr, this);
 }
 
 void CoqFBlockStore::outStream(std::ostream & os) const
@@ -363,9 +394,9 @@ void CoqFBlockStore::outStream(std::ostream & os) const
     write_files_document(os, nullptr, this);
 }
 
-void CoqFInfoStore::inStream(std::istream & ins)
+bool CoqFInfoStore::inStream(std::istream & ins)
 {
-    read_files_document(ins, this, nullptr);
+    return read_files_document(ins, this, nullptr);
 }
 
 void CoqFInfoStore::outStream(std::ostream & os) const
@@ -377,9 +408,9 @@ CoqFilesStream::CoqFilesStream(const std::shared_ptr<CoqFInfoStore> &fi, const s
   : _finfostore(fi), _fblockstore(fb)
 {}
 
-void CoqFilesStream::inStream(std::istream & ins)
+bool CoqFilesStream::inStream(std::istream & ins)
 {
-    read_files_document(ins, _finfostore.get(), _fblockstore.get());
+    return read_files_document(ins, _finfostore.get(), _fblockstore.get());
 }
 
 void CoqFilesStream::outStream(std::ostream & os) const
